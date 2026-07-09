@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useOrders } from '@/lib/ordersContext';
-import { History, ChevronRight, Truck, UtensilsCrossed, MapPin, Clock, X } from 'lucide-react';
+import { History, ChevronRight, Truck, UtensilsCrossed, MapPin } from 'lucide-react';
 import { Order } from '@/lib/orderUtils';
 
 // Mock previous orders for demonstration

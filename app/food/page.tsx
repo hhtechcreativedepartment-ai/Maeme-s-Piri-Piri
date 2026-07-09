@@ -1,33 +1,6 @@
-import BrandButton from '@/components/common/BrandButton';
 import FlavourStrip from '@/components/sections/FlavourStrip';
 
 export default function FoodPage() {
-  const sections = [
-    {
-      title: 'OUR FOOD & FLAVOUR',
-      subtitle: 'What\'s Your Flavour?',
-      description: 'Enjoy fresh, flamingly good food with a choice of 6 delicious flavours. Our flame-grilled piri piri chicken is infused with the taste and flavours specially created for Maeme\'s.',
-      highlighted: true,
-    },
-    {
-      title: 'PIRI PIRI',
-      label: 'Flamingly Good',
-      description: 'Our flame-grilled piri piri chicken is marinated for 24 hours in our secret blend of spices. Each piece is carefully prepared to deliver authentic, mouth-watering flavour.',
-    },
-    {
-      title: 'ICONIC DISHES',
-      description: 'Choose from our most premium items, hand-prepared with premium meat flavoured with our exclusive spice mixes. From signature burgers to wings, every dish is crafted for excellence.',
-    },
-    {
-      title: 'DIPS & SIDES',
-      description: 'Freshly prepared using original secret recipes and the finest ingredients. Our dips and sides are designed to complement your meal perfectly.',
-    },
-    {
-      title: 'QUALITY',
-      description: 'Our processes ensure our international guidelines are strictly adhered to. We source the finest ingredients and maintain the highest standards of quality in everything we prepare.',
-    },
-  ];
-
   return (
     <div className="bg-[#f5f1e8] min-h-screen">
       {/* Header */}

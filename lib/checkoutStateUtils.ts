@@ -1,10 +1,19 @@
+import type { NewPaymentMethodInput, SavedPaymentMethod } from './paymentConfig';
+
+interface CheckoutAddress {
+  id: string;
+  type: 'home' | 'office' | 'work' | 'other';
+  street: string;
+  postcode: string;
+}
+
 export interface CheckoutState {
   orderType: 'delivery' | 'pickup' | null;
   selectedAddressId: string | null;
   selectedPaymentId: string | null;
   paymentMethod: 'card' | 'cash';
-  savedAddresses: any[];
-  savedPaymentMethods: any[];
+  savedAddresses: CheckoutAddress[];
+  savedPaymentMethods: Array<SavedPaymentMethod | NewPaymentMethodInput>;
 }
 
 const CHECKOUT_STATE_KEY = 'checkoutState';

@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 
 interface DishCard {
+  id: number;
   productId: string;
   name: string;
   description: string;
@@ -17,6 +18,7 @@ interface DishCard {
 
 const FEATURED_DISHES: DishCard[] = [
   {
+    id: 101,
     productId: 'chicken-burger',
     name: 'Chicken Burger',
     description: 'Crispy fried chicken with special sauce and fresh toppings',
@@ -26,6 +28,7 @@ const FEATURED_DISHES: DishCard[] = [
     badge: 'Popular',
   },
   {
+    id: 102,
     productId: 'half-chicken',
     name: 'Half Chicken',
     description: 'Flame-grilled piri piri chicken, perfectly seasoned',
@@ -34,6 +37,7 @@ const FEATURED_DISHES: DishCard[] = [
     image: '🍗',
   },
   {
+    id: 103,
     productId: 'chicken-rice-box',
     name: 'Chicken Rice Box',
     description: 'Succulent chicken served with fragrant jasmine rice',
@@ -42,6 +46,7 @@ const FEATURED_DISHES: DishCard[] = [
     image: '🍚',
   },
   {
+    id: 104,
     productId: 'spicy-wrap',
     name: 'Spicy Chicken Wrap',
     description: 'Grilled chicken wrap with piri piri sauce and vegetables',
@@ -50,6 +55,7 @@ const FEATURED_DISHES: DishCard[] = [
     image: '🌯',
   },
   {
+    id: 105,
     productId: 'wings-combo',
     name: 'Wings Combo',
     description: 'Crispy wings coated in signature piri piri spice',
@@ -58,6 +64,7 @@ const FEATURED_DISHES: DishCard[] = [
     image: '🍗',
   },
   {
+    id: 106,
     productId: 'loaded-fries',
     name: 'Loaded Fries',
     description: 'Crispy fries topped with cheese and piri piri chicken',
@@ -72,7 +79,14 @@ export default function FeaturedDishesSection() {
   const [toast, setToast] = useState<{ message: string; productName: string } | null>(null);
 
   const handleAddToCart = (dish: DishCard) => {
-    addToCart(parseInt(dish.productId as any), dish.name, dish.price);
+    addToCart({
+      productId: dish.id,
+      name: dish.name,
+      price: dish.price,
+      quantity: 1,
+      unitPrice: dish.price,
+      totalPrice: dish.price,
+    });
 
     setToast({
       message: 'Added to cart',

@@ -1,5 +1,3 @@
-import BrandButton from '@/components/common/BrandButton';
-
 export default function AppPromoSection() {
   const benefits = [
     '10% off your first order',

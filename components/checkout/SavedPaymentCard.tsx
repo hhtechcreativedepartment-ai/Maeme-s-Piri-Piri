@@ -1,5 +1,5 @@
 import { SavedPaymentMethod } from '@/lib/paymentConfig';
-import { CreditCard, Check, Trash2 } from 'lucide-react';
+import { Check, Trash2 } from 'lucide-react';
 
 interface SavedPaymentCardProps {
   card: SavedPaymentMethod;

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Check, Copy, Gift, Heart, History, Home, MapPin, Plus, Trash2, User } from 'lucide-react';
+import { ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { useOrders } from '@/lib/ordersContext';
 import { Order } from '@/lib/orderUtils';
@@ -11,7 +11,7 @@ import { useFavourites } from '@/lib/favouritesContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
 import ProductCard from '@/components/ordering/ProductCard';
 
-type AccountTab = 'profile' | 'history' | 'favourites' | 'addresses' | 'promos';
+type AccountTab = 'profile' | 'history' | 'tracking' | 'favourites' | 'addresses' | 'promos';
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
 
 interface SavedAddress {
@@ -26,11 +26,19 @@ interface SavedAddress {
 }
 
 const tabs = [
-  { id: 'profile' as AccountTab, label: 'Edit Profile', icon: User },
+  { id: 'profile' as AccountTab, label: 'My Account / Edit Profile', icon: User },
   { id: 'history' as AccountTab, label: 'Order History', icon: History },
+  { id: 'tracking' as AccountTab, label: 'Current Order Tracking', icon: Truck },
   { id: 'favourites' as AccountTab, label: 'Favourites', icon: Heart },
   { id: 'addresses' as AccountTab, label: 'Saved Addresses', icon: MapPin },
   { id: 'promos' as AccountTab, label: 'Promos', icon: Gift },
+];
+
+const profileLinks = [
+  { label: 'Explore Menu', href: '/menu', icon: Utensils },
+  { label: 'Branch Locator', href: '/branches', icon: Store },
+  { label: 'Privacy Policy', href: '/privacy-policy', icon: FileText },
+  { label: 'Terms & Conditions', href: '/terms-and-conditions', icon: FileText },
 ];
 
 const promoCards = [
@@ -44,7 +52,7 @@ const inputClass = 'min-h-12 w-full rounded-2xl border border-[#ead8c6] bg-white
 export default function PremiumAccountPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const { orders, currentOrder, updateOrderStatus } = useOrders();
   const { favourites, removeFavourite } = useFavourites();
   const [activeTab, setActiveTab] = useState<AccountTab>('profile');
@@ -67,22 +75,22 @@ export default function PremiumAccountPage() {
       return;
     }
 
-    if (!user) {
-      router.push('/login?redirect=/account');
-      return;
+    if (user) {
+      setProfile({
+        name: user.name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        dob: localStorage.getItem('maemes.account.dob') || '',
+      });
+    } else {
+      setProfile({ name: '', phone: '', email: '', dob: '' });
     }
-
-    setProfile({
-      name: user.name || '',
-      phone: user.phone || '',
-      email: user.email || '',
-      dob: localStorage.getItem('maemes.account.dob') || '',
-    });
   }, [isLoading, router, user]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'orders') setActiveTab('history');
+    if (tab === 'tracking') setActiveTab('tracking');
     if (tab === 'favourites' || tab === 'addresses' || tab === 'promos') setActiveTab(tab);
   }, [searchParams]);
 
@@ -170,7 +178,16 @@ export default function PremiumAccountPage() {
     showToast('Order cancelled');
   };
 
-  if (isLoading || !user) {
+  const handleLogin = () => {
+    router.push('/login?redirect=/account');
+  };
+
+  const handleLogout = () => {
+    logout();
+    showToast('Logged out');
+  };
+
+  if (isLoading) {
     return <main className="min-h-screen bg-[#fff8ed]" />;
   }
 
@@ -187,7 +204,7 @@ export default function PremiumAccountPage() {
               <h1 className="mt-2 max-w-[280px] break-words text-[1.7rem] font-black leading-tight tracking-tight sm:max-w-none sm:text-5xl">
                 Welcome back, {profile.name || "Maeme's guest"}
               </h1>
-              <p className="mt-2 text-sm font-semibold text-[#6b5b55]">{profile.phone}</p>
+              <p className="mt-2 text-sm font-semibold text-[#6b5b55]">{user ? profile.phone : 'Login to manage your Maeme’s account.'}</p>
             </div>
           </div>
         </header>
@@ -210,11 +227,38 @@ export default function PremiumAccountPage() {
                   </button>
                 );
               })}
+              <div className="hidden border-t border-[#f0d59d] pt-2 lg:block" />
+              {profileLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={`${item.label}-${item.href}`}
+                    href={item.href}
+                    className="flex min-w-max items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black text-[#1a120f] transition hover:bg-[#fff8ed] lg:w-full"
+                  >
+                    <Icon size={18} className="text-[#99041e]" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={user ? handleLogout : handleLogin}
+                className={`flex min-w-max items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition lg:w-full ${
+                  user ? 'bg-[#99041e] text-white hover:bg-[#7f0318]' : 'bg-[#ffc257] text-[#1a120f] hover:bg-[#e5a93e]'
+                }`}
+              >
+                {user ? <LogOut size={18} className="text-[#ffc257]" /> : <LogIn size={18} className="text-[#99041e]" />}
+                {user ? 'Logout' : 'Login'}
+              </button>
             </nav>
           </aside>
 
           <section className="min-w-0 rounded-[28px] border border-[#f0d59d] bg-white p-5 shadow-[0_18px_50px_rgba(50,24,16,0.08)] sm:p-7">
-            {activeTab === 'profile' && (
+            {!user && (
+              <LoginPrompt onLogin={handleLogin} />
+            )}
+
+            {user && activeTab === 'profile' && (
               <div>
                 <PanelTitle title="Edit Profile" subtitle="Keep your Maeme's account details up to date." />
                 <div className="grid gap-4 md:grid-cols-2">
@@ -227,11 +271,15 @@ export default function PremiumAccountPage() {
               </div>
             )}
 
-            {activeTab === 'history' && (
+            {user && activeTab === 'history' && (
               <OrderHistoryPanel liveOrder={liveOrder} pastOrders={pastOrders} onCancel={cancelOrder} />
             )}
 
-            {activeTab === 'favourites' && (
+            {user && activeTab === 'tracking' && (
+              <CurrentTrackingPanel liveOrder={liveOrder} />
+            )}
+
+            {user && activeTab === 'favourites' && (
               <div>
                 <PanelTitle title="Favourites" subtitle="Your saved Maeme's dishes, ready for next time." />
                 {favouriteProducts.length ? (
@@ -251,7 +299,7 @@ export default function PremiumAccountPage() {
               </div>
             )}
 
-            {activeTab === 'addresses' && (
+            {user && activeTab === 'addresses' && (
               <div>
                 <PanelTitle title="Saved Addresses" subtitle="Manage delivery addresses for faster checkout." />
                 <div className="grid gap-4 lg:grid-cols-2">
@@ -291,7 +339,7 @@ export default function PremiumAccountPage() {
               </div>
             )}
 
-            {activeTab === 'promos' && (
+            {user && activeTab === 'promos' && (
               <div>
                 <PanelTitle title="Promos" subtitle="Copy or apply your available Maeme's promo codes." />
                 {promoCards.length ? (
@@ -341,6 +389,39 @@ function EmptyState({ icon, title, text }: { icon: React.ReactNode; title: strin
   );
 }
 
+function LoginPrompt({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div>
+      <PanelTitle title="My Account" subtitle="Login to manage your profile, orders, favourites, addresses and promos." />
+      <div className="rounded-2xl border border-[#f0d59d] bg-[#fff8ed] p-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#99041e]">
+          <User size={36} />
+        </div>
+        <h3 className="mt-4 text-xl font-black">Login to continue</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#6b5b55]">
+          Access your profile, saved addresses, favourites, promos and order history from one place.
+        </p>
+        <button onClick={onLogin} className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-[#ffc257] px-6 py-3 text-sm font-black text-[#1a120f]">
+          <LogIn size={17} /> Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CurrentTrackingPanel({ liveOrder }: { liveOrder?: Order }) {
+  return (
+    <div>
+      <PanelTitle title="Current Order Tracking" subtitle="Track your latest active Maeme's order." />
+      {liveOrder ? (
+        <LiveOrderCard order={liveOrder} />
+      ) : (
+        <EmptyState icon={<Truck size={42} />} title="No active order" text="Your current order tracking will appear here after checkout." />
+      )}
+    </div>
+  );
+}
+
 function OrderHistoryPanel({ liveOrder, pastOrders, onCancel }: { liveOrder?: Order; pastOrders: Order[]; onCancel: (order: Order) => void }) {
   const orders = liveOrder ? [liveOrder, ...pastOrders] : pastOrders;
 
@@ -356,7 +437,7 @@ function OrderHistoryPanel({ liveOrder, pastOrders, onCancel }: { liveOrder?: Or
   );
 }
 
-function LiveOrderCard({ order, onCancel }: { order: Order; onCancel: (order: Order) => void }) {
+function LiveOrderCard({ order, onCancel }: { order: Order; onCancel?: (order: Order) => void }) {
   const steps = order.orderType === 'delivery'
     ? ['Confirmed', 'Preparing', 'On the way', 'Delivered']
     : ['Confirmed', 'Preparing', 'Ready for pickup', 'Completed'];
@@ -387,7 +468,7 @@ function LiveOrderCard({ order, onCancel }: { order: Order; onCancel: (order: Or
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Link href={`/account/orders/${order.orderNumber}`} className="rounded-2xl bg-[#99041e] px-5 py-3 text-center text-sm font-black text-white">View details</Link>
         <Link href={`/track/${order.orderNumber}`} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-center text-sm font-black text-[#99041e]">Track Order</Link>
-        {order.currentStep === 0 && <button onClick={() => onCancel(order)} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-sm font-black text-[#99041e]">Cancel order</button>}
+        {onCancel && order.currentStep === 0 && <button onClick={() => onCancel(order)} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-sm font-black text-[#99041e]">Cancel order</button>}
       </div>
     </article>
   );

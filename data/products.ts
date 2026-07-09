@@ -1,4 +1,4 @@
-import type { Product, ProductAddOn, ProductOptionGroup } from '@/types';
+﻿import type { Product, ProductAddOn, ProductOptionGroup } from '@/types';
 
 const heatOptions: ProductOptionGroup = {
   id: 'heat',
@@ -70,24 +70,25 @@ function product(
 }
 
 export const products: Product[] = [
-  product('whole-piri-piri-chicken', 'Whole Piri Piri Chicken', 'Grilled Collection', 'A whole flame-grilled chicken marinated overnight and brushed with your chosen Maeme’s sauce.', '/images/hero-chicken.png', 17.99, 1250, true),
+  product('whole-piri-piri-chicken', 'Whole Piri Piri Chicken', 'Grilled Collection', 'A whole flame-grilled chicken marinated overnight and brushed with your chosen Maemeâ€™s sauce.', '/images/hero-chicken.png', 17.99, 1250, true),
   product('half-piri-piri-chicken', 'Half Piri Piri Chicken', 'Grilled Collection', 'Juicy half chicken cooked over flame with crisp edges and a bold piri finish.', '/images/hero-chicken.png', 10.99, 680, true),
   product('quarter-chicken', 'Quarter Chicken', 'Grilled Collection', 'A classic quarter chicken portion, freshly grilled and finished with signature sauce.', '/images/hero-chicken.png', 6.99, 390),
-  product('chicken-burger', 'Chicken Burger', 'Burgers', 'Grilled chicken breast with lettuce, mayo and your favourite Maeme’s flavour in a toasted bun.', '/images/hero-chicken.png', 7.99, 580, true),
-  product('gourmet-beef-burger', 'Gourmet Beef Burger', 'Burgers', 'Premium beef patty with cheese, salad and a smoky house relish.', '/images/hero-chicken.png', 9.99, 710),
-  product('chicken-wrap', 'Chicken Wrap', 'Wraps & Pittas', 'Flame-grilled chicken strips wrapped with salad, sauce and a soft tortilla.', '/images/chicken-wrap.png', 8.49, 540),
-  product('chicken-pitta', 'Chicken Pitta', 'Wraps & Pittas', 'Warm pitta packed with grilled chicken, crunchy salad and your chosen sauce.', '/images/chicken-wrap.png', 8.49, 520),
-  product('chicken-rice-box', 'Chicken Rice Box', 'Rice Boxes', 'Spicy rice topped with grilled chicken, fresh garnish and a drizzle of Maeme’s sauce.', '/images/meal-bowl.png', 9.49, 620, true),
-  product('wings', 'Wings', 'Wings & Strips', 'Six flame-grilled wings tossed in your preferred piri piri flavour.', '/images/hero-chicken.png', 6.99, 460, true),
-  product('tender-strips', 'Tender Strips', 'Wings & Strips', 'Four tender chicken strips grilled fresh and served with a dip.', '/images/hero-chicken.png', 6.49, 420),
-  product('loaded-fries', 'Loaded Fries', 'Sides', 'Crisp fries loaded with cheese, sauce and fresh herbs.', '/images/chicken-fries.png', 5.49, 520, true, [sizeOptions], sideAddOns),
-  product('fries', 'Fries', 'Sides', 'Golden fries, salted and served hot.', '/images/chicken-fries.png', 3.49, 360, false, [sizeOptions], sideAddOns),
-  product('corn-on-the-cob', 'Corn on the Cob', 'Sides', 'Sweetcorn grilled and finished with butter and piri seasoning.', '/images/chicken-fries.png', 3.99, 260, false, [], sideAddOns),
-  product('side-salad', 'Side Salad', 'Sides', 'Fresh leaves, cucumber, tomato and house dressing.', '/images/chicken-fries.png', 3.99, 140, false, [], noAddOns),
-  product('kids-burger-meal', 'Kids Burger Meal', 'Kids Meals', 'Mini chicken burger with fries and a kids drink.', '/images/hero-chicken.png', 6.99, 540, false, [heatOptions], noAddOns),
-  product('kids-strips-meal', 'Kids Strips Meal', 'Kids Meals', 'Tender strips with fries and a kids drink.', '/images/hero-chicken.png', 6.49, 500, false, [heatOptions], noAddOns),
-  product('chocolate-cake', 'Chocolate Cake', 'Desserts', 'Rich chocolate cake slice for a sweet finish.', '/images/premium-hero-chicken.png', 4.49, 390, false, [], noAddOns),
+  product('chicken-burger', 'Chicken Burger', 'Maeme’s Burgers', 'Grilled chicken breast with lettuce, mayo and your favourite Maemeâ€™s flavour in a toasted bun.', '/images/hero-chicken.png', 7.99, 580, true),
+  product('gourmet-beef-burger', 'Gourmet Beef Burger', 'Maeme’s Burgers', 'Premium beef patty with cheese, salad and a smoky house relish.', '/images/hero-chicken.png', 9.99, 710),
+  product('chicken-wrap', 'Chicken Wrap', 'Maeme’s Extras', 'Flame-grilled chicken strips wrapped with salad, sauce and a soft tortilla.', '/images/chicken-wrap.png', 8.49, 540),
+  product('chicken-pitta', 'Chicken Pitta', 'Maeme’s Extras', 'Warm pitta packed with grilled chicken, crunchy salad and your chosen sauce.', '/images/chicken-wrap.png', 8.49, 520),
+  product('chicken-rice-box', 'Chicken Rice Box', 'Maeme’s Platter', 'Spicy rice topped with grilled chicken, fresh garnish and a drizzle of Maemeâ€™s sauce.', '/images/meal-bowl.png', 9.49, 620, true),
+  product('wings', 'Wings', 'Fried Collection', 'Six flame-grilled wings tossed in your preferred piri piri flavour.', '/images/hero-chicken.png', 6.99, 460, true),
+  product('tender-strips', 'Tender Strips', 'Fried Collection', 'Four tender chicken strips grilled fresh and served with a dip.', '/images/hero-chicken.png', 6.49, 420),
+  product('loaded-fries', 'Loaded Fries', 'Sides Collection', 'Crisp fries loaded with cheese, sauce and fresh herbs.', '/images/chicken-fries.png', 5.49, 520, true, [sizeOptions], sideAddOns),
+  product('fries', 'Fries', 'Sides Collection', 'Golden fries, salted and served hot.', '/images/chicken-fries.png', 3.49, 360, false, [sizeOptions], sideAddOns),
+  product('corn-on-the-cob', 'Corn on the Cob', 'Sides Collection', 'Sweetcorn grilled and finished with butter and piri seasoning.', '/images/chicken-fries.png', 3.99, 260, false, [], sideAddOns),
+  product('side-salad', 'Side Salad', 'Sides Collection', 'Fresh leaves, cucumber, tomato and house dressing.', '/images/chicken-fries.png', 3.99, 140, false, [], noAddOns),
+  product('kids-burger-meal', 'Kids Burger Meal', 'Kids Meal', 'Mini chicken burger with fries and a kids drink.', '/images/hero-chicken.png', 6.99, 540, false, [heatOptions], noAddOns),
+  product('kids-strips-meal', 'Kids Strips Meal', 'Kids Meal', 'Tender strips with fries and a kids drink.', '/images/hero-chicken.png', 6.49, 500, false, [heatOptions], noAddOns),
+  product('chocolate-cake', 'Chocolate Cake', 'Dessert Collection', 'Rich chocolate cake slice for a sweet finish.', '/images/premium-hero-chicken.png', 4.49, 390, false, [], noAddOns),
   product('mango-lassi', 'Mango Lassi', 'Drinks', 'Cool mango yoghurt drink with a smooth finish.', '/images/meal-bowl.png', 3.99, 260, true, [drinkSizeOptions], noAddOns),
-  product('oreo-milkshake', 'Oreo Milkshake', 'Milkshakes', 'Thick vanilla shake blended with Oreo pieces.', '/images/premium-hero-chicken.png', 4.99, 430, false, [drinkSizeOptions], noAddOns),
-  product('lotus-biscoff-milkshake', 'Lotus Biscoff Milkshake', 'Milkshakes', 'Creamy Biscoff shake with caramel biscuit notes.', '/images/premium-hero-chicken.png', 5.49, 460, true, [drinkSizeOptions], noAddOns),
+  product('oreo-milkshake', 'Oreo Milkshake', 'Drinks', 'Thick vanilla shake blended with Oreo pieces.', '/images/premium-hero-chicken.png', 4.99, 430, false, [drinkSizeOptions], noAddOns),
+  product('lotus-biscoff-milkshake', 'Lotus Biscoff Milkshake', 'Drinks', 'Creamy Biscoff shake with caramel biscuit notes.', '/images/premium-hero-chicken.png', 5.49, 460, true, [drinkSizeOptions], noAddOns),
 ];
+

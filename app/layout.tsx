@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import PostcodeModalHost from '@/components/ordering/PostcodeModalHost'
 import { AuthProvider } from '@/lib/authContext'
 import { CartProvider } from '@/lib/cartContext'
 import { FavouritesProvider } from '@/lib/favouritesContext'
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   colorScheme: 'light',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#8B2E3B' },
+    { media: '(prefers-color-scheme: light)', color: '#99041e' },
   ],
 }
 
@@ -53,7 +54,8 @@ export default function RootLayout({
             <OrdersProvider>
               <FavouritesProvider>
             <Header />
-            <main className="min-h-screen">
+            <PostcodeModalHost />
+            <main className="min-h-screen pt-20">
               {children}
             </main>
             <Footer />

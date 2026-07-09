@@ -21,7 +21,7 @@ const recommendedNames = [
 const dipsRecommendation: MenuItem = {
   id: 1001,
   name: 'Dips',
-  category: 'Sides',
+  category: 'Dips',
   description: 'Creamy, smoky and piri piri dips for every bite.',
   price: 0.79,
   kcal: 80,

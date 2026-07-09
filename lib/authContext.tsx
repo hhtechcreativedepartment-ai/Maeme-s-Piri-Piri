@@ -27,8 +27,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhone, setCurrentPhone] = useState<string | null>(null);
-  const [otpSent, setOtpSent] = useState(false);
-  const [mockOtp, setMockOtp] = useState<string>('1234'); // Mock OTP for development
+  const [, setOtpSent] = useState(false);
+  const [mockOtp] = useState<string>('1234'); // Mock OTP for development
 
   // Initialize from localStorage on mount
   useEffect(() => {

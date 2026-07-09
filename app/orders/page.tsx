@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, MapPin, Clock, Package } from 'lucide-react';
+import { ChevronLeft, MapPin, Package } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
 interface OrderItem {

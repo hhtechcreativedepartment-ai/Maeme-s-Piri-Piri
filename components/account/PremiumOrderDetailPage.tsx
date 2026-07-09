@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Check, MapPin, ReceiptText, Truck } from 'lucide-react';
+import { ArrowLeft, MapPin, ReceiptText, Truck } from 'lucide-react';
 import { useOrders } from '@/lib/ordersContext';
 import { getLastOrder } from '@/lib/orderUtils';
 

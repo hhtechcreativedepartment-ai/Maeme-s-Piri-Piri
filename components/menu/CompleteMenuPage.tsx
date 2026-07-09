@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Clock, ShoppingBag, ShoppingCart, Store, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
@@ -25,13 +25,15 @@ export default function CompleteMenuPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [pendingProduct, setPendingProduct] = useState<MenuItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [canScrollCategoryLeft, setCanScrollCategoryLeft] = useState(false);
+  const [canScrollCategoryRight, setCanScrollCategoryRight] = useState(true);
   const categoryRailRef = useRef<HTMLDivElement>(null);
 
   const productsByCategory = useMemo(() => (
     MENU_CATEGORIES.map((category) => ({
       category,
       products: MENU_DATA.filter((product) => product.category === category),
-    })).filter((section) => section.products.length > 0)
+    }))
   ), []);
 
   const cartCount = getCartCount();
@@ -72,7 +74,52 @@ export default function CompleteMenuPage() {
       left: direction === 'right' ? 320 : -320,
       behavior: 'smooth',
     });
+    window.setTimeout(updateCategoryRailState, 260);
   };
+
+  const updateCategoryRailState = () => {
+    const rail = categoryRailRef.current;
+    if (!rail) return;
+
+    const maxScrollLeft = rail.scrollWidth - rail.clientWidth;
+    setCanScrollCategoryLeft(rail.scrollLeft > 6);
+    setCanScrollCategoryRight(rail.scrollLeft < maxScrollLeft - 6);
+  };
+
+  useEffect(() => {
+    const rail = categoryRailRef.current;
+    if (!rail) return;
+
+    updateCategoryRailState();
+    rail.addEventListener('scroll', updateCategoryRailState, { passive: true });
+    window.addEventListener('resize', updateCategoryRailState);
+
+    return () => {
+      rail.removeEventListener('scroll', updateCategoryRailState);
+      window.removeEventListener('resize', updateCategoryRailState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        const category = visibleEntry?.target.getAttribute('data-menu-section');
+        if (category) setActiveCategory(category);
+      },
+      { rootMargin: '-190px 0px -55% 0px', threshold: [0.12, 0.28, 0.5] },
+    );
+
+    productsByCategory.forEach(({ category }) => {
+      const section = document.getElementById(`category-${slugify(category)}`);
+      if (section) observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, [productsByCategory]);
 
   const handleProductAdded = () => {
     setToast('Added to cart');
@@ -115,24 +162,26 @@ export default function CompleteMenuPage() {
         </div>
       </section>
 
-      <div className="sticky top-[72px] z-30 border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur md:top-[86px]">
+      <div className="menu-category-carousel sticky top-20 z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
         <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             onClick={() => scrollCategoryRail('left')}
-            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#f0d59d] bg-[#fff8ed] text-[#99041e] transition hover:bg-[#ffc257] lg:flex"
+            disabled={!canScrollCategoryLeft}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#f0d59d] bg-[#fff8ed] text-[#99041e] transition hover:bg-[#ffc257] disabled:pointer-events-none disabled:opacity-35 md:flex"
             aria-label="Scroll categories left"
           >
             <ArrowLeft size={18} />
           </button>
           <div
             ref={categoryRailRef}
-            className="flex flex-1 gap-2 overflow-x-auto py-4 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex flex-1 snap-x snap-mandatory gap-2 overflow-x-auto py-4 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {MENU_CATEGORIES.map((category) => (
               <button
                 key={category}
+                data-category={slugify(category)}
                 onClick={() => handleCategoryClick(category)}
-                className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-sm font-black transition ${
+                className={`shrink-0 snap-start rounded-full border-2 px-4 py-2.5 text-sm font-black transition ${
                   activeCategory === category
                     ? 'border-[#99041e] bg-[#ffc257] text-[#1a120f] shadow-sm'
                     : 'border-[#99041e] bg-white text-[#99041e] hover:bg-[#fff8ed]'
@@ -144,7 +193,8 @@ export default function CompleteMenuPage() {
           </div>
           <button
             onClick={() => scrollCategoryRail('right')}
-            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#f0d59d] bg-[#fff8ed] text-[#99041e] transition hover:bg-[#ffc257] lg:flex"
+            disabled={!canScrollCategoryRight}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#f0d59d] bg-[#fff8ed] text-[#99041e] transition hover:bg-[#ffc257] disabled:pointer-events-none disabled:opacity-35 md:flex"
             aria-label="Scroll categories right"
           >
             <ArrowRight size={18} />
@@ -155,7 +205,7 @@ export default function CompleteMenuPage() {
       <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8 lg:py-12">
         <div className="space-y-14">
           {productsByCategory.map(({ category, products }) => (
-            <section key={category} id={`category-${slugify(category)}`} className="scroll-mt-40">
+            <section key={category} id={`category-${slugify(category)}`} data-menu-section={category} className="scroll-mt-40">
               <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
                   <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category}</h2>
@@ -165,17 +215,23 @@ export default function CompleteMenuPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
-                ))}
-              </div>
+              {products.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-[22px] border border-dashed border-[#f0d59d] bg-white px-6 py-8 text-sm font-semibold text-[#6b5b55]">
+                  New items coming soon.
+                </div>
+              )}
             </section>
           ))}
         </div>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-[170px] rounded-[24px] border border-[#f0d59d] bg-white p-5 shadow-[0_18px_50px_rgba(50,24,16,0.10)]">
+        <aside className="menu-cart-sidebar sticky top-[176px] hidden self-start lg:block">
+          <div className="rounded-[24px] border border-[#f0d59d] bg-white p-5 shadow-[0_18px_50px_rgba(50,24,16,0.10)]">
             <div className="flex items-center justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-[#99041e]">Your order</p>

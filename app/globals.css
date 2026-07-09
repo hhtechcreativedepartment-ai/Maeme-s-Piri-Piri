@@ -54,6 +54,13 @@
   --color-brand-cream: #fff8ed;
   --color-text-dark: #1A1A1A;
   --color-text-light: #FFFFFF;
+  --maeme-red: var(--color-brand-red);
+  --maeme-red-dark: var(--color-brand-red-dark);
+  --maeme-red-rgb: 153,4,30;
+  --maeme-yellow: var(--color-brand-yellow);
+  --maeme-yellow-dark: #e5a93e;
+  --maeme-yellow-rgb: 255,194,87;
+  --font-primary: var(--font-sans);
   
   /* Semantic tokens */
   --background: #FFFFFF;
@@ -167,18 +174,19 @@
     @apply border-border outline-ring/50;
   }
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
     scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-primary);
     color: #1a120f;
-    overflow-x: hidden;
+    overflow-x: clip;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: #ffc257;
+    background: var(--maeme-yellow);
     color: #1a120f;
   }
 }
@@ -190,6 +198,10 @@
 
   .site-container-wide {
     @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-container {
+    @apply mx-auto box-border w-full max-w-[1720px] px-4 sm:px-6 lg:px-8;
   }
 
   .section-shell {
@@ -205,19 +217,19 @@
   }
 
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#99041e] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_32px_rgba(153,4,30,0.22)] transition hover:bg-[#7f0318] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/35;
+    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[var(--maeme-red)] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_32px_rgba(var(--maeme-red-rgb),0.22)] transition hover:bg-[var(--maeme-red-dark)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/35;
   }
 
   .btn-accent {
-    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#ffc257] px-5 py-3 text-sm font-bold text-[#1a120f] shadow-[0_14px_32px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/35;
+    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[var(--maeme-yellow)] px-5 py-3 text-sm font-bold text-[#1a120f] shadow-[0_14px_32px_rgba(var(--maeme-yellow-rgb),0.24)] transition hover:bg-[var(--maeme-yellow-dark)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/35;
   }
 
   .btn-outline {
-    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] border border-[#f0d59d] bg-white px-5 py-3 text-sm font-bold text-[#99041e] transition hover:bg-[#fff8ed] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/25;
+    @apply inline-flex min-h-11 items-center justify-center rounded-[16px] border border-[#f0d59d] bg-white px-5 py-3 text-sm font-bold text-[var(--maeme-red)] transition hover:bg-[#fff8ed] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/25;
   }
 
   .form-input {
-    @apply h-12 w-full rounded-[16px] border border-[#ead8c6] bg-white px-4 text-base text-[#1a120f] shadow-sm outline-none transition placeholder:text-[#8b7a73] focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/25;
+    @apply h-12 w-full rounded-[16px] border border-[#ead8c6] bg-white px-4 text-base text-[#1a120f] shadow-sm outline-none transition placeholder:text-[#8b7a73] focus:border-[var(--maeme-red)] focus:ring-4 focus:ring-[var(--maeme-yellow)]/25;
   }
 
   .premium-card {

@@ -1,16 +1,4 @@
 export default function FlavourStrip() {
-  const flavours = [
-    { name: 'Mango Lime', color: '#A4D65E' },
-    { name: 'Lemon Herb', color: '#FFD700' },
-    { name: 'Garlic & Herb', color: '#F0E68C' },
-    { name: 'Mild', color: '#FFB347' },
-    { name: 'Hot', color: '#FF6347' },
-    { name: 'Extra Hot', color: '#DC143C' },
-    { name: 'Extreme', color: '#8B0000' },
-    { name: 'Blazing', color: '#FF4500' },
-    { name: 'Inferno', color: '#CC0000' },
-  ];
-
   return (
     <section className="bg-white px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
       <div className="max-w-7xl mx-auto">

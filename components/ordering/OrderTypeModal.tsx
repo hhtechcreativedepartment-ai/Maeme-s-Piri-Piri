@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Clock, MapPin, Navigation, Search, ShoppingBag, Truck, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { BRANCHES, formatBranchDisplay } from '@/lib/branchData';
@@ -19,6 +20,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
   const [orderType, setOrderType] = useState<OrderType>('delivery');
   const [query, setQuery] = useState('');
   const [searched, setSearched] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const branches = useMemo(() => {
     const normalised = query.trim().toLowerCase();
@@ -35,7 +37,22 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
     );
   }, [orderType, query]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSelect = (branchId: string) => {
     selectBranch(branchId, orderType);
@@ -53,13 +70,13 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
     setSearched(true);
   };
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm">
+  const modal = (
+    <div className="postcode-modal-overlay fixed inset-0 z-[9998] box-border flex items-center justify-center overflow-x-hidden bg-black/55 px-3 py-4 backdrop-blur-sm sm:p-6">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-type-title"
-        className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-[24px] border border-[#f0d59d] bg-white shadow-[0_28px_90px_rgba(26,18,15,0.32)]"
+        className="postcode-modal relative z-[9999] box-border max-h-[calc(100vh-2rem)] w-full max-w-[780px] overflow-hidden rounded-[24px] border border-[#f0d59d] bg-white shadow-[0_28px_90px_rgba(26,18,15,0.32)] sm:max-h-[calc(100vh-48px)]"
       >
         <div className="relative border-b border-[#ead8c6] bg-[#fff8ed] px-5 py-6 text-center sm:px-8">
           <button
@@ -80,7 +97,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
           </p>
         </div>
 
-        <div className="max-h-[calc(92vh-186px)] overflow-y-auto bg-white p-5 sm:p-6">
+        <div className="box-border max-h-[calc(92vh-186px)] overflow-y-auto overflow-x-hidden bg-white p-4 sm:p-6">
           <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-1.5">
             {(['delivery', 'pickup'] as OrderType[]).map(type => (
               <button
@@ -102,32 +119,32 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
             ))}
           </div>
 
-          <div className="rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-3 sm:p-4">
+          <div className="box-border w-full rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-3 sm:p-4">
             <p className="mb-3 text-sm font-bold text-[#1A1A1A]">
               {orderType === 'delivery'
                 ? "Enter your postcode to find your nearest Maeme's"
                 : "Choose your nearest Maeme's for collection"}
             </p>
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-            <label className="relative block">
+            <div className="grid w-full min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <label className="relative block min-w-0">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B2E3B]" size={18} />
               <input
                 value={query}
                 onChange={event => setQuery(event.target.value)}
                 placeholder={orderType === 'delivery' ? 'Postcode' : 'City, region or postcode'}
-                className="h-12 w-full rounded-xl border border-[#E7D7C4] bg-[#FFFCF7] pl-11 pr-4 text-sm font-semibold outline-none ring-[#99041e]/20 focus:border-[#99041e] focus:ring-4"
+                className="box-border h-12 w-full min-w-0 rounded-xl border border-[#E7D7C4] bg-[#FFFCF7] pl-11 pr-4 text-sm font-semibold outline-none ring-[#99041e]/20 focus:border-[#99041e] focus:ring-4"
               />
             </label>
             <button
               onClick={handleUseLocation}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E7D7C4] bg-white px-4 text-sm font-black text-[#99041e] transition hover:bg-[#FFF7E1]"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#E7D7C4] bg-white px-4 text-sm font-black text-[#99041e] transition hover:bg-[#FFF7E1] md:w-auto"
             >
               <Navigation size={17} />
               Use Current Location
             </button>
             <button
               onClick={handleSearch}
-              className="h-12 rounded-xl bg-[#ffc257] px-6 text-sm font-black text-[#1A1A1A] shadow-sm transition hover:bg-[#e5a93e]"
+              className="h-12 w-full rounded-xl bg-[#ffc257] px-6 text-sm font-black text-[#1A1A1A] shadow-sm transition hover:bg-[#e5a93e] md:w-auto"
             >
               Search
             </button>
@@ -208,4 +225,6 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

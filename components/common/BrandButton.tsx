@@ -1,11 +1,9 @@
 import React from 'react';
 
-interface BrandButtonProps {
+interface BrandButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'gold';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-  className?: string;
-  [key: string]: any;
 }
 
 export default function BrandButton({

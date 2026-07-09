@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useCart } from '@/lib/cartContext';
 import { formatBranchDisplay } from '@/lib/branchData';
-import { SavedPaymentMethod } from '@/lib/paymentConfig';
+import { NewPaymentMethodInput, SavedPaymentMethod } from '@/lib/paymentConfig';
 import { MapPin, CreditCard, Plus, X } from 'lucide-react';
 import SavedPaymentCard from './SavedPaymentCard';
 import NewPaymentMethodForm from './NewPaymentMethodForm';
@@ -59,7 +59,7 @@ export default function DeliveryForm({ onBack, onPlaceOrder }: DeliveryFormProps
   ]);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>('card_1');
   const [showNewPaymentForm, setShowNewPaymentForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
 
   const handleAddAddress = () => {
     if (!newAddress.street.trim() || !newAddress.postcode.trim()) {
@@ -93,7 +93,7 @@ export default function DeliveryForm({ onBack, onPlaceOrder }: DeliveryFormProps
     }
   };
 
-  const handleAddNewPaymentMethod = (data: any) => {
+  const handleAddNewPaymentMethod = (data: NewPaymentMethodInput) => {
     const newPayment: SavedPaymentMethod = {
       id: `card_${Date.now()}`,
       type: 'card',

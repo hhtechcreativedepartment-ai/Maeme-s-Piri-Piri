@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Branch, BRANCHES, findNearestBranch, formatBranchDisplay } from './branchData';
+import { Branch, BRANCHES, findNearestBranch } from './branchData';
 
 export interface CartItemCustomization {
   selectedSize?: string;
@@ -52,7 +52,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<OrderType | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [, setIsHydrated] = useState(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {

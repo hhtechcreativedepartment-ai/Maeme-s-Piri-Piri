@@ -79,15 +79,27 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     },
     setSelectedBranch: selectedBranch => {
       setState(current => ({ ...current, selectedBranch }));
-      selectedBranch ? writeStorage(storageKeys.selectedBranch, selectedBranch) : removeStorage(storageKeys.selectedBranch);
+      if (selectedBranch) {
+        writeStorage(storageKeys.selectedBranch, selectedBranch);
+      } else {
+        removeStorage(storageKeys.selectedBranch);
+      }
     },
     setSelectedOrderType: selectedOrderType => {
       setState(current => ({ ...current, selectedOrderType }));
-      selectedOrderType ? writeStorage(storageKeys.selectedOrderType, selectedOrderType) : removeStorage(storageKeys.selectedOrderType);
+      if (selectedOrderType) {
+        writeStorage(storageKeys.selectedOrderType, selectedOrderType);
+      } else {
+        removeStorage(storageKeys.selectedOrderType);
+      }
     },
     setUserSession: userSession => {
       setState(current => ({ ...current, userSession }));
-      userSession ? writeStorage(storageKeys.userSession, userSession) : removeStorage(storageKeys.userSession);
+      if (userSession) {
+        writeStorage(storageKeys.userSession, userSession);
+      } else {
+        removeStorage(storageKeys.userSession);
+      }
     },
     resetPrototypeState: () => {
       setState(initialState);

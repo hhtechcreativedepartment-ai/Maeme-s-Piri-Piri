@@ -1,19 +1,22 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORIES = [
-  { id: 1, name: 'Grilled Collection', image: '🍗' },
-  { id: 2, name: 'Burgers', image: '🍔' },
-  { id: 3, name: 'Wraps & Pittas', image: '🌯' },
-  { id: 4, name: 'Rice Boxes', image: '🍚' },
-  { id: 5, name: 'Wings & Strips', image: '🍗' },
-  { id: 6, name: 'Sides', image: '🍟' },
-  { id: 7, name: 'Kids Meals', image: '👶' },
-  { id: 8, name: 'Desserts', image: '🍰' },
-  { id: 9, name: 'Drinks', image: '🥤' },
+  { id: 1, name: 'Grilled Collection', image: '/images/categories/grilled-collection.png' },
+  { id: 2, name: 'Maeme’s Burgers', image: '/images/categories/burgers.png' },
+  { id: 3, name: 'Vegetarian Collection', image: '/images/categories/wraps-pittas.png' },
+  { id: 4, name: 'Fried Collection', image: '/images/categories/wings-strips.png' },
+  { id: 5, name: 'Maeme’s Platter', image: '/images/categories/grilled-collection.png' },
+  { id: 6, name: 'Kids Meal', image: '/images/categories/kids-meals.png' },
+  { id: 7, name: 'Dessert Collection', image: '/images/categories/desserts.png' },
+  { id: 8, name: 'Sides Collection', image: '/images/categories/sides.png' },
+  { id: 9, name: 'Maeme’s Extras', image: '/images/categories/burgers.png' },
+  { id: 10, name: 'Ice Cream', image: '/images/categories/drinks-milkshakes.png' },
+  { id: 11, name: 'Dips', image: '/images/categories/rice-boxes.png' },
+  { id: 12, name: 'Drinks', image: '/images/categories/drinks-milkshakes.png' },
 ];
 
 export default function ExploreMenuSection() {
@@ -23,7 +26,7 @@ export default function ExploreMenuSection() {
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
-    
+
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
     setShowLeftArrow(scrollLeft > 0);
     setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
@@ -32,66 +35,57 @@ export default function ExploreMenuSection() {
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
     const scrollAmount = 300;
-    const newScrollLeft =
-      scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+    const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
     scrollContainerRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
   };
 
   return (
-    <section className="bg-white px-4 sm:px-6 lg:px-8 py-14 sm:py-18 lg:py-24">
-      <div className="max-w-7xl mx-auto">
-        {/* Header - Centered & Premium */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 sm:gap-8 mb-12 sm:mb-16">
+    <section className="bg-white px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 flex flex-col gap-6 sm:mb-16 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
           <div className="flex-1">
-            <h2 className="text-4xl sm:text-5xl lg:text-5xl font-black text-[#1A1A1A] mb-3 leading-tight">
+            <h2 className="mb-3 text-4xl font-black leading-tight text-[#1A1A1A] sm:text-5xl lg:text-5xl">
               Explore our menu
             </h2>
-            <p className="text-base sm:text-lg text-[#666666] font-regular max-w-md">
+            <p className="max-w-md text-base font-normal text-[#666666] sm:text-lg">
               Something delicious for every kind of craving.
             </p>
           </div>
           <Link
             href="/menu"
-            className="hidden sm:inline-block px-6 py-3 bg-[#99041e] text-white font-bold text-sm rounded-full hover:bg-[#7f0318] transition-colors duration-200 whitespace-nowrap shadow-lg hover:shadow-xl"
+            className="hidden whitespace-nowrap rounded-full bg-[#99041e] px-6 py-3 text-sm font-bold text-white shadow-lg transition-colors duration-200 hover:bg-[#7f0318] hover:shadow-xl sm:inline-block"
           >
             View all categories
           </Link>
         </div>
 
-        {/* Carousel */}
         <div className="relative">
-          {/* Left Arrow */}
           {showLeftArrow && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow hidden sm:flex items-center justify-center"
+              className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-2 shadow-md transition-shadow hover:shadow-lg sm:flex"
               aria-label="Scroll left"
             >
               <ChevronLeft size={24} className="text-[#99041e]" />
             </button>
           )}
 
-          {/* Categories Container */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {CATEGORIES.map((category) => (
               <Link
                 key={category.id}
                 href={`/menu?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className="flex-shrink-0 w-40 sm:w-44"
+                className="w-40 flex-shrink-0 sm:w-44"
               >
-                <div className="bg-white rounded-xl border border-[#E8E0D5] p-6 text-center hover:border-[#99041e] hover:shadow-lg transition-all duration-300 snap-start">
-                  <div className="text-6xl sm:text-7xl mb-5 text-center">
-                    {category.image}
+                <div className="snap-start rounded-xl border border-[#E8E0D5] bg-white p-6 text-center transition-all duration-300 hover:border-[#99041e] hover:shadow-lg">
+                  <div className="mb-5 flex h-24 items-center justify-center sm:h-28">
+                    <img src={category.image} alt="" className="max-h-full max-w-full object-contain" />
                   </div>
-                  <h3 className="font-bold text-sm sm:text-base text-[#1A1A1A] line-clamp-2 leading-snug">
+                  <h3 className="line-clamp-2 text-sm font-bold leading-snug text-[#1A1A1A] sm:text-base">
                     {category.name}
                   </h3>
                 </div>
@@ -99,11 +93,10 @@ export default function ExploreMenuSection() {
             ))}
           </div>
 
-          {/* Right Arrow */}
           {showRightArrow && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow hidden sm:flex items-center justify-center"
+              className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-2 shadow-md transition-shadow hover:shadow-lg sm:flex"
               aria-label="Scroll right"
             >
               <ChevronRight size={24} className="text-[#99041e]" />
@@ -111,20 +104,13 @@ export default function ExploreMenuSection() {
           )}
         </div>
 
-        {/* Mobile CTA */}
         <Link
           href="/menu"
-          className="sm:hidden block mt-10 text-center text-white bg-[#99041e] py-3 px-6 rounded-full font-bold text-sm hover:bg-[#7f0318] transition-colors duration-200"
+          className="mt-10 block rounded-full bg-[#99041e] px-6 py-3 text-center text-sm font-bold text-white transition-colors duration-200 hover:bg-[#7f0318] sm:hidden"
         >
           View all categories
         </Link>
       </div>
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </section>
   );
 }

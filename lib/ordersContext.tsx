@@ -17,7 +17,7 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [, setIsHydrated] = useState(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {

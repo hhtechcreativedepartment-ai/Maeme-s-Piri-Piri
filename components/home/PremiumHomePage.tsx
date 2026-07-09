@@ -42,15 +42,17 @@ const heroFeatures = [
 
 const categoryImage: Record<string, string> = {
   'Grilled Collection': '/images/hero-chicken.png',
-  Burgers: '/images/premium-hero-chicken.png',
-  'Wraps & Pittas': '/images/chicken-wrap.png',
-  'Rice Boxes': '/images/meal-bowl.png',
-  'Wings & Strips': '/images/hero-chicken.png',
-  Sides: '/images/chicken-fries.png',
-  'Kids Meals': '/images/chicken-fries.png',
-  Desserts: '/images/premium-hero-chicken.png',
+  'Maeme’s Burgers': '/images/premium-hero-chicken.png',
+  'Vegetarian Collection': '/images/chicken-wrap.png',
+  'Fried Collection': '/images/chicken-fries.png',
+  'Maeme’s Platter': '/images/meal-bowl.png',
+  'Kids Meal': '/images/chicken-fries.png',
+  'Dessert Collection': '/images/premium-hero-chicken.png',
+  'Sides Collection': '/images/chicken-fries.png',
+  'Maeme’s Extras': '/images/chicken-wrap.png',
+  'Ice Cream': '/images/premium-hero-chicken.png',
+  Dips: '/images/chicken-fries.png',
   Drinks: '/images/meal-bowl.png',
-  Milkshakes: '/images/chicken-wrap.png',
 };
 
 const whyChooseUs = [

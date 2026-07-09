@@ -84,8 +84,8 @@ export function maskCardNumber(cardNumber: string): string {
  * Mock function to process payment - Replace with actual Stripe integration
  */
 export async function processPayment(
-  amount: number,
-  paymentMethod: SavedPaymentMethod | NewPaymentMethodInput
+  _amount: number,
+  _paymentMethod: SavedPaymentMethod | NewPaymentMethodInput
 ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
   // This is a placeholder for payment processing
   // In production, this would integrate with Stripe API

@@ -1,7 +1,7 @@
 'use client';
 
 import CompleteMenuPage from '@/components/menu/CompleteMenuPage';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import CartDrawer from '@/components/CartDrawer';
 import ProductCustomizationModal from '@/components/modals/ProductCustomizationModal';

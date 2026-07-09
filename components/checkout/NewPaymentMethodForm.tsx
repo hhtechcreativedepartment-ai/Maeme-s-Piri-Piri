@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { validateCardNumber, detectCardBrand, maskCardNumber, formatExpiryYear } from '@/lib/paymentConfig';
+import { validateCardNumber, detectCardBrand, formatExpiryYear } from '@/lib/paymentConfig';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface NewPaymentMethodFormProps {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useOrders } from '@/lib/ordersContext';
-import { Truck, MapPin, Clock, Check } from 'lucide-react';
+import { Truck, Check } from 'lucide-react';
 
 export default function CurrentOrderTrackingSection() {
   const { currentOrder } = useOrders();

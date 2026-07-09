@@ -103,8 +103,8 @@ function LoginPageContent() {
       } else {
         setStep('signup');
       }
-    } catch (err: any) {
-      setError(err.message || 'Invalid OTP. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }

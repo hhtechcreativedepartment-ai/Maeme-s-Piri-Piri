@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { MenuItem } from '@/lib/menuData';
+import { FLAVOUR_OPTIONS, GO_LARGE_OPTION, MEAL_OPTION_GROUPS, MEAL_SIZE_OPTIONS, MealOptionChoice, MealOptionGroup, getProductOptionVisibility } from '@/lib/productOptionConfig';
 
 interface PremiumProductCustomizationModalProps {
   isOpen: boolean;
@@ -11,37 +12,6 @@ interface PremiumProductCustomizationModalProps {
   onClose: () => void;
   onAdded?: (product: MenuItem) => void;
 }
-
-interface AddOnOption {
-  name: string;
-  price: number;
-}
-
-const ADDON_OPTIONS: AddOnOption[] = [
-  { name: 'Extra cheese', price: 1.5 },
-  { name: 'Fries', price: 2.49 },
-  { name: 'Drink', price: 1.99 },
-  { name: 'Dip', price: 0.75 },
-  { name: 'Extra sauce', price: 0.75 },
-  { name: 'Fresh salad', price: 1.5 },
-];
-
-const SIZE_OPTIONS = [
-  { name: 'Regular', price: 0 },
-  { name: 'Large', price: 2 },
-];
-
-const FLAVOUR_OPTIONS = [
-  'Lemon & Herb',
-  'Mild',
-  'Mango & Lime',
-  'Medium',
-  'Hot',
-  'Extra Hot',
-  'Extra Hot & Sweet',
-  'BBQ',
-  'Garlic & Herb',
-];
 
 export default function PremiumProductCustomizationModal({
   isOpen,
@@ -51,58 +21,97 @@ export default function PremiumProductCustomizationModal({
 }: PremiumProductCustomizationModalProps) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState('Regular');
+  const [goLarge, setGoLarge] = useState(false);
+  const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
+  const [mealOptionErrors, setMealOptionErrors] = useState<string[]>([]);
   const [selectedFlavour, setSelectedFlavour] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
-  const [selectedAddOns, setSelectedAddOns] = useState<Record<string, AddOnOption>>({});
   const [specialInstructions, setSpecialInstructions] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
     setSelectedSize('Regular');
+    setGoLarge(false);
+    setSelectedMealOptions({});
+    setMealOptionErrors([]);
     setSelectedFlavour('Medium');
     setQuantity(1);
-    setSelectedAddOns({});
     setSpecialInstructions('');
   }, [isOpen, product?.id]);
 
-  const selectedSizeOption = SIZE_OPTIONS.find((option) => option.name === selectedSize) || SIZE_OPTIONS[0];
-  const selectedAddOnsList = useMemo(() => Object.values(selectedAddOns), [selectedAddOns]);
-  const addOnsTotal = selectedAddOnsList.reduce((sum, addon) => sum + addon.price, 0);
-  const unitPrice = product ? product.price + selectedSizeOption.price + addOnsTotal : 0;
+  const optionVisibility = useMemo(
+    () => getProductOptionVisibility(product?.category || ''),
+    [product?.category],
+  );
+  const selectedSizeOption = optionVisibility.showSize
+    ? MEAL_SIZE_OPTIONS.find((option) => option.name === selectedSize) || MEAL_SIZE_OPTIONS[0]
+    : { name: '', price: 0 };
+  const mealSelected = selectedSize === 'Meal';
+  const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? GO_LARGE_OPTION.price : 0;
+  const mealOptionsList = useMemo(() => Object.values(selectedMealOptions).flat(), [selectedMealOptions]);
+  const mealOptionsTotal = mealSelected ? mealOptionsList.reduce((sum, option) => sum + option.price, 0) : 0;
+  const unitPrice = product ? product.price + selectedSizeOption.price + goLargePrice + mealOptionsTotal : 0;
   const calculatedTotal = unitPrice * quantity;
 
   if (!isOpen || !product) return null;
 
-  const toggleAddOn = (addon: AddOnOption) => {
-    setSelectedAddOns((current) => {
+  const toggleMealOption = (group: MealOptionGroup, option: MealOptionChoice) => {
+    const groupId = group.id;
+    setMealOptionErrors((current) => current.filter((id) => id !== groupId));
+    setSelectedMealOptions((current) => {
       const next = { ...current };
-      if (next[addon.name]) delete next[addon.name];
-      else next[addon.name] = addon;
+      if (group.multiple) {
+        const selectedOptions = Array.isArray(current[groupId]) ? current[groupId] : [];
+        const selected = selectedOptions.some((item) => item.name === option.name);
+        const updatedOptions = selected
+          ? selectedOptions.filter((item) => item.name !== option.name)
+          : [...selectedOptions, option];
+
+        if (updatedOptions.length) next[groupId] = updatedOptions;
+        else delete next[groupId];
+      } else {
+        const selectedOption = !Array.isArray(current[groupId]) ? current[groupId] : undefined;
+        if (selectedOption?.name === option.name) delete next[groupId];
+        else next[groupId] = option;
+      }
       return next;
     });
   };
 
   const handleAddToCart = () => {
+    const missingRequiredMealOptions = mealSelected
+      ? MEAL_OPTION_GROUPS.filter((group) => group.required && !selectedMealOptions[group.id]).map((group) => group.id)
+      : [];
+
+    if (missingRequiredMealOptions.length > 0) {
+      setMealOptionErrors(missingRequiredMealOptions);
+      return;
+    }
+
+    const selectedSizeLabel = optionVisibility.showSize
+      ? `${selectedSize}${goLargePrice > 0 ? `, ${GO_LARGE_OPTION.name}` : ''}`
+      : undefined;
+
     const cartItem = {
       productId: product.id,
       name: product.name,
       image: product.image,
       basePrice: product.price,
-      selectedSize,
-      selectedFlavour,
-      selectedSpiceLevel: selectedFlavour,
-      selectedAddOns: selectedAddOnsList,
-      specialInstructions,
+      selectedSize: selectedSizeLabel,
+      selectedFlavour: optionVisibility.showFlavour ? selectedFlavour : undefined,
+      selectedSpiceLevel: optionVisibility.showFlavour ? selectedFlavour : undefined,
+      selectedAddOns: mealSelected ? mealOptionsList : [],
+      specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
       quantity,
       unitPrice,
       totalPrice: calculatedTotal,
       price: unitPrice,
       customization: {
-        selectedSize,
-        selectedFlavour,
-        selectedSpiceLevel: selectedFlavour,
-        selectedAddOns: selectedAddOnsList,
-        specialInstructions,
+        selectedSize: selectedSizeLabel,
+        selectedFlavour: optionVisibility.showFlavour ? selectedFlavour : undefined,
+        selectedSpiceLevel: optionVisibility.showFlavour ? selectedFlavour : undefined,
+        selectedAddOns: mealSelected ? mealOptionsList : [],
+        specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
       },
     };
 
@@ -148,83 +157,123 @@ export default function PremiumProductCustomizationModal({
                   </p>
                 </div>
 
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <h3 className="text-sm font-black uppercase tracking-[0.14em] text-[#1a120f]">Size</h3>
-                    <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {SIZE_OPTIONS.map((size) => (
-                      <button
-                        key={size.name}
-                        onClick={() => setSelectedSize(size.name)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition ${
-                          selectedSize === size.name
-                            ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                            : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                        }`}
-                      >
-                        <span className="block text-sm font-black">{size.name}</span>
-                        <span className={`mt-1 block text-xs font-bold ${selectedSize === size.name ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                          {size.price > 0 ? `+£${size.price.toFixed(2)}` : 'Included'}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="mb-3 text-sm font-black uppercase tracking-[0.14em] text-[#1a120f]">Flavour / heat / spice level</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {FLAVOUR_OPTIONS.map((flavour) => (
-                      <button
-                        key={flavour}
-                        onClick={() => setSelectedFlavour(flavour)}
-                        className={`rounded-full border px-4 py-2 text-sm font-black transition ${
-                          selectedFlavour === flavour
-                            ? 'border-[#99041e] bg-[#99041e] text-white'
-                            : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                        }`}
-                      >
-                        {flavour}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="mb-3 text-sm font-black uppercase tracking-[0.14em] text-[#1a120f]">Optional extras</h3>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {ADDON_OPTIONS.map((addon) => {
-                      const checked = Boolean(selectedAddOns[addon.name]);
-                      return (
+                {optionVisibility.showSize && (
+                  <section>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Size</h3>
+                      <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {MEAL_SIZE_OPTIONS.map((size) => (
                         <button
-                          key={addon.name}
-                          onClick={() => toggleAddOn(addon)}
-                          className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
-                            checked
-                              ? 'border-[#99041e] bg-[#fff4f6]'
-                              : 'border-[#ead8c6] bg-[#fff8ed] hover:border-[#99041e]'
+                          key={size.name}
+                          onClick={() => {
+                            setSelectedSize(size.name);
+                            if (size.name !== 'Meal') {
+                              setGoLarge(false);
+                              setSelectedMealOptions({});
+                            }
+                          }}
+                          className={`rounded-2xl border px-4 py-3 text-left transition ${
+                            selectedSize === size.name
+                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
+                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
                           }`}
                         >
-                          <span className="text-sm font-black text-[#1a120f]">{addon.name}</span>
-                          <span className="text-sm font-black text-[#99041e]">+£{addon.price.toFixed(2)}</span>
+                          <span className="block text-sm font-medium">{size.name}</span>
+                          <span className={`mt-1 block text-xs font-semibold ${selectedSize === size.name ? 'text-white/75' : 'text-[#6b5b55]'}`}>
+                            {size.price > 0 ? `+£${size.price.toFixed(2)}` : 'Included'}
+                          </span>
                         </button>
-                      );
-                    })}
-                  </div>
-                </section>
+                      ))}
+                    </div>
+                    {mealSelected && (
+                      <div className="mt-3 grid grid-cols-1 gap-3">
+                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Meal Option</h3>
+                        <button
+                          onClick={() => setGoLarge((current) => !current)}
+                          className={`rounded-2xl border px-4 py-3 text-left transition ${
+                            goLarge
+                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
+                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
+                          }`}
+                        >
+                          <span className="block text-sm font-medium">{GO_LARGE_OPTION.name}</span>
+                          <span className={`mt-1 block text-xs font-semibold ${goLarge ? 'text-white/75' : 'text-[#6b5b55]'}`}>
+                            +£{GO_LARGE_OPTION.price.toFixed(2)}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                )}
 
-                <section>
-                  <h3 className="mb-3 text-sm font-black uppercase tracking-[0.14em] text-[#1a120f]">Special instructions</h3>
-                  <textarea
-                    value={specialInstructions}
-                    onChange={(event) => setSpecialInstructions(event.target.value)}
-                    placeholder="Allergies or preparation notes?"
-                    rows={3}
-                    className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-4 text-sm font-medium text-[#1a120f] outline-none transition placeholder:text-[#8b7a73] focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/25"
-                  />
-                </section>
+                {optionVisibility.showFlavour && (
+                  <section>
+                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Flavour / Heat / Spice Level</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {FLAVOUR_OPTIONS.map((flavour) => (
+                        <button
+                          key={flavour}
+                          onClick={() => setSelectedFlavour(flavour)}
+                          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                            selectedFlavour === flavour
+                              ? 'border-[#99041e] bg-[#99041e] text-white'
+                              : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
+                          }`}
+                        >
+                          {flavour}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {mealSelected && MEAL_OPTION_GROUPS.map((group) => (
+                  <section key={group.id}>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">{group.title}</h3>
+                      {group.required && <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.options.map((option) => {
+                        const groupSelection = selectedMealOptions[group.id];
+                        const selected = Array.isArray(groupSelection)
+                          ? groupSelection.some((item) => item.name === option.name)
+                          : groupSelection?.name === option.name;
+                        return (
+                          <button
+                            key={option.name}
+                            onClick={() => toggleMealOption(group, option)}
+                            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                              selected
+                                ? 'border-[#99041e] bg-[#99041e] text-white'
+                                : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
+                            }`}
+                          >
+                            {option.name}{option.price > 0 ? ` +£${option.price.toFixed(2)}` : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {mealOptionErrors.includes(group.id) && (
+                      <p className="mt-2 text-xs font-bold text-[#99041e]">Please select an option</p>
+                    )}
+                  </section>
+                ))}
+
+                {optionVisibility.showSpecialInstructions && (
+                  <section>
+                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Special Instructions</h3>
+                    <textarea
+                      value={specialInstructions}
+                      onChange={(event) => setSpecialInstructions(event.target.value)}
+                      placeholder="Allergies or preparation notes?"
+                      rows={3}
+                      className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-4 text-sm font-medium text-[#1a120f] outline-none transition placeholder:text-[#8b7a73] focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/25"
+                    />
+                  </section>
+                )}
               </div>
 
               <div className="sticky bottom-0 mt-auto border-t border-[#ead8c6] bg-white/96 p-4 shadow-[0_-12px_34px_rgba(50,24,16,0.08)] backdrop-blur sm:p-5">

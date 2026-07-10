@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { MenuItem } from '@/lib/menuData';
+import { FLAVOUR_OPTIONS, GO_LARGE_OPTION, MEAL_OPTION_GROUPS, MEAL_SIZE_OPTIONS, MealOptionChoice, MealOptionGroup, getProductOptionVisibility } from '@/lib/productOptionConfig';
 
 interface ProductCustomizationModalProps {
   isOpen: boolean;
@@ -11,74 +12,87 @@ interface ProductCustomizationModalProps {
   onClose: () => void;
 }
 
-interface SelectedAddOns {
-  [key: string]: { name: string; price: number; selected: boolean };
-}
-
-const ADDON_OPTIONS = [
-  { name: 'Extra cheese', price: 1.50 },
-  { name: 'Fries', price: 2.49 },
-  { name: 'Drink', price: 1.99 },
-  { name: 'Dip', price: 0.75 },
-  { name: 'Fresh salad', price: 1.50 },
-  { name: 'Extra sauce', price: 0.75 },
-];
-
-const SIZE_PRICES: { [key: string]: number } = {
-  'Regular': 0,
-  'Large': 2.00,
-};
-
 export default function ProductCustomizationModal({ isOpen, product, onClose }: ProductCustomizationModalProps) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState<string>('Regular');
+  const [goLarge, setGoLarge] = useState(false);
+  const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
+  const [mealOptionErrors, setMealOptionErrors] = useState<string[]>([]);
   const [selectedFlavour, setSelectedFlavour] = useState<string>('Medium');
   const [quantity, setQuantity] = useState(1);
-  const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOns>({});
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [sizeError, setSizeError] = useState(false);
 
   if (!isOpen || !product) return null;
 
-  const handleAddOnChange = (addon: typeof ADDON_OPTIONS[0]) => {
-    setSelectedAddOns(prev => ({
-      ...prev,
-      [addon.name]: {
-        name: addon.name,
-        price: addon.price,
-        selected: !prev[addon.name]?.selected,
-      },
-    }));
-  };
-
-  const getSelectedAddOnsList = () => {
-    return Object.values(selectedAddOns).filter(addon => addon.selected);
-  };
+  const optionVisibility = getProductOptionVisibility(product.category);
+  const selectedSizePrice = optionVisibility.showSize
+    ? MEAL_SIZE_OPTIONS.find((option) => option.name === selectedSize)?.price || 0
+    : 0;
+  const mealSelected = selectedSize === 'Meal';
+  const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? GO_LARGE_OPTION.price : 0;
+  const getMealOptionsList = () => mealSelected ? Object.values(selectedMealOptions).flat() : [];
 
   const calculateTotalPrice = () => {
-    const basePrice = product.price + (SIZE_PRICES[selectedSize] || 0);
-    const addOnsTotal = getSelectedAddOnsList().reduce((sum, addon) => sum + addon.price, 0);
-    return (basePrice + addOnsTotal) * quantity;
+    const basePrice = product.price + selectedSizePrice + goLargePrice;
+    const mealOptionsTotal = getMealOptionsList().reduce((sum, option) => sum + option.price, 0);
+    return (basePrice + mealOptionsTotal) * quantity;
+  };
+
+  const toggleMealOption = (group: MealOptionGroup, option: MealOptionChoice) => {
+    const groupId = group.id;
+    setMealOptionErrors((current) => current.filter((id) => id !== groupId));
+    setSelectedMealOptions((current) => {
+      const next = { ...current };
+      if (group.multiple) {
+        const selectedOptions = Array.isArray(current[groupId]) ? current[groupId] : [];
+        const selected = selectedOptions.some((item) => item.name === option.name);
+        const updatedOptions = selected
+          ? selectedOptions.filter((item) => item.name !== option.name)
+          : [...selectedOptions, option];
+
+        if (updatedOptions.length) next[groupId] = updatedOptions;
+        else delete next[groupId];
+      } else {
+        const selectedOption = !Array.isArray(current[groupId]) ? current[groupId] : undefined;
+        if (selectedOption?.name === option.name) delete next[groupId];
+        else next[groupId] = option;
+      }
+      return next;
+    });
   };
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
+    if (optionVisibility.requiresSize && !selectedSize) {
       setSizeError(true);
       return;
     }
+
+    const missingRequiredMealOptions = mealSelected
+      ? MEAL_OPTION_GROUPS.filter((group) => group.required && !selectedMealOptions[group.id]).map((group) => group.id)
+      : [];
+
+    if (missingRequiredMealOptions.length > 0) {
+      setMealOptionErrors(missingRequiredMealOptions);
+      return;
+    }
+
+    const selectedSizeLabel = optionVisibility.showSize
+      ? `${selectedSize}${goLargePrice > 0 ? `, ${GO_LARGE_OPTION.name}` : ''}`
+      : undefined;
 
     const cartItem = {
       productId: product.id,
       quantity,
       name: product.name,
-      price: product.price + (SIZE_PRICES[selectedSize] || 0),
+      price: product.price + selectedSizePrice + goLargePrice,
       image: product.image,
       customization: {
-        selectedSize,
-        selectedFlavour,
-        selectedSpiceLevel: selectedFlavour,
-        selectedAddOns: getSelectedAddOnsList(),
-        specialInstructions,
+        selectedSize: selectedSizeLabel,
+        selectedFlavour: optionVisibility.showFlavour ? selectedFlavour : undefined,
+        selectedSpiceLevel: optionVisibility.showFlavour ? selectedFlavour : undefined,
+        selectedAddOns: getMealOptionsList(),
+        specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
       },
       totalPrice: calculateTotalPrice(),
     };
@@ -88,9 +102,11 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
     
     // Reset form
     setSelectedSize('Regular');
+    setGoLarge(false);
+    setSelectedMealOptions({});
+    setMealOptionErrors([]);
     setSelectedFlavour('Medium');
     setQuantity(1);
-    setSelectedAddOns({});
     setSpecialInstructions('');
     setSizeError(false);
   };
@@ -136,87 +152,124 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
               </div>
 
               {/* Size Selection */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <label className="text-sm font-bold text-[#1A1A1A]">Choose a size</label>
-                  <span className="text-xs text-[#99041e] font-bold">Required</span>
+              {optionVisibility.showSize && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="text-[15px] font-bold text-[#1A1A1A]">Size</label>
+                    <span className="text-xs text-[#99041e] font-bold">Required</span>
+                  </div>
+                  <div className="flex gap-3">
+                    {MEAL_SIZE_OPTIONS.map(size => (
+                      <button
+                        key={size.name}
+                        onClick={() => {
+                          setSelectedSize(size.name);
+                          if (size.name !== 'Meal') {
+                            setGoLarge(false);
+                            setSelectedMealOptions({});
+                          }
+                          setSizeError(false);
+                        }}
+                        className={`px-6 py-3 rounded-lg font-normal text-sm border-2 transition-all ${
+                          selectedSize === size.name
+                            ? 'bg-[#99041e] text-white border-[#99041e]'
+                            : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                        }`}
+                      >
+                        {size.name}
+                        {size.price > 0 && ` +GBP ${size.price.toFixed(2)}`}
+                      </button>
+                    ))}
+                  </div>
+                  {mealSelected && (
+                    <div className="mt-3 flex flex-col gap-3">
+                      <label className="text-[15px] font-bold text-[#1A1A1A]">Meal Option</label>
+                      <button
+                        onClick={() => setGoLarge((current) => !current)}
+                        className={`px-6 py-3 rounded-lg font-normal text-sm border-2 transition-all ${
+                          goLarge
+                            ? 'bg-[#99041e] text-white border-[#99041e]'
+                            : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                        }`}
+                      >
+                        {GO_LARGE_OPTION.name} +GBP {GO_LARGE_OPTION.price.toFixed(2)}
+                      </button>
+                    </div>
+                  )}
+                  {sizeError && <p className="text-xs text-[#99041e] mt-2">Please select a size</p>}
                 </div>
-                <div className="flex gap-3">
-                  {Object.keys(SIZE_PRICES).map(size => (
-                    <button
-                      key={size}
-                      onClick={() => {
-                        setSelectedSize(size);
-                        setSizeError(false);
-                      }}
-                      className={`px-6 py-3 rounded-lg font-semibold text-sm border-2 transition-all ${
-                        selectedSize === size
-                          ? 'bg-[#99041e] text-white border-[#99041e]'
-                          : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
-                      }`}
-                    >
-                      {size}
-                      {SIZE_PRICES[size] > 0 && ` +GBP ${SIZE_PRICES[size].toFixed(2)}`}
-                    </button>
-                  ))}
-                </div>
-                {sizeError && <p className="text-xs text-[#99041e] mt-2">Please select a size</p>}
-              </div>
+              )}
 
               {/* Flavour / Heat */}
-              <div>
-                <label className="text-sm font-bold text-[#1A1A1A] block mb-3">Flavour / heat</label>
-                <div className="flex gap-2 flex-wrap">
-                  {['Lemon & Herb', 'Mild', 'Mango & Lime', 'Medium', 'Hot', 'Extra Hot', 'Extra Hot & Sweet', 'BBQ', 'Garlic & Herb'].map(spice => (
-                    <button
-                      key={spice}
-                      onClick={() => setSelectedFlavour(spice)}
-                      className={`px-4 py-2 rounded-full font-semibold text-sm border-2 transition-all ${
-                        selectedFlavour === spice
-                          ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
-                          : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
-                      }`}
-                    >
-                      {spice}
-                    </button>
-                  ))}
+              {optionVisibility.showFlavour && (
+                <div>
+                  <label className="text-[15px] font-bold text-[#1A1A1A] block mb-3">Flavour / Heat / Spice Level</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {FLAVOUR_OPTIONS.map(spice => (
+                      <button
+                        key={spice}
+                        onClick={() => setSelectedFlavour(spice)}
+                        className={`px-4 py-2 rounded-full font-normal text-sm border-2 transition-all ${
+                          selectedFlavour === spice
+                            ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                            : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                        }`}
+                      >
+                        {spice}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Add-ons */}
-              <div>
-                <label className="text-sm font-bold text-[#1A1A1A] block mb-3">
-                  Add something extra <span className="text-xs text-[#999999] font-normal">Optional</span>
-                </label>
-                <div className="space-y-2">
-                  {ADDON_OPTIONS.map(addon => (
-                    <label key={addon.name} className="flex items-center gap-3 p-3 bg-[#F9F9F9] rounded-lg hover:bg-[#F5F5F5] cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={selectedAddOns[addon.name]?.selected || false}
-                        onChange={() => handleAddOnChange(addon)}
-                        className="w-4 h-4 rounded border-[#99041e] accent-[#99041e]"
-                      />
-                      <span className="text-sm font-semibold text-[#1A1A1A] flex-1">{addon.name}</span>
-                      <span className="text-sm font-bold text-[#99041e]">+GBP {addon.price.toFixed(2)}</span>
-                    </label>
-                  ))}
+              {mealSelected && MEAL_OPTION_GROUPS.map((group) => (
+                <div key={group.id}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="text-[15px] font-bold text-[#1A1A1A]">{group.title}</label>
+                    {group.required && <span className="text-xs text-[#99041e] font-bold">Required</span>}
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {group.options.map((option) => {
+                      const groupSelection = selectedMealOptions[group.id];
+                      const selected = Array.isArray(groupSelection)
+                        ? groupSelection.some((item) => item.name === option.name)
+                        : groupSelection?.name === option.name;
+                      return (
+                        <button
+                          key={option.name}
+                          onClick={() => toggleMealOption(group, option)}
+                          className={`px-4 py-2 rounded-full font-normal text-sm border-2 transition-all ${
+                            selected
+                              ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                              : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                          }`}
+                        >
+                          {option.name}{option.price > 0 ? ` +GBP ${option.price.toFixed(2)}` : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {mealOptionErrors.includes(group.id) && (
+                    <p className="text-xs text-[#99041e] mt-2">Please select an option</p>
+                  )}
                 </div>
-              </div>
+              ))}
 
               {/* Special Instructions */}
-              <div>
-                <label className="text-sm font-bold text-[#1A1A1A] block mb-2">
-                  Special instructions <span className="text-xs text-[#999999] font-normal">Optional</span>
-                </label>
-                <textarea
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value)}
-                  placeholder="Allergies or preparation notes?"
-                  className="w-full p-3 border border-[#F0E5D8] rounded-lg text-sm focus:outline-none focus:border-[#99041e] focus:ring-1 focus:ring-[#99041e] resize-none"
-                  rows={3}
-                />
-              </div>
+              {optionVisibility.showSpecialInstructions && (
+                <div>
+                  <label className="text-[15px] font-bold text-[#1A1A1A] block mb-2">
+                    Special Instructions <span className="text-xs text-[#999999] font-normal">Optional</span>
+                  </label>
+                  <textarea
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    placeholder="Allergies or preparation notes?"
+                    className="w-full p-3 border border-[#F0E5D8] rounded-lg text-sm focus:outline-none focus:border-[#99041e] focus:ring-1 focus:ring-[#99041e] resize-none"
+                    rows={3}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

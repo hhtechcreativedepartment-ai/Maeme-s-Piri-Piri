@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Clock, ShoppingBag, ShoppingCart, Store, Truck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingBag, Store, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import ProductCard from '@/components/ordering/ProductCard';
@@ -12,13 +11,23 @@ import { useCart } from '@/lib/cartContext';
 function slugify(value: string) {
   return value
     .toLowerCase()
+    .replace(/[\u2018\u2019']/g, '')
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
 
+const DIRECT_ADD_CATEGORY_SLUGS = new Set([
+  'dessert-collection',
+  'sides-collection',
+  'maemes-extras',
+  'ice-cream',
+  'dips',
+  'drinks',
+]);
+
 export default function CompleteMenuPage() {
-  const { selectedBranch, selectedOrderType, getCartCount, getCartTotal } = useCart();
+  const { items, selectedBranch, selectedOrderType, addToCart, updateQuantity } = useCart();
   const [activeCategory, setActiveCategory] = useState(MENU_CATEGORIES[0]);
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -36,12 +45,32 @@ export default function CompleteMenuPage() {
     }))
   ), []);
 
-  const cartCount = getCartCount();
-  const cartTotal = getCartTotal();
+  const isDirectAddProduct = (product: MenuItem) => DIRECT_ADD_CATEGORY_SLUGS.has(slugify(product.category));
 
   const openProductDetail = (product: MenuItem) => {
     setSelectedProduct(product);
     setShowProductModal(true);
+  };
+
+  const addSimpleProductToCart = (product: MenuItem) => {
+    const existingItem = items.find((item) => item.productId === product.id && !item.customization);
+
+    if (existingItem) {
+      updateQuantity(product.id, existingItem.quantity + 1);
+    } else {
+      addToCart({
+        productId: product.id,
+        quantity: 1,
+        name: product.name,
+        price: product.price,
+        unitPrice: product.price,
+        basePrice: product.price,
+        totalPrice: product.price,
+        image: product.image,
+      });
+    }
+
+    handleProductAdded();
   };
 
   const handleAddProduct = (product: MenuItem) => {
@@ -51,12 +80,18 @@ export default function CompleteMenuPage() {
       return;
     }
 
+    if (isDirectAddProduct(product)) {
+      addSimpleProductToCart(product);
+      return;
+    }
+
     openProductDetail(product);
   };
 
   const handleOrderSetupSelected = () => {
     if (pendingProduct) {
-      openProductDetail(pendingProduct);
+      if (isDirectAddProduct(pendingProduct)) addSimpleProductToCart(pendingProduct);
+      else openProductDetail(pendingProduct);
       setPendingProduct(null);
     }
   };
@@ -101,6 +136,18 @@ export default function CompleteMenuPage() {
   }, []);
 
   useEffect(() => {
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) return;
+
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    window.setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }, []);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         const visibleEntry = entries
@@ -127,9 +174,9 @@ export default function CompleteMenuPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#fff8ed] pb-24 text-[#1a120f] lg:pb-0">
-      <section className="bg-[#99041e] px-4 py-12 text-white sm:px-6 lg:px-8 lg:py-16">
-        <div className="mx-auto max-w-[1320px]">
+    <main className="min-h-screen bg-[#fff8ed] pb-24 text-[#1a120f]">
+      <section className="bg-[#99041e] py-12 text-white lg:py-16">
+        <div className="page-container">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-5xl font-black tracking-tight sm:text-6xl">Menu</h1>
@@ -163,7 +210,7 @@ export default function CompleteMenuPage() {
       </section>
 
       <div className="menu-category-carousel sticky top-20 z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
-        <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <div className="page-container flex items-center gap-3">
           <button
             onClick={() => scrollCategoryRail('left')}
             disabled={!canScrollCategoryLeft}
@@ -202,11 +249,11 @@ export default function CompleteMenuPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8 lg:py-12">
+      <div className="page-container py-10 lg:py-12">
         <div className="space-y-14">
           {productsByCategory.map(({ category, products }) => (
             <section key={category} id={`category-${slugify(category)}`} data-menu-section={category} className="scroll-mt-40">
-              <div className="mb-5 flex items-end justify-between gap-4">
+              <div className="mb-5 flex items-end justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
                 <div>
                   <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category}</h2>
                   <p className="mt-1 text-sm font-medium text-[#6b5b55]">
@@ -216,7 +263,7 @@ export default function CompleteMenuPage() {
               </div>
 
               {products.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
                   ))}
@@ -229,64 +276,7 @@ export default function CompleteMenuPage() {
             </section>
           ))}
         </div>
-
-        <aside className="menu-cart-sidebar sticky top-[176px] hidden self-start lg:block">
-          <div className="rounded-[24px] border border-[#f0d59d] bg-white p-5 shadow-[0_18px_50px_rgba(50,24,16,0.10)]">
-            <div className="flex items-center justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#99041e]">Your order</p>
-                <h2 className="mt-1 text-2xl font-black text-[#1a120f]">Cart</h2>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff8ed] text-[#99041e]">
-                <ShoppingCart size={23} />
-              </div>
-            </div>
-
-            <div className="space-y-3 py-5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-[#6b5b55]">Items</span>
-                <span className="font-black text-[#1a120f]">{cartCount}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-[#6b5b55]">Subtotal</span>
-                <span className="font-black text-[#99041e]">£{cartTotal.toFixed(2)}</span>
-              </div>
-              {selectedBranch && (
-                <div className="rounded-2xl bg-[#fff8ed] p-3 text-xs font-bold leading-5 text-[#6b5b55]">
-                  <p className="text-[#1a120f]">{selectedBranch.branchName}</p>
-                  <p className="mt-1 flex items-center gap-1">
-                    <Clock size={14} className="text-[#99041e]" />
-                    {selectedOrderType === 'pickup' ? selectedBranch.pickupTime : selectedBranch.deliveryTime}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <Link
-              href="/cart"
-              className={`block rounded-2xl px-5 py-3 text-center text-sm font-black transition ${
-                cartCount > 0
-                  ? 'bg-[#ffc257] text-[#1a120f] hover:bg-[#e5a93e]'
-                  : 'bg-[#ead8c6] text-[#8b7a73]'
-              }`}
-            >
-              View cart
-            </Link>
-          </div>
-        </aside>
       </div>
-
-      {cartCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#f0d59d] bg-white p-3 shadow-[0_-12px_32px_rgba(50,24,16,0.12)] lg:hidden">
-          <Link href="/cart" className="mx-auto flex max-w-xl items-center justify-between rounded-2xl bg-[#99041e] px-4 py-3 text-white">
-            <span className="flex items-center gap-3 text-sm font-black">
-              <ShoppingCart size={20} />
-              {cartCount} {cartCount === 1 ? 'item' : 'items'}
-            </span>
-            <span className="text-sm font-black">£{cartTotal.toFixed(2)}</span>
-          </Link>
-        </div>
-      )}
 
       {toast && (
         <div className="fixed bottom-24 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-[0_18px_46px_rgba(153,4,30,0.28)] lg:bottom-8 lg:left-auto lg:right-8 lg:mx-0">

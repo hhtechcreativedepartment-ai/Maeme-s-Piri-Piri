@@ -121,8 +121,8 @@ export default function PremiumAccountPage() {
   const favouriteProducts = favourites
     .map((fav) => MENU_DATA.find((product) => String(product.id) === fav.id || product.name === fav.name) || ({
       id: Number(fav.id) || Date.now(),
-      name: fav.name,
-      category: 'Favourites',
+      name: fav.title || fav.name,
+      category: fav.category || 'Favourites',
       description: fav.description,
       price: fav.price,
       kcal: Number(fav.kcal) || 0,

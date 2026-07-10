@@ -5,10 +5,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface FavouriteItem {
   id: string;
   name: string;
+  title?: string;
+  category?: string;
   description: string;
   price: number;
   image: string;
-  kcal?: string;
+  kcal?: string | number;
 }
 
 interface FavouritesContextType {

@@ -41,7 +41,7 @@ export default function CurrentOrderTrackingSection() {
     : [
         { label: 'Confirmed', completed: currentOrder.currentStep >= 0 },
         { label: 'Preparing', completed: currentOrder.currentStep >= 1 },
-        { label: 'Ready for Pickup', completed: currentOrder.currentStep >= 2 },
+        { label: 'Ready for Collection', completed: currentOrder.currentStep >= 2 },
         { label: 'Completed', completed: currentOrder.currentStep >= 3 },
       ];
 
@@ -58,7 +58,7 @@ export default function CurrentOrderTrackingSection() {
           <div>
             <p className="text-xs text-[#999999] font-bold mb-1">ORDER TYPE</p>
             <p className="font-bold text-[#1A1A1A]">
-              {currentOrder.orderType === 'delivery' ? 'Delivery' : 'Pickup'}
+              {currentOrder.orderType === 'delivery' ? 'Delivery' : 'Collection'}
             </p>
           </div>
           <div className="text-right">

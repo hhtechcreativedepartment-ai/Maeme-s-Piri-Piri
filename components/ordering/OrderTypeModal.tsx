@@ -6,6 +6,7 @@ import { Clock, MapPin, Navigation, Search, ShoppingBag, Truck, X } from 'lucide
 import { useRouter } from 'next/navigation';
 import { BRANCHES, formatBranchDisplay } from '@/lib/branchData';
 import { OrderType, useCart } from '@/lib/cartContext';
+import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 interface OrderTypeModalProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
                 }`}
               >
                 {type === 'delivery' ? <Truck size={17} /> : <ShoppingBag size={17} />}
-                {type}
+                {getOrderTypeLabel(type)}
               </button>
             ))}
           </div>
@@ -192,7 +193,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
                               {formatBranchDisplay(branch)}
                             </span>
                             <span>Delivery time: {branch.deliveryTime}</span>
-                            <span>Pickup time: {branch.pickupTime}</span>
+                            <span>Collection time: {branch.pickupTime}</span>
                             <span>Minimum order: £{branch.minDeliveryAmount.toFixed(2)}</span>
                             <span>Delivery fee: £{branch.deliveryFee.toFixed(2)}</span>
                           </div>
@@ -203,7 +204,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
                           disabled={isClosed}
                           className="rounded-xl bg-[#ffc257] px-5 py-3 text-sm font-black text-[#1A1A1A] shadow-sm transition hover:bg-[#e5a93e] disabled:cursor-not-allowed disabled:bg-[#ead8c6] disabled:text-[#8b7a73]"
                         >
-                          Select for {orderType === 'delivery' ? 'Delivery' : 'Pickup'}
+                          Select for {getOrderTypeLabel(orderType)}
                         </button>
                       </div>
                     </article>

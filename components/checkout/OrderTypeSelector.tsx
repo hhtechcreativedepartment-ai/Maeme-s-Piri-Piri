@@ -28,7 +28,7 @@ export default function OrderTypeSelector({ onSelect }: OrderTypeSelectorProps) 
           </div>
         </button>
 
-        {/* Pickup Option */}
+        {/* Collection Option */}
         <button
           onClick={() => onSelect('pickup')}
           className="p-6 border-2 border-[#E8E0D5] rounded-lg hover:border-[#99041e] hover:bg-[#FFF5F5] transition-all group"
@@ -38,7 +38,7 @@ export default function OrderTypeSelector({ onSelect }: OrderTypeSelectorProps) 
               <Store size={32} className="text-[#99041e]" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-black text-[#1A1A1A] mb-2">Pickup</h3>
+              <h3 className="text-lg font-black text-[#1A1A1A] mb-2">Collection</h3>
               <p className="text-sm text-[#666666]">Collect from a restaurant</p>
             </div>
           </div>

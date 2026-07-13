@@ -146,7 +146,7 @@ export default function OrderHistorySection() {
                 ) : (
                   <>
                     <UtensilsCrossed size={18} className="text-[#99041e]" />
-                    Pickup
+                    Collection
                   </>
                 )}
               </p>
@@ -204,7 +204,7 @@ export default function OrderHistorySection() {
   const pastOrders = allOrders.filter(order => order.status === 'completed');
 
   const trackingSteps = currentLiveOrder?.orderType === 'pickup'
-    ? ['Confirmed', 'Preparing', 'Ready for pickup', 'Completed']
+    ? ['Confirmed', 'Preparing', 'Ready for collection', 'Completed']
     : ['Confirmed', 'Preparing', 'On the way', 'Delivered'];
 
   return (
@@ -270,7 +270,7 @@ export default function OrderHistorySection() {
           <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#E8E0D5]">
             <div className="flex items-center gap-4">
               <span className="px-3 py-1 bg-[#F5F5F5] rounded text-xs font-bold text-[#1A1A1A]">
-                {currentLiveOrder.orderType === 'delivery' ? 'Delivery' : 'Pickup'}
+                {currentLiveOrder.orderType === 'delivery' ? 'Delivery' : 'Collection'}
               </span>
               <span className="px-3 py-1 bg-[#FFC107] rounded text-xs font-bold text-[#1A1A1A]">
                 Pay: {currentLiveOrder.paymentMethod === 'card' ? 'Pending' : 'Pending'}
@@ -388,7 +388,7 @@ export default function OrderHistorySection() {
                 <div className="text-right flex-shrink-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-bold text-[#999999]">
-                      {order.orderType === 'delivery' ? 'Delivery' : 'Pickup'}
+                      {order.orderType === 'delivery' ? 'Delivery' : 'Collection'}
                     </span>
                     <span className="px-2 py-1 bg-[#FFC107] rounded text-xs font-bold text-[#1A1A1A]">
                       Pay: Paid

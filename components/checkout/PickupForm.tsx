@@ -77,7 +77,7 @@ export default function PickupForm({ onBack, onPlaceOrder }: PickupFormProps) {
       <div className="bg-white rounded-lg shadow-sm border border-[#F0E5D8] p-6">
         <h3 className="text-lg font-black text-[#1A1A1A] mb-6 flex items-center gap-2">
           <MapPin size={20} className="text-[#99041e]" />
-          Select Pickup Location
+          Select Collection Location
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -102,7 +102,7 @@ export default function PickupForm({ onBack, onPlaceOrder }: PickupFormProps) {
       {/* Pickup Details */}
       {selectedBranch && (
         <div className="bg-white rounded-lg shadow-sm border border-[#F0E5D8] p-6">
-          <h3 className="text-lg font-black text-[#1A1A1A] mb-6">Pickup Details</h3>
+          <h3 className="text-lg font-black text-[#1A1A1A] mb-6">Collection Details</h3>
 
           <div className="space-y-4">
             <div>
@@ -135,7 +135,7 @@ export default function PickupForm({ onBack, onPlaceOrder }: PickupFormProps) {
           <div className="p-4 bg-[#FFF5F5] rounded-lg border border-[#FFE5E5] mb-4">
             <p className="text-sm font-bold text-[#99041e]">💳 Online Card Payment Only</p>
             <p className="text-xs text-[#666666] mt-2">
-              For pickup orders, payment must be completed online with a card before order preparation.
+              For collection orders, payment must be completed online with a card before order preparation.
             </p>
           </div>
 

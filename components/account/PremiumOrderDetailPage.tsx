@@ -27,7 +27,7 @@ export default function PremiumOrderDetailPage() {
   const serviceCharge = 0.79;
   const discount = Math.max(order.subtotal + order.deliveryFee + serviceCharge - order.total, 0);
   const subtotal = order.subtotal;
-  const destinationLabel = order.orderType === 'delivery' ? 'Delivery address' : 'Pickup branch';
+  const destinationLabel = order.orderType === 'delivery' ? 'Delivery address' : 'Collection branch';
 
   return (
     <main className="min-h-screen bg-[#fff8ed] px-4 py-10 text-[#1a120f] sm:px-6 lg:px-8 lg:py-14">

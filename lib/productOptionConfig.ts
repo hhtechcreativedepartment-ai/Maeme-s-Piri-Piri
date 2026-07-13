@@ -1,3 +1,5 @@
+import { MENU_DATA } from './menuData';
+
 export const FULL_OPTION_CATEGORY_SLUGS = new Set([
   'grilled-collection',
   'maemes-burgers',
@@ -12,10 +14,32 @@ export const MEAL_SIZE_OPTIONS = [
 
 export const GO_LARGE_OPTION = { name: 'Go Large', price: 2 };
 
+const VEGETARIAN_MEAL_SIZE_OPTIONS = [
+  { name: 'Regular', price: 0 },
+  { name: 'Meal', price: 2 },
+];
+
+const VEGETARIAN_GO_LARGE_OPTION = { name: 'Go Large', price: 0.5 };
+
 export interface MealOptionChoice {
+  id?: string;
+  name: string;
+  price: number;
+  modifiers?: MealOptionModifier[];
+  selectedModifiers?: MealOptionModifier[];
+}
+
+export interface MealOptionModifier {
+  id: string;
   name: string;
   price: number;
 }
+
+const PIRI_PIRI_MODIFIER: MealOptionModifier = {
+  id: 'piri-piri-seasoning',
+  name: 'Piri Piri seasoning',
+  price: 0.30,
+};
 
 export interface MealOptionGroup {
   id: string;
@@ -25,14 +49,21 @@ export interface MealOptionGroup {
   options: MealOptionChoice[];
 }
 
+export const INCLUDED_DIP_OPTIONS: MealOptionChoice[] = MENU_DATA
+  .filter((product) => product.category === 'Dips')
+  .map((product) => ({
+    id: String(product.id),
+    name: product.name,
+    price: 0,
+  }));
+
 export const MEAL_OPTION_GROUPS: MealOptionGroup[] = [
   {
     id: 'fries',
     title: 'Fries Option',
     required: false,
     options: [
-      { name: 'Regular Fries', price: 0 },
-      { name: 'Piri Piri Fries', price: 0.3 },
+      { id: 'regular-fries', name: 'Regular Fries', price: 0, modifiers: [PIRI_PIRI_MODIFIER] },
     ],
   },
   {
@@ -49,44 +80,34 @@ export const MEAL_OPTION_GROUPS: MealOptionGroup[] = [
       { name: 'Sprite Zero', price: 0 },
       { name: 'Tango Apple', price: 0 },
       { name: 'Tango Orange', price: 0 },
-      { name: 'Fruitshoot Apple & Blackcurrant', price: 0 },
-      { name: 'Fruitshoot Orange', price: 0 },
+      { id: 'fruitshoot-apple-blackcurrant', name: 'Fruitshoot Apple & Blackcurrant', price: 0 },
+      { id: 'fruitshoot-orange', name: 'Fruitshoot Orange', price: 0 },
     ],
   },
   {
     id: 'dip',
     title: 'Dip Option',
     required: false,
-    options: [
-      { name: 'Burger Sauce', price: 0 },
-      { name: 'Garlic Mayo', price: 0 },
-      { name: 'Piri Piri Mayo', price: 0 },
-      { name: 'Sweet Chilli Sauce', price: 0 },
-    ],
+    options: INCLUDED_DIP_OPTIONS,
   },
   {
     id: 'sides',
-    title: 'Sides Option',
+    title: 'Sides & Extras',
     required: false,
     multiple: true,
     options: [
-      { name: 'Onion Rings', price: 2.49 },
-      { name: 'Cheesy Fries', price: 3.49 },
-      { name: 'Corn On The Cob', price: 2.49 },
-      { name: 'Large Fries', price: 3.49 },
-      { name: 'Large Piri Piri Fries', price: 3.79 },
-      { name: 'Mozzarella Sticks', price: 3.99 },
-      { name: 'Cheese Slice', price: 0.5 },
-      { name: 'Pitta Bread', price: 0.99 },
-      { name: 'Baked Beans', price: 1.49 },
-      { name: 'Piri Piri Pitta Bread', price: 1.29 },
-      { name: 'Piri Piri Corn On The Cob', price: 2.79 },
-      { name: 'Piri Piri Wedges', price: 3.49 },
-      { name: 'Reg Fries', price: 0 },
-      { name: 'Regular Piri Piri Fries', price: 0 },
-      { name: 'Side Salad', price: 2.49 },
-      { name: 'Spicy Rice', price: 3.49 },
-      { name: 'Wedges', price: 3.49 },
+      { id: '6-onion-rings', name: '6 Onion Rings', price: 2.49 },
+      { id: 'cheesy-fries', name: 'Cheesy Fries', price: 3.49 },
+      { id: 'corn-on-the-cob', name: 'Corn on the Cob', price: 2.49, modifiers: [PIRI_PIRI_MODIFIER] },
+      { id: 'large-fries', name: 'Large Fries', price: 3.49, modifiers: [PIRI_PIRI_MODIFIER] },
+      { id: 'mozzarella-sticks', name: 'Mozzarella Sticks', price: 3.99 },
+      { id: 'cheese-slice', name: 'Cheese Slice', price: 0.5 },
+      { id: 'pitta-bread', name: 'Pitta Bread', price: 0.99, modifiers: [PIRI_PIRI_MODIFIER] },
+      { id: 'baked-beans', name: 'Baked Beans', price: 1.49, modifiers: [PIRI_PIRI_MODIFIER] },
+      { id: 'regular-fries', name: 'Regular Fries', price: 0, modifiers: [PIRI_PIRI_MODIFIER] },
+      { id: 'side-salad', name: 'Side Salad', price: 2.49 },
+      { id: 'spicy-rice', name: 'Spicy Rice', price: 3.49 },
+      { id: 'wedges', name: 'Wedges', price: 3.49, modifiers: [PIRI_PIRI_MODIFIER] },
     ],
   },
   {
@@ -125,13 +146,27 @@ export function categorySlug(value: string) {
 }
 
 export function getProductOptionVisibility(category: string) {
-  const hasFullOptions = FULL_OPTION_CATEGORY_SLUGS.has(categorySlug(category));
+  const slug = categorySlug(category);
+  const hasFullOptions = FULL_OPTION_CATEGORY_SLUGS.has(slug);
+  const supportsFlavour = hasFullOptions && slug !== 'maemes-burgers';
 
   return {
     showSize: hasFullOptions,
     showGoLarge: hasFullOptions,
-    showFlavour: hasFullOptions,
-    showSpecialInstructions: hasFullOptions,
+    showFlavour: supportsFlavour,
+    showSpecialInstructions: hasFullOptions || slug === 'box-meals' || slug === 'sharing-meal' || slug === 'fried-wings' || slug === 'fried-chicken' || slug === 'fried-boneless',
     requiresSize: hasFullOptions,
   };
+}
+
+export function getMealSizeOptions(category: string, mealPrice?: number) {
+  if (mealPrice !== undefined) return [{ name: 'Regular', price: 0 }, { name: 'Meal', price: mealPrice }];
+  const slug = categorySlug(category);
+  return slug === 'vegetarian-collection' || slug === 'fried-collection' ? VEGETARIAN_MEAL_SIZE_OPTIONS : MEAL_SIZE_OPTIONS;
+}
+
+export function getGoLargeOption(category: string, goLargePrice?: number) {
+  if (goLargePrice !== undefined) return { name: 'Go Large', price: goLargePrice };
+  const slug = categorySlug(category);
+  return slug === 'vegetarian-collection' || slug === 'fried-collection' ? VEGETARIAN_GO_LARGE_OPTION : GO_LARGE_OPTION;
 }

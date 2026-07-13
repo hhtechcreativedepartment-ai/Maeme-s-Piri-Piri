@@ -3,12 +3,54 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Branch, BRANCHES, findNearestBranch } from './branchData';
 
+export interface FriedMealConfiguration {
+  option: 'Single' | 'Meal';
+  mealCharge: number;
+  fries?: {
+    id: string;
+    name: string;
+    price: number;
+    modifier?: { id: string; name: string; price: number };
+  };
+  drink?: { id: string; name: string };
+  dip?: { id: string; name: string };
+}
+
 export interface CartItemCustomization {
   selectedSize?: string;
   selectedFlavour?: string;
   selectedSpiceLevel?: string;
-  selectedAddOns?: { name: string; price: number }[];
+  selectedAddOns?: CartItemAddOn[];
   specialInstructions?: string;
+  platterSides?: { id: string; name: string; modifier?: { id: string; name: string; price: number } }[];
+  sidesBundlePrice?: number;
+  platterDrink?: { id: string; name: string };
+  drinkAddOnPrice?: number;
+  platterCake?: { id: string; name: string };
+  cakeAddOnPrice?: number;
+  kidsMealIncluded?: {
+    mainItem: string;
+    fries: string;
+    fruitShoot?: { id: string; name: string };
+  };
+  boxMealIncluded?: {
+    items: string[];
+    drink?: { id: string; name: string };
+  };
+  sharingMealIncluded?: {
+    items: string[];
+    dips: { id: string; name: string; quantity: number }[];
+  };
+  friedMealConfiguration?: FriedMealConfiguration;
+  friedWingsConfiguration?: FriedMealConfiguration;
+  selectedFreeToppings?: { id: string; name: string }[];
+}
+
+export interface CartItemAddOn {
+  id?: string;
+  name: string;
+  price: number;
+  modifiers?: { id: string; name: string; price: number }[];
 }
 
 export interface CartItem {
@@ -21,7 +63,7 @@ export interface CartItem {
   selectedSize?: string;
   selectedFlavour?: string;
   selectedSpiceLevel?: string;
-  selectedAddOns?: { name: string; price: number }[];
+  selectedAddOns?: CartItemAddOn[];
   specialInstructions?: string;
   unitPrice?: number;
   customization?: CartItemCustomization;

@@ -37,7 +37,7 @@ const flavours = [
 const heroFeatures = [
   { label: 'Flame-Grilled Fresh', icon: Flame },
   { label: '9 Signature Flavours', icon: Sparkles },
-  { label: 'Delivery or Pickup', icon: Truck },
+  { label: 'Delivery or Collection', icon: Truck },
 ];
 
 const categoryImage: Record<string, string> = {
@@ -48,8 +48,7 @@ const categoryImage: Record<string, string> = {
   'Maeme’s Platter': '/images/meal-bowl.png',
   'Kids Meal': '/images/chicken-fries.png',
   'Dessert Collection': '/images/premium-hero-chicken.png',
-  'Sides Collection': '/images/chicken-fries.png',
-  'Maeme’s Extras': '/images/chicken-wrap.png',
+  'Sides & Extras': '/images/chicken-fries.png',
   'Ice Cream': '/images/premium-hero-chicken.png',
   Dips: '/images/chicken-fries.png',
   Drinks: '/images/meal-bowl.png',
@@ -59,7 +58,7 @@ const whyChooseUs = [
   { label: 'Flame-grilled fresh', icon: Flame },
   { label: 'Signature sauces', icon: Sparkles },
   { label: 'Fast ordering', icon: ArrowRight },
-  { label: 'Delivery or pickup', icon: Truck },
+  { label: 'Delivery or collection', icon: Truck },
   { label: 'Freshly prepared meals', icon: Utensils },
 ];
 
@@ -276,7 +275,7 @@ export default function PremiumHomePage() {
           <div>
             <h2 className="text-4xl font-black tracking-tight text-[#1a120f]">Find your nearest Maeme&apos;s</h2>
             <p className="mt-3 text-base leading-7 text-[#6b5b55]">
-              Choose delivery or pickup from your local branch before placing an order.
+              Choose delivery or collection from your local branch before placing an order.
             </p>
             <button
               onClick={() => setShowOrderModal(true)}
@@ -301,7 +300,7 @@ export default function PremiumHomePage() {
                 </p>
                 <p className="mt-3 flex items-center gap-2 text-xs font-black text-[#99041e]">
                   <Clock size={15} />
-                  Delivery {branch.deliveryTime} - Pickup {branch.pickupTime}
+                  Delivery {branch.deliveryTime} - Collection {branch.pickupTime}
                 </p>
               </article>
             ))}

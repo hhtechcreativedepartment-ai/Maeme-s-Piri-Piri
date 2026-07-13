@@ -139,7 +139,7 @@ export default function OrdersPage() {
                     )}
                     <div>
                       <p className="text-xs text-[#666666] font-semibold">
-                        {order.type === 'delivery' ? 'Delivery' : 'Pickup'}
+                        {order.type === 'delivery' ? 'Delivery' : 'Collection'}
                       </p>
                       <p className="text-sm font-bold text-[#1A1A1A]">{order.branchName}</p>
                     </div>

@@ -3,21 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const CATEGORIES = [
-  { id: 1, name: 'Grilled Collection', image: '/images/categories/grilled-collection.png' },
-  { id: 2, name: 'Maeme’s Burgers', image: '/images/categories/burgers.png' },
-  { id: 3, name: 'Vegetarian Collection', image: '/images/categories/wraps-pittas.png' },
-  { id: 4, name: 'Fried Collection', image: '/images/categories/wings-strips.png' },
-  { id: 5, name: 'Maeme’s Platter', image: '/images/categories/grilled-collection.png' },
-  { id: 6, name: 'Kids Meal', image: '/images/categories/kids-meals.png' },
-  { id: 7, name: 'Dessert Collection', image: '/images/categories/desserts.png' },
-  { id: 8, name: 'Sides Collection', image: '/images/categories/sides.png' },
-  { id: 9, name: 'Maeme’s Extras', image: '/images/categories/burgers.png' },
-  { id: 10, name: 'Ice Cream', image: '/images/categories/drinks-milkshakes.png' },
-  { id: 11, name: 'Dips', image: '/images/categories/rice-boxes.png' },
-  { id: 12, name: 'Drinks', image: '/images/categories/drinks-milkshakes.png' },
-];
+import { MENU_CATEGORY_DATA } from '@/lib/menuData';
 
 export default function ExploreMenuSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -75,10 +61,10 @@ export default function ExploreMenuSection() {
             onScroll={handleScroll}
             className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {CATEGORIES.map((category) => (
+            {MENU_CATEGORY_DATA.map((category) => (
               <Link
                 key={category.id}
-                href={`/menu?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+                href={`/menu#${category.anchor}`}
                 className="w-40 flex-shrink-0 sm:w-44"
               >
                 <div className="snap-start rounded-xl border border-[#E8E0D5] bg-white p-6 text-center transition-all duration-300 hover:border-[#99041e] hover:shadow-lg">
@@ -86,7 +72,7 @@ export default function ExploreMenuSection() {
                     <img src={category.image} alt="" className="max-h-full max-w-full object-contain" />
                   </div>
                   <h3 className="line-clamp-2 text-sm font-bold leading-snug text-[#1A1A1A] sm:text-base">
-                    {category.name}
+                    {category.title}
                   </h3>
                 </div>
               </Link>

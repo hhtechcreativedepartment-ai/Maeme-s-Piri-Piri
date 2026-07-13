@@ -440,7 +440,7 @@ function OrderHistoryPanel({ liveOrder, pastOrders, onCancel }: { liveOrder?: Or
 function LiveOrderCard({ order, onCancel }: { order: Order; onCancel?: (order: Order) => void }) {
   const steps = order.orderType === 'delivery'
     ? ['Confirmed', 'Preparing', 'On the way', 'Delivered']
-    : ['Confirmed', 'Preparing', 'Ready for pickup', 'Completed'];
+    : ['Confirmed', 'Preparing', 'Ready for collection', 'Completed'];
 
   return (
     <article className="rounded-[24px] border-2 border-[#ffc257] bg-[#fff8ed] p-5 shadow-[0_14px_38px_rgba(50,24,16,0.08)]">

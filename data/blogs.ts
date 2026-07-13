@@ -30,7 +30,7 @@
   {
     slug: 'delivery-or-pickup-which-is-better-for-your-meal',
     category: 'Ordering Tips',
-    title: 'Delivery or Pickup: Which Is Better for Your Meal?',
+    title: 'Delivery or Collection: Which Is Better for Your Meal?',
     excerpt: 'Choose the best order type for your plans, timing and favourite dishes, whether you want it brought to you or ready at the counter.',
     image: '/images/chicken-fries.png',
   },

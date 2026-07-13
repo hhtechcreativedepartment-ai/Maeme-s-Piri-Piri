@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { MenuItem } from '@/lib/menuData';
-import { FLAVOUR_OPTIONS, GO_LARGE_OPTION, MEAL_OPTION_GROUPS, MEAL_SIZE_OPTIONS, MealOptionChoice, MealOptionGroup, getProductOptionVisibility } from '@/lib/productOptionConfig';
+import { FLAVOUR_OPTIONS, MEAL_OPTION_GROUPS, MealOptionChoice, MealOptionGroup, MealOptionModifier, categorySlug, getGoLargeOption, getMealSizeOptions, getProductOptionVisibility } from '@/lib/productOptionConfig';
 
 interface ProductCustomizationModalProps {
   isOpen: boolean;
@@ -22,21 +22,28 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
   const [quantity, setQuantity] = useState(1);
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [sizeError, setSizeError] = useState(false);
+  const [selectedProductModifierIds, setSelectedProductModifierIds] = useState<string[]>([]);
 
   if (!isOpen || !product) return null;
 
   const optionVisibility = getProductOptionVisibility(product.category);
+  const mealSizeOptions = getMealSizeOptions(product.category, product.mealPrice);
+  const goLargeOption = getGoLargeOption(product.category, product.goLargePrice);
   const selectedSizePrice = optionVisibility.showSize
-    ? MEAL_SIZE_OPTIONS.find((option) => option.name === selectedSize)?.price || 0
+    ? mealSizeOptions.find((option) => option.name === selectedSize)?.price || 0
     : 0;
   const mealSelected = selectedSize === 'Meal';
-  const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? GO_LARGE_OPTION.price : 0;
+  const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? goLargeOption.price : 0;
   const getMealOptionsList = () => mealSelected ? Object.values(selectedMealOptions).flat() : [];
+  const selectedProductModifiers = (product.popupModifiers || []).filter((modifier) => selectedProductModifierIds.includes(modifier.id));
 
   const calculateTotalPrice = () => {
     const basePrice = product.price + selectedSizePrice + goLargePrice;
-    const mealOptionsTotal = getMealOptionsList().reduce((sum, option) => sum + option.price, 0);
-    return (basePrice + mealOptionsTotal) * quantity;
+    const mealOptionsTotal = getMealOptionsList().reduce((sum, option) => (
+      sum + option.price + (option.selectedModifiers || []).reduce((modifierTotal, modifier) => modifierTotal + modifier.price, 0)
+    ), 0);
+    const productModifiersTotal = selectedProductModifiers.reduce((total, modifier) => total + modifier.price, 0);
+    return (basePrice + mealOptionsTotal + productModifiersTotal) * quantity;
   };
 
   const toggleMealOption = (group: MealOptionGroup, option: MealOptionChoice) => {
@@ -62,6 +69,45 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
     });
   };
 
+  const toggleMealOptionModifier = (groupId: string, option: MealOptionChoice, modifier: MealOptionModifier) => {
+    setSelectedMealOptions((current) => {
+      const groupSelection = current[groupId];
+      const toggleModifier = (selectedOption: MealOptionChoice) => {
+        const selectedModifiers = selectedOption.selectedModifiers || [];
+        const modifierSelected = selectedModifiers.some((item) => item.id === modifier.id);
+        return {
+          ...selectedOption,
+          selectedModifiers: modifierSelected
+            ? selectedModifiers.filter((item) => item.id !== modifier.id)
+            : [...selectedModifiers, modifier],
+        };
+      };
+
+      if (Array.isArray(groupSelection)) {
+        return {
+          ...current,
+          [groupId]: groupSelection.map((selectedOption) => (
+            (selectedOption.id || selectedOption.name) === (option.id || option.name)
+              ? toggleModifier(selectedOption)
+              : selectedOption
+          )),
+        };
+      }
+
+      if (groupSelection && (groupSelection.id || groupSelection.name) === (option.id || option.name)) {
+        return { ...current, [groupId]: toggleModifier(groupSelection) };
+      }
+
+      return current;
+    });
+  };
+
+  const toggleProductModifier = (modifierId: string) => {
+    setSelectedProductModifierIds((current) => (
+      current.includes(modifierId) ? current.filter((id) => id !== modifierId) : [modifierId]
+    ));
+  };
+
   const handleAddToCart = () => {
     if (optionVisibility.requiresSize && !selectedSize) {
       setSizeError(true);
@@ -78,20 +124,32 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
     }
 
     const selectedSizeLabel = optionVisibility.showSize
-      ? `${selectedSize}${goLargePrice > 0 ? `, ${GO_LARGE_OPTION.name}` : ''}`
+      ? product.mealPrice !== undefined || ['vegetarian-collection', 'fried-collection'].includes(categorySlug(product.category))
+        ? `${selectedSize}${selectedSizePrice > 0 ? ` +GBP ${selectedSizePrice.toFixed(2)}` : ''}${goLargePrice > 0 ? `, ${goLargeOption.name} +GBP ${goLargePrice.toFixed(2)}` : ''}`
+        : `${selectedSize}${goLargePrice > 0 ? `, ${goLargeOption.name}` : ''}`
       : undefined;
+    const mealCartAddOns = getMealOptionsList().map(({ id, name, price, selectedModifiers }) => ({
+      id,
+      name,
+      price,
+      modifiers: selectedModifiers,
+    }));
+    const productModifierAddOns = selectedProductModifiers.map(({ id, name, price }) => ({ id, name, price }));
+    const unitPrice = calculateTotalPrice() / quantity;
 
     const cartItem = {
       productId: product.id,
       quantity,
       name: product.name,
-      price: product.price + selectedSizePrice + goLargePrice,
+      price: unitPrice,
+      unitPrice,
+      basePrice: product.price,
       image: product.image,
       customization: {
         selectedSize: selectedSizeLabel,
         selectedFlavour: optionVisibility.showFlavour ? selectedFlavour : undefined,
         selectedSpiceLevel: optionVisibility.showFlavour ? selectedFlavour : undefined,
-        selectedAddOns: getMealOptionsList(),
+        selectedAddOns: [...mealCartAddOns, ...productModifierAddOns],
         specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
       },
       totalPrice: calculateTotalPrice(),
@@ -109,6 +167,7 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
     setQuantity(1);
     setSpecialInstructions('');
     setSizeError(false);
+    setSelectedProductModifierIds([]);
   };
 
   return (
@@ -159,7 +218,7 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
                     <span className="text-xs text-[#99041e] font-bold">Required</span>
                   </div>
                   <div className="flex gap-3">
-                    {MEAL_SIZE_OPTIONS.map(size => (
+                    {mealSizeOptions.map(size => (
                       <button
                         key={size.name}
                         onClick={() => {
@@ -192,7 +251,7 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
                             : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
                         }`}
                       >
-                        {GO_LARGE_OPTION.name} +GBP {GO_LARGE_OPTION.price.toFixed(2)}
+                        {goLargeOption.name} +GBP {goLargeOption.price.toFixed(2)}
                       </button>
                     </div>
                   )}
@@ -222,6 +281,32 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
                 </div>
               )}
 
+              {product.popupModifiers && product.popupModifiers.length > 0 && (
+                <div>
+                  <label className="text-[15px] font-bold text-[#1A1A1A] block mb-3">Extras</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {product.popupModifiers.map((modifier) => {
+                      const selected = selectedProductModifierIds.includes(modifier.id);
+                      return (
+                        <button
+                          key={modifier.id}
+                          type="button"
+                          onClick={() => toggleProductModifier(modifier.id)}
+                          aria-pressed={selected}
+                          className={`px-4 py-2 rounded-full font-normal text-sm border-2 transition-all ${
+                            selected
+                              ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                              : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                          }`}
+                        >
+                          {modifier.name} +GBP {modifier.price.toFixed(2)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {mealSelected && MEAL_OPTION_GROUPS.map((group) => (
                 <div key={group.id}>
                   <div className="flex items-center gap-2 mb-3">
@@ -231,21 +316,41 @@ export default function ProductCustomizationModal({ isOpen, product, onClose }: 
                   <div className="flex gap-2 flex-wrap">
                     {group.options.map((option) => {
                       const groupSelection = selectedMealOptions[group.id];
-                      const selected = Array.isArray(groupSelection)
-                        ? groupSelection.some((item) => item.name === option.name)
-                        : groupSelection?.name === option.name;
+                      const selectedOption = Array.isArray(groupSelection)
+                        ? groupSelection.find((item) => (item.id || item.name) === (option.id || option.name))
+                        : (groupSelection?.id || groupSelection?.name) === (option.id || option.name) ? groupSelection : undefined;
+                      const selected = Boolean(selectedOption);
                       return (
-                        <button
-                          key={option.name}
-                          onClick={() => toggleMealOption(group, option)}
-                          className={`px-4 py-2 rounded-full font-normal text-sm border-2 transition-all ${
-                            selected
-                              ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
-                              : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
-                          }`}
-                        >
-                          {option.name}{option.price > 0 ? ` +GBP ${option.price.toFixed(2)}` : ''}
-                        </button>
+                        <div key={option.id || option.name} className="flex flex-col items-start gap-1">
+                          <button
+                            onClick={() => toggleMealOption(group, option)}
+                            className={`px-4 py-2 rounded-full font-normal text-sm border-2 transition-all ${
+                              selected
+                                ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                                : 'bg-white text-[#1A1A1A] border-[#F0E5D8] hover:border-[#99041e]'
+                            }`}
+                          >
+                            {option.name}{option.price > 0 ? ` +GBP ${option.price.toFixed(2)}` : ''}
+                          </button>
+                          {selected && option.modifiers?.map((modifier) => {
+                            const modifierSelected = selectedOption?.selectedModifiers?.some((item) => item.id === modifier.id) || false;
+                            return (
+                              <button
+                                key={modifier.id}
+                                type="button"
+                                onClick={() => toggleMealOptionModifier(group.id, option, modifier)}
+                                aria-pressed={modifierSelected}
+                                className={`px-3 py-1 rounded-full font-bold text-[10px] border transition-all ${
+                                  modifierSelected
+                                    ? 'bg-[#ffc257] text-[#1A1A1A] border-[#ffc257]'
+                                    : 'bg-[#FAF8F5] text-[#99041e] border-[#F0E5D8] hover:border-[#99041e]'
+                                }`}
+                              >
+                                Piri Piri +GBP {modifier.price.toFixed(2)}
+                              </button>
+                            );
+                          })}
+                        </div>
                       );
                     })}
                   </div>

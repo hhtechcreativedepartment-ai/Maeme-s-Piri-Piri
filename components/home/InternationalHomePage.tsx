@@ -20,21 +20,8 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cartContext';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import AppDownloadSection from '@/components/home/AppDownloadSection';
-
-const categoryCards = [
-  { name: 'Grilled Collection', slug: 'grilled-collection', image: '/images/categories/original-brand/grilled-collection.jpg' },
-  { name: 'Maeme’s Burgers', slug: 'maemes-burgers', image: '/images/categories/original-brand/maemes-burgers.jpg' },
-  { name: 'Vegetarian Collection', slug: 'vegetarian-collection', image: '/images/categories/original-brand/vegetarian-collection.jpg' },
-  { name: 'Fried Collection', slug: 'fried-collection', image: '/images/categories/original-brand/fried-collection.jpg' },
-  { name: 'Maeme’s Platter', slug: 'maemes-platter', image: '/images/categories/original-brand/maemes-platter.jpg' },
-  { name: 'Kids Meal', slug: 'kids-meal', image: '/images/categories/original-brand/kids-meal.jpg' },
-  { name: 'Dessert Collection', slug: 'dessert-collection', image: '/images/categories/original-brand/dessert-collection.jpg' },
-  { name: 'Sides Collection', slug: 'sides-collection', image: '/images/categories/original-brand/sides-collection.jpg' },
-  { name: 'Maeme’s Extras', slug: 'maemes-extras', image: '/images/categories/original-brand/maemes-extras.jpg' },
-  { name: 'Ice Cream', slug: 'ice-cream', image: '/images/categories/original-brand/ice-cream.jpg' },
-  { name: 'Dips', slug: 'dips', image: '/images/categories/original-brand/dips.jpg' },
-  { name: 'Drinks', slug: 'drinks', image: '/images/categories/original-brand/drinks.jpg' },
-];
+import NewsletterSection from '@/components/home/NewsletterSection';
+import { MENU_CATEGORY_DATA } from '@/lib/menuData';
 
 const heroSlides = [
   { name: 'Chicken Rice Box', image: '/images/banners/chicken-rice-box.png' },
@@ -187,20 +174,20 @@ export default function InternationalHomePage() {
               ref={menuCarouselRef}
               className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory items-stretch gap-4 overflow-x-auto scroll-smooth px-1 pb-7 pt-2 [scrollbar-width:none] sm:gap-5 sm:px-0 [&::-webkit-scrollbar]:hidden"
             >
-              {categoryCards.map((category) => (
+              {MENU_CATEGORY_DATA.map((category) => (
               <Link
-                key={category.name}
+                key={category.id}
                 data-menu-category-card
-                href={`/menu#category-${category.slug}`}
+                href={`/menu#${category.anchor}`}
                 className="maeme-menu-category-card group flex h-[232px] w-[78vw] min-w-[236px] max-w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-[16px] border border-[#ead8c6] bg-[#FFFFFF] p-4 text-left shadow-[0_10px_26px_rgba(31,18,16,0.045)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(var(--maeme-red-rgb),0.22)] hover:shadow-[0_16px_34px_rgba(31,18,16,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/30 sm:h-[244px] sm:w-[calc((100%-40px)/3)] sm:min-w-[226px] sm:max-w-none lg:w-[calc((100%-80px)/5)] lg:min-w-[0]"
               >
                 <h3 className="min-h-[38px] text-sm font-black uppercase leading-tight tracking-[0.025em] text-[#1f1210] sm:text-[15px]">
-                  {category.name}
+                  {category.title}
                 </h3>
                 <span className="mt-3 flex min-h-0 flex-1 items-center justify-center px-3 py-4">
                   <img
                     src={category.image}
-                    alt={`${category.name} category`}
+                    alt={`${category.title} category`}
                     className="max-h-[150px] w-full object-contain object-center transition-transform duration-300 ease-out group-hover:scale-[1.018] sm:max-h-[158px]"
                   />
                 </span>
@@ -352,24 +339,7 @@ export default function InternationalHomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1320px] items-center gap-5 rounded-[20px] bg-[var(--maeme-red)] px-5 py-5 text-white shadow-[0_18px_46px_rgba(var(--maeme-red-rgb),0.18)] md:grid-cols-[1fr_minmax(360px,0.92fr)] lg:px-8">
-          <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">Get Exclusive Deals & Updates</h2>
-            <p className="mt-1 text-sm font-medium text-white/80">Join our newsletter and never miss an offer!</p>
-          </div>
-          <form className="flex flex-col gap-3 sm:flex-row sm:gap-0">
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              className="min-h-12 flex-1 rounded-xl border-0 bg-white px-4 text-sm font-semibold text-[#1f1210] outline-none placeholder:text-[#8c7a74] sm:rounded-r-none"
-            />
-            <button className="min-h-12 rounded-xl bg-[var(--maeme-yellow)] px-7 text-sm font-black text-[#1f1210] transition hover:bg-[var(--maeme-yellow-dark)] sm:rounded-l-none">
-              Subscribe
-            </button>
-          </form>
-        </div>
-      </section>
+      <NewsletterSection />
 
       <OrderTypeModal isOpen={showOrderModal} onClose={() => setShowOrderModal(false)} />
     </main>

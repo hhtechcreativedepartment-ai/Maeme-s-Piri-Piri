@@ -182,14 +182,11 @@ export function findNearestBranch(postcode: string): Branch {
 }
 
 export function formatBranchDisplay(branch: Branch): string {
-  if (typeof window === 'undefined') {
-    // Server-side rendering fallback
-    return `Open: 11:00 AM - 11:00 PM`;
-  }
-  
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
   const today = new Date().getDay();
   const dayName = days[today];
-  const timings = branch.openingHours[dayName];
-  return `Open: ${timings}`;
+  const timings = branch.openingHours?.[dayName];
+  if (!timings) return 'Opening hours unavailable';
+
+  return `${branch.isOpen === false ? 'Closed' : 'Open'} today: ${timings}`;
 }

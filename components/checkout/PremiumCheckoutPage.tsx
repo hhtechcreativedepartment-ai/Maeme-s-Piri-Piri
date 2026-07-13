@@ -20,6 +20,9 @@ import { CartItem, OrderType, useCart } from '@/lib/cartContext';
 import { useAuth } from '@/lib/authContext';
 import { createOrder, saveOrder } from '@/lib/orderUtils';
 import { useOrders } from '@/lib/ordersContext';
+import { MENU_DATA } from '@/lib/menuData';
+import { categorySlug } from '@/lib/productOptionConfig';
+import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
 type PaymentMethod = 'cash' | 'card' | 'wallet';
@@ -58,10 +61,19 @@ function itemTotal(item: CartItem) {
 
 function formatItemOptions(item: CartItem) {
   const size = item.selectedSize || item.customization?.selectedSize;
-  const flavour = item.selectedFlavour || item.selectedSpiceLevel || item.customization?.selectedSpiceLevel;
+  const product = MENU_DATA.find((candidate) => candidate.id === item.productId);
+  const flavour = product && categorySlug(product.category) === 'maemes-burgers'
+    ? undefined
+    : item.selectedFlavour || item.selectedSpiceLevel || item.customization?.selectedSpiceLevel;
   const addOns = item.selectedAddOns || item.customization?.selectedAddOns || [];
+  const formattedAddOns = addOns.map((addon) => {
+    const modifiers = addon.modifiers?.map((modifier) => `${modifier.name} +£${modifier.price.toFixed(2)}`).join(', ');
+    return modifiers
+      ? `${addon.name} — ${modifiers}`
+      : `${addon.name}${addon.price > 0 ? ` +£${addon.price.toFixed(2)}` : ''}`;
+  });
 
-  return [size, flavour, addOns.length ? addOns.map((addon) => addon.name).join(', ') : '']
+  return [size, flavour, formattedAddOns.length ? formattedAddOns.join(', ') : '']
     .filter(Boolean)
     .join(' · ');
 }
@@ -162,6 +174,17 @@ export default function PremiumCheckoutPage() {
   }, [selectedBranch, selectedOrderType]);
 
   useEffect(() => {
+    if (!branch) return;
+    if (orderType === 'delivery' && !branch.deliveryAvailable && branch.pickupAvailable) {
+      setLocalOrderType('pickup');
+      setOrderType('pickup');
+    } else if (orderType === 'pickup' && !branch.pickupAvailable && branch.deliveryAvailable) {
+      setLocalOrderType('delivery');
+      setOrderType('delivery');
+    }
+  }, [branch, orderType, setOrderType]);
+
+  useEffect(() => {
     if (orderType === 'pickup' && paymentMethod === 'cash') {
       setPaymentMethod('card');
     }
@@ -203,6 +226,8 @@ export default function PremiumCheckoutPage() {
   );
 
   const handleOrderType = (nextType: OrderType) => {
+    if (branch && nextType === 'delivery' && !branch.deliveryAvailable) return;
+    if (branch && nextType === 'pickup' && !branch.pickupAvailable) return;
     setLocalOrderType(nextType);
     setOrderType(nextType);
     if (branch) selectBranch(branch.branchId, nextType);
@@ -285,6 +310,8 @@ export default function PremiumCheckoutPage() {
   const validateCheckout = () => {
     if (items.length === 0) return 'Your cart is empty.';
     if (!branch) return 'Please select a branch for this order.';
+    if (orderType === 'delivery' && !branch.deliveryAvailable) return 'Delivery is currently unavailable from this branch.';
+    if (orderType === 'pickup' && !branch.pickupAvailable) return 'Collection is currently unavailable from this branch.';
     if (orderType === 'delivery' && !selectedAddressId && !addressForm.address) {
       return 'Please select or add a delivery address.';
     }
@@ -382,17 +409,18 @@ export default function PremiumCheckoutPage() {
               </div>
             )}
 
-            <CheckoutSection icon={<Truck size={20} />} title="Delivery or Pickup">
+            <CheckoutSection icon={<Truck size={20} />} title="Delivery or Collection">
               <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#fff8ed] p-1">
                 {(['delivery', 'pickup'] as OrderType[]).map((type) => (
                   <button
                     key={type}
                     onClick={() => handleOrderType(type)}
+                    disabled={Boolean(branch && (type === 'delivery' ? !branch.deliveryAvailable : !branch.pickupAvailable))}
                     className={`min-h-12 rounded-xl text-sm font-black capitalize transition ${
-                      orderType === type ? 'bg-[#ffc257] text-[#1a120f] shadow-sm' : 'text-[#99041e] hover:bg-white'
+                      orderType === type ? 'bg-[#ffc257] text-[#1a120f] shadow-sm' : 'text-[#99041e] hover:bg-white disabled:cursor-not-allowed disabled:opacity-40'
                     }`}
                   >
-                    {type}
+                    {getOrderTypeLabel(type)}
                   </button>
                 ))}
               </div>
@@ -415,7 +443,7 @@ export default function PremiumCheckoutPage() {
                     <input
                       value={pickupSearch}
                       onChange={(event) => setPickupSearch(event.target.value)}
-                      placeholder="Pickup postcode or area"
+                      placeholder="Collection postcode or area"
                       className={fieldClass}
                     />
                     <button onClick={handlePickupFind} className="w-full rounded-2xl bg-[#99041e] px-6 py-3 text-sm font-black text-white transition hover:bg-[#7f0318] md:w-auto">
@@ -441,7 +469,7 @@ export default function PremiumCheckoutPage() {
                       {branch?.address} {branch?.postcode ? `· ${branch.postcode}` : ''}
                     </p>
                     <p className="mt-1 text-sm font-black text-[#126336]">
-                      {areaResult || `${orderType === 'pickup' ? 'Pickup' : 'Delivery'} estimate: ${estimate}`}
+                      {areaResult || `${getOrderTypeLabel(orderType)} estimate: ${estimate}`}
                     </p>
                   </div>
                 </div>
@@ -559,11 +587,11 @@ export default function PremiumCheckoutPage() {
               )}
             </CheckoutSection>
 
-            <CheckoutSection icon={<ReceiptText size={20} />} title={orderType === 'delivery' ? 'Delivery notes' : 'Pickup notes'}>
+            <CheckoutSection icon={<ReceiptText size={20} />} title={orderType === 'delivery' ? 'Delivery notes' : 'Collection notes'}>
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder={orderType === 'delivery' ? 'Delivery notes' : 'Pickup notes'}
+                placeholder={orderType === 'delivery' ? 'Delivery notes' : 'Collection notes'}
                 className="min-h-28 w-full resize-none rounded-2xl border border-[#ead8c6] bg-white px-4 py-3 text-sm font-semibold text-[#1a120f] outline-none transition focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
               />
             </CheckoutSection>
@@ -576,7 +604,7 @@ export default function PremiumCheckoutPage() {
                   {orderType === 'pickup' ? <ShoppingBag size={24} className="text-[#99041e]" /> : <Truck size={24} className="text-[#99041e]" />}
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#6b5b55]">
-                      Estimated {orderType === 'pickup' ? 'pickup' : 'delivery'}
+                      Estimated {getOrderTypeLabel(orderType).toLowerCase()}
                     </p>
                     <p className="text-xl font-black">{estimate}</p>
                   </div>

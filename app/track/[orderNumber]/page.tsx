@@ -174,7 +174,7 @@ export default function TrackOrderPage() {
               <MapPin size={20} className="text-[#99041e] flex-shrink-0 mt-1" />
               <div>
                 <p className="text-xs text-[#999999] font-semibold uppercase mb-1">
-                  {order.orderType === 'delivery' ? 'Delivering To' : 'Pickup Location'}
+                  {order.orderType === 'delivery' ? 'Delivering To' : 'Collection Location'}
                 </p>
                 <p className="font-semibold text-[#1A1A1A] text-sm">{order.branchName}</p>
                 <p className="text-xs text-[#666666] mt-1">{order.branchAddress}</p>
@@ -188,7 +188,7 @@ export default function TrackOrderPage() {
               <Clock size={20} className="text-[#99041e] flex-shrink-0 mt-1" />
               <div>
                 <p className="text-xs text-[#999999] font-semibold uppercase mb-1">
-                  {order.orderType === 'delivery' ? 'Estimated Delivery' : 'Ready for Pickup'}
+                  {order.orderType === 'delivery' ? 'Estimated Delivery' : 'Ready for Collection'}
                 </p>
                 <p className="font-semibold text-[#1A1A1A] text-sm">{estimatedTime}</p>
                 <p className="text-xs text-[#666666] mt-1">

@@ -5,8 +5,10 @@ import { ArrowLeft, ArrowRight, ShoppingBag, Store, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import ProductCard from '@/components/ordering/ProductCard';
-import { MENU_DATA, MENU_CATEGORIES, MenuItem } from '@/lib/menuData';
+import { MENU_DATA, MENU_CATEGORY_DATA, MenuItem, MenuQuickAddOption } from '@/lib/menuData';
 import { useCart } from '@/lib/cartContext';
+import { formatBranchDisplay } from '@/lib/branchData';
+import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 function slugify(value: string) {
   return value
@@ -19,29 +21,29 @@ function slugify(value: string) {
 
 const DIRECT_ADD_CATEGORY_SLUGS = new Set([
   'dessert-collection',
-  'sides-collection',
-  'maemes-extras',
+  'sides-and-extras',
   'ice-cream',
   'dips',
   'drinks',
 ]);
 
 export default function CompleteMenuPage() {
-  const { items, selectedBranch, selectedOrderType, addToCart, updateQuantity } = useCart();
-  const [activeCategory, setActiveCategory] = useState(MENU_CATEGORIES[0]);
+  const { items, selectedBranch, selectedOrderType, addToCart, updateQuantity, setOrderType } = useCart();
+  const [activeCategory, setActiveCategory] = useState(MENU_CATEGORY_DATA[0].id);
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [pendingProduct, setPendingProduct] = useState<MenuItem | null>(null);
+  const [pendingQuickOptions, setPendingQuickOptions] = useState<MenuQuickAddOption[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [canScrollCategoryLeft, setCanScrollCategoryLeft] = useState(false);
   const [canScrollCategoryRight, setCanScrollCategoryRight] = useState(true);
   const categoryRailRef = useRef<HTMLDivElement>(null);
 
   const productsByCategory = useMemo(() => (
-    MENU_CATEGORIES.map((category) => ({
+    MENU_CATEGORY_DATA.map((category) => ({
       category,
-      products: MENU_DATA.filter((product) => product.category === category),
+      products: MENU_DATA.filter((product) => product.category === category.title),
     }))
   ), []);
 
@@ -52,36 +54,48 @@ export default function CompleteMenuPage() {
     setShowProductModal(true);
   };
 
-  const addSimpleProductToCart = (product: MenuItem) => {
-    const existingItem = items.find((item) => item.productId === product.id && !item.customization);
+  const addSimpleProductToCart = (product: MenuItem, selectedOptions: MenuQuickAddOption[] = []) => {
+    const selectedAddOns = selectedOptions.map(({ id, name, price }) => ({ id, name, price }));
+    const customization = selectedAddOns.length > 0 || product.sizeInfo
+      ? { selectedSize: product.sizeInfo, selectedAddOns }
+      : undefined;
+    const existingItem = items.find((item) => (
+      item.productId === product.id
+      && JSON.stringify(item.customization) === JSON.stringify(customization)
+    ));
+    const unitPrice = product.price + selectedAddOns.reduce((total, option) => total + option.price, 0);
 
     if (existingItem) {
-      updateQuantity(product.id, existingItem.quantity + 1);
+      updateQuantity(product.id, existingItem.quantity + 1, customization);
     } else {
       addToCart({
         productId: product.id,
         quantity: 1,
         name: product.name,
-        price: product.price,
-        unitPrice: product.price,
+        price: unitPrice,
+        unitPrice,
         basePrice: product.price,
-        totalPrice: product.price,
+        totalPrice: unitPrice,
         image: product.image,
+        selectedSize: product.sizeInfo,
+        selectedAddOns,
+        customization,
       });
     }
 
     handleProductAdded();
   };
 
-  const handleAddProduct = (product: MenuItem) => {
+  const handleAddProduct = (product: MenuItem, selectedOptions: MenuQuickAddOption[] = []) => {
     if (!selectedBranch || !selectedOrderType) {
       setPendingProduct(product);
+      setPendingQuickOptions(selectedOptions);
       setShowOrderModal(true);
       return;
     }
 
     if (isDirectAddProduct(product)) {
-      addSimpleProductToCart(product);
+      addSimpleProductToCart(product, selectedOptions);
       return;
     }
 
@@ -90,15 +104,16 @@ export default function CompleteMenuPage() {
 
   const handleOrderSetupSelected = () => {
     if (pendingProduct) {
-      if (isDirectAddProduct(pendingProduct)) addSimpleProductToCart(pendingProduct);
+      if (isDirectAddProduct(pendingProduct)) addSimpleProductToCart(pendingProduct, pendingQuickOptions);
       else openProductDetail(pendingProduct);
       setPendingProduct(null);
+      setPendingQuickOptions([]);
     }
   };
 
-  const handleCategoryClick = (category: string) => {
-    setActiveCategory(category);
-    document.getElementById(`category-${slugify(category)}`)?.scrollIntoView({
+  const handleCategoryClick = (categoryId: string, anchor: string) => {
+    setActiveCategory(categoryId);
+    document.getElementById(anchor)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
@@ -136,6 +151,18 @@ export default function CompleteMenuPage() {
   }, []);
 
   useEffect(() => {
+    if (!selectedBranch) return;
+
+    if (selectedOrderType === 'delivery' && !selectedBranch.deliveryAvailable && selectedBranch.pickupAvailable) {
+      setOrderType('pickup');
+    } else if (selectedOrderType === 'pickup' && !selectedBranch.pickupAvailable && selectedBranch.deliveryAvailable) {
+      setOrderType('delivery');
+    } else if (!selectedOrderType && selectedBranch.deliveryAvailable !== selectedBranch.pickupAvailable) {
+      setOrderType(selectedBranch.deliveryAvailable ? 'delivery' : 'pickup');
+    }
+  }, [selectedBranch, selectedOrderType, setOrderType]);
+
+  useEffect(() => {
     const targetId = window.location.hash.slice(1);
     if (!targetId) return;
 
@@ -154,14 +181,14 @@ export default function CompleteMenuPage() {
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
 
-        const category = visibleEntry?.target.getAttribute('data-menu-section');
-        if (category) setActiveCategory(category);
+        const categoryId = visibleEntry?.target.getAttribute('data-menu-section');
+        if (categoryId) setActiveCategory(categoryId);
       },
       { rootMargin: '-190px 0px -55% 0px', threshold: [0.12, 0.28, 0.5] },
     );
 
     productsByCategory.forEach(({ category }) => {
-      const section = document.getElementById(`category-${slugify(category)}`);
+      const section = document.getElementById(category.anchor);
       if (section) observer.observe(section);
     });
 
@@ -186,21 +213,61 @@ export default function CompleteMenuPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[430px]">
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                <div className="flex items-center gap-3">
-                  <Store size={20} className="text-[#ffc257]" />
-                  <div>
+              <div className="h-full rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <div className="flex items-start gap-3">
+                  <Store size={20} className="mt-0.5 shrink-0 text-[#ffc257]" />
+                  <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-[0.14em] text-white/65">Branch</p>
-                    <p className="text-sm font-black">{selectedBranch ? selectedBranch.postcode : 'Select Location'}</p>
+                    <p className="mt-1 break-words text-sm font-black">{selectedBranch?.branchName || 'Selected Branch'}</p>
+                    {selectedBranch && (
+                      <>
+                        <p className="mt-0.5 text-xs font-bold text-white/90">{selectedBranch.postcode}</p>
+                        {selectedBranch.address && (
+                          <p className="mt-1 break-words text-xs leading-5 text-white/75">
+                            {selectedBranch.address}{selectedBranch.postcode ? `, ${selectedBranch.postcode}` : ''}
+                          </p>
+                        )}
+                        <p className={`mt-1 text-xs font-bold ${selectedBranch.isOpen === false ? 'text-[#ffc257]' : 'text-white/90'}`}>
+                          {formatBranchDisplay(selectedBranch)}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                <div className="flex items-center gap-3">
+              <div className="h-full rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <div className="flex items-start gap-3">
                   {selectedOrderType === 'pickup' ? <ShoppingBag size={20} className="text-[#ffc257]" /> : <Truck size={20} className="text-[#ffc257]" />}
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-black uppercase tracking-[0.14em] text-white/65">Order type</p>
-                    <p className="text-sm font-black capitalize">{selectedOrderType || 'Delivery or Pickup'}</p>
+                    <p className="mt-1 text-sm font-black">{getOrderTypeLabel(selectedOrderType)}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-white/15 bg-black/10 p-1">
+                      {(['delivery', 'pickup'] as const).map((type) => {
+                        const available = !selectedBranch || (type === 'delivery' ? selectedBranch.deliveryAvailable : selectedBranch.pickupAvailable);
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => available && selectedBranch && setOrderType(type)}
+                            disabled={!selectedBranch || !available}
+                            aria-pressed={selectedOrderType === type}
+                            className={`min-h-9 rounded-lg px-2 py-1.5 text-xs font-black transition ${
+                              selectedOrderType === type
+                                ? 'bg-[#ffc257] text-[#1a120f] shadow-sm'
+                                : 'text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40'
+                            }`}
+                          >
+                            {getOrderTypeLabel(type)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedBranch && !selectedBranch.deliveryAvailable && (
+                      <p className="mt-2 text-[11px] leading-4 text-white/75">Delivery is currently unavailable from this branch.</p>
+                    )}
+                    {selectedBranch && !selectedBranch.pickupAvailable && (
+                      <p className="mt-2 text-[11px] leading-4 text-white/75">Collection is currently unavailable from this branch.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -223,18 +290,18 @@ export default function CompleteMenuPage() {
             ref={categoryRailRef}
             className="flex flex-1 snap-x snap-mandatory gap-2 overflow-x-auto py-4 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {MENU_CATEGORIES.map((category) => (
+            {MENU_CATEGORY_DATA.map((category) => (
               <button
-                key={category}
-                data-category={slugify(category)}
-                onClick={() => handleCategoryClick(category)}
+                key={category.id}
+                data-category={category.slug}
+                onClick={() => handleCategoryClick(category.id, category.anchor)}
                 className={`shrink-0 snap-start rounded-full border-2 px-4 py-2.5 text-sm font-black transition ${
-                  activeCategory === category
+                  activeCategory === category.id
                     ? 'border-[#99041e] bg-[#ffc257] text-[#1a120f] shadow-sm'
                     : 'border-[#99041e] bg-white text-[#99041e] hover:bg-[#fff8ed]'
                 }`}
               >
-                {category}
+                {category.title}
               </button>
             ))}
           </div>
@@ -252,10 +319,10 @@ export default function CompleteMenuPage() {
       <div className="page-container py-10 lg:py-12">
         <div className="space-y-14">
           {productsByCategory.map(({ category, products }) => (
-            <section key={category} id={`category-${slugify(category)}`} data-menu-section={category} className="scroll-mt-40">
+            <section key={category.id} id={category.anchor} data-menu-section={category.id} className="scroll-mt-40">
               <div className="mb-5 flex items-end justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
                 <div>
-                  <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category}</h2>
+                  <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category.title}</h2>
                   <p className="mt-1 text-sm font-medium text-[#6b5b55]">
                     {products.length} {products.length === 1 ? 'item' : 'items'}
                   </p>
@@ -298,6 +365,7 @@ export default function CompleteMenuPage() {
         onClose={() => {
           setShowOrderModal(false);
           setPendingProduct(null);
+          setPendingQuickOptions([]);
         }}
         redirectToMenu={false}
         onSelected={handleOrderSetupSelected}

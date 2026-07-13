@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Minus, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
+import { Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
+import { categorySlug, getProductOptionVisibility } from '@/lib/productOptionConfig';
+import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 const recommendedNames = [
   'Loaded Fries',
-  'Dips',
+  'Burger Sauce',
   'Fries',
   'Mango Lassi',
   'Wings',
@@ -18,32 +20,44 @@ const recommendedNames = [
   'Lotus Biscoff Milkshake',
 ];
 
-const dipsRecommendation: MenuItem = {
-  id: 1001,
-  name: 'Dips',
-  category: 'Dips',
-  description: 'Creamy, smoky and piri piri dips for every bite.',
-  price: 0.79,
-  kcal: 80,
-  image: '/images/chicken-fries.png',
-};
-
 function formatOptions(item: CartItem) {
   const size = item.selectedSize || item.customization?.selectedSize;
-  const flavour = item.selectedFlavour || item.selectedSpiceLevel || item.customization?.selectedSpiceLevel;
+  const product = MENU_DATA.find((candidate) => candidate.id === item.productId);
+  const flavour = product && categorySlug(product.category) === 'maemes-burgers'
+    ? undefined
+    : item.selectedFlavour || item.selectedSpiceLevel || item.customization?.selectedSpiceLevel;
   const addOns = item.selectedAddOns || item.customization?.selectedAddOns || [];
   const notes = item.specialInstructions || item.customization?.specialInstructions;
+  const formattedAddOns = addOns.map((addon) => {
+    const modifiers = addon.modifiers?.map((modifier) => `${modifier.name} +£${modifier.price.toFixed(2)}`).join(', ');
+    return modifiers
+      ? `${addon.name} — ${modifiers}`
+      : `${addon.name}${addon.price > 0 ? ` +£${addon.price.toFixed(2)}` : ''}`;
+  });
 
   return [
     size,
     flavour,
-    addOns.length ? addOns.map((addon) => addon.name).join(', ') : '',
+    formattedAddOns.length ? formattedAddOns.join(', ') : '',
     notes ? `Note: ${notes}` : '',
   ].filter(Boolean).join(' · ');
 }
 
 function getItemTotal(item: CartItem) {
   return (item.unitPrice ?? item.price) * item.quantity;
+}
+
+function getEditableProduct(item: CartItem) {
+  const product = MENU_DATA.find((candidate) => candidate.id === item.productId);
+  if (!product) return null;
+  const isPlatter = categorySlug(product.category) === 'maemes-platter';
+  const isKidsMeal = categorySlug(product.category) === 'kids-meal';
+  const isBoxMeal = categorySlug(product.category) === 'box-meals';
+  const isSharingMeal = categorySlug(product.category) === 'sharing-meal';
+  const isFriedWings = categorySlug(product.category) === 'fried-wings';
+  const isFriedChicken = categorySlug(product.category) === 'fried-chicken';
+  const isFriedBoneless = categorySlug(product.category) === 'fried-boneless';
+  return isPlatter || isKidsMeal || isBoxMeal || isSharingMeal || isFriedWings || isFriedChicken || isFriedBoneless || getProductOptionVisibility(product.category).showSize ? product : null;
 }
 
 export default function PremiumCartPage() {
@@ -56,6 +70,7 @@ export default function PremiumCartPage() {
     getCartTotal,
   } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const productTotal = getCartTotal();
@@ -71,7 +86,7 @@ export default function PremiumCartPage() {
   const recommendedProducts = useMemo(() => {
     const seen = new Set<number>();
     return recommendedNames
-      .map((name) => name === 'Dips' ? dipsRecommendation : MENU_DATA.find((item) => item.name === name))
+      .map((name) => MENU_DATA.find((item) => item.name === name))
       .filter((item): item is MenuItem => Boolean(item))
       .filter((item) => {
         if (seen.has(item.id)) return false;
@@ -86,6 +101,13 @@ export default function PremiumCartPage() {
 
   const handleQuantity = (item: CartItem, quantity: number) => {
     updateQuantity(item.productId, quantity, item.customization);
+  };
+
+  const handleEdit = (item: CartItem) => {
+    const product = getEditableProduct(item);
+    if (!product) return;
+    setEditingItem(item);
+    setSelectedProduct(product);
   };
 
   const handleAdded = () => {
@@ -168,13 +190,24 @@ export default function PremiumCartPage() {
                         </button>
                       </div>
 
-                      <button
-                        onClick={() => handleRemove(item)}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-[#ead8c6] px-4 py-2 text-sm font-black text-[#99041e] transition hover:bg-[#fff8ed]"
-                      >
-                        <Trash2 size={17} />
-                        Remove
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        {getEditableProduct(item) ? (
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="inline-flex items-center gap-2 rounded-2xl border border-[#ead8c6] px-4 py-2 text-sm font-black text-[#99041e] transition hover:bg-[#fff8ed]"
+                          >
+                            <Pencil size={17} />
+                            Edit
+                          </button>
+                        ) : null}
+                        <button
+                          onClick={() => handleRemove(item)}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-[#ead8c6] px-4 py-2 text-sm font-black text-[#99041e] transition hover:bg-[#fff8ed]"
+                        >
+                          <Trash2 size={17} />
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -193,7 +226,7 @@ export default function PremiumCartPage() {
                   )}
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#6b5b55]">
-                      Estimated {selectedOrderType === 'pickup' ? 'pickup' : 'delivery'}
+                      Estimated {getOrderTypeLabel(selectedOrderType).toLowerCase()}
                     </p>
                     <p className="text-xl font-black text-[#1a120f]">{estimate}</p>
                   </div>
@@ -277,7 +310,11 @@ export default function PremiumCartPage() {
       <PremiumProductCustomizationModal
         isOpen={Boolean(selectedProduct)}
         product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        editingItem={editingItem}
+        onClose={() => {
+          setSelectedProduct(null);
+          setEditingItem(null);
+        }}
         onAdded={handleAdded}
       />
     </main>

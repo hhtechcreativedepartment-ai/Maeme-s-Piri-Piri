@@ -39,7 +39,7 @@ export default function Footer() {
               <img src="/images/maemes-logo.png" alt="Maeme's Piri Piri" className="h-16 w-auto" />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-7 text-white/80">
-              Maeme&apos;s Piri Piri serves freshly grilled chicken, bold sauces and fast ordering for delivery or pickup across local branches.
+              Maeme&apos;s Piri Piri serves freshly grilled chicken, bold sauces and fast ordering for delivery or collection across local branches.
             </p>
             <div className="mt-5 flex gap-3">
               {[AtSign, Globe, Sparkles].map((Icon, index) => (

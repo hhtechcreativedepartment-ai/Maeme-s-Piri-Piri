@@ -1,22 +1,21 @@
 'use client';
 
-import { MouseEvent, useEffect } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
-import { MenuItem } from '@/lib/menuData';
+import { MenuItem, MenuQuickAddOption } from '@/lib/menuData';
 import { useAuth } from '@/lib/authContext';
 import { useFavourites } from '@/lib/favouritesContext';
 
 interface ProductCardProps {
   product: MenuItem;
-  onAdd: (product: MenuItem) => void;
+  onAdd: (product: MenuItem, selectedOptions?: MenuQuickAddOption[]) => void;
   onFavourite?: (product: MenuItem) => void;
 }
 
 const CATEGORIES_WITHOUT_DESCRIPTION = new Set([
   'dessert-collection',
-  'sides-collection',
-  'maemes-extras',
+  'sides-and-extras',
   'ice-cream',
   'dips',
   'drinks',
@@ -54,6 +53,10 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
   const productId = String(product.id);
   const isSaved = isFavourite(productId);
   const showDescription = !CATEGORIES_WITHOUT_DESCRIPTION.has(categorySlug(product.category));
+  const [selectedQuickOptionIds, setSelectedQuickOptionIds] = useState<string[]>([]);
+  const selectedQuickOptions = product.quickAddOptions?.filter((option) => selectedQuickOptionIds.includes(option.id)) || [];
+  const displayedPrice = product.price + selectedQuickOptions.reduce((total, option) => total + option.price, 0);
+  const isCompactMealPriceProduct = ['fried-wings', 'fried-chicken', 'fried-boneless'].includes(categorySlug(product.category));
 
   useEffect(() => {
     if (!user || isLoading) return;
@@ -111,20 +114,51 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
 
         <div className="min-w-0 pr-9">
           <h3 className="line-clamp-2 text-[15px] font-black leading-[1.18] text-[#1a120f]">{product.name}</h3>
+          {product.servingInfo && (
+            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#99041e]">{product.servingInfo}</p>
+          )}
+          {product.sizeInfo && (
+            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#99041e]">{product.sizeInfo}</p>
+          )}
           {showDescription && (
             <p className="mt-1.5 line-clamp-2 text-xs leading-[1.45] text-[#6b5b55]">{product.description}</p>
           )}
-          <p className={`${showDescription ? 'mt-2' : 'mt-3'} text-[11px] font-bold uppercase tracking-[0.08em] text-[#8a7a6a]`}>
-            {product.kcal} kcal
-          </p>
+          {product.quickAddOptions?.map((option) => {
+            const selected = selectedQuickOptionIds.includes(option.id);
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setSelectedQuickOptionIds((current) => (
+                  selected ? current.filter((id) => id !== option.id) : [...current, option.id]
+                ))}
+                aria-pressed={selected}
+                className={`mt-2 rounded-full border px-2.5 py-1 text-[10px] font-black transition ${
+                  selected
+                    ? 'border-[#99041e] bg-[#99041e] text-white'
+                    : 'border-[#ead8c6] bg-[#fff8ed] text-[#99041e] hover:border-[#99041e]'
+                }`}
+              >
+                {option.name} +£{option.price.toFixed(2)}
+              </button>
+            );
+          })}
+          {product.kcal != null && (
+            <p className={`${showDescription ? 'mt-2' : 'mt-3'} text-[11px] font-bold uppercase tracking-[0.08em] text-[#8a7a6a]`}>
+              {product.kcal} kcal
+            </p>
+          )}
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-2">
-          <p className="min-w-0 text-[15px] font-black leading-none text-[#99041e]">
-            £{product.price.toFixed(2)}
-          </p>
+          <div className="min-w-0">
+            <p className="text-[15px] font-black leading-none text-[#99041e]">£{displayedPrice.toFixed(2)}</p>
+            {isCompactMealPriceProduct && product.mealTotalPrice !== undefined && (
+              <p className="mt-1 text-[10px] font-black leading-none text-[#6b5b55]">Meal £{product.mealTotalPrice.toFixed(2)}</p>
+            )}
+          </div>
           <button
-            onClick={() => onAdd(product)}
+            onClick={() => onAdd(product, selectedQuickOptions)}
             className="inline-flex h-[42px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#99041e] px-[18px] text-xs font-black text-white shadow-sm transition hover:bg-[#7f0318]"
             aria-label={`Add ${product.name}`}
           >

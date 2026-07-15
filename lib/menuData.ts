@@ -171,7 +171,7 @@ export const MENU_DATA: MenuItem[] = [
   { id: 505, slug: 'paneer-wrap', name: 'Paneer Wrap', category: 'Vegetarian Collection', description: 'Grilled paneer with tomato salsa, mayonnaise and lettuce in a tortilla wrap.', price: 6.00, image: '/placeholder.svg', popupModifiers: [EXTRA_PANEER] },
   { id: 506, slug: 'veggie-wrap', name: 'Veggie Wrap', category: 'Vegetarian Collection', description: 'Veggie patty with mayonnaise, tomato salsa and lettuce in a tortilla wrap.', price: 5.49, image: '/placeholder.svg' },
   { id: 507, slug: 'veggie-burger', name: 'Veggie Burger', category: 'Vegetarian Collection', description: 'Veggie patty with mayonnaise, tomato, lettuce, cheese and burger sauce in a seeded bun.', price: 4.99, image: '/placeholder.svg', popupModifiers: [EXTRA_VEGGIE_PATTY] },
-  { id: 5, name: 'Gourmet Beef Burger', category: 'Maeme’s Burgers', description: 'Premium beef patty, cheese, salad and smoky house relish.', price: 9.99, kcal: 710, image: imageFor('Maeme’s Burgers'), startingPrice: true },
+  { id: 5, slug: 'quarter-pounder', name: '1/4 Pounder', category: 'Maeme’s Burgers', description: 'Beef patty with mayonnaise, tomato, lettuce, red onion, cheese, burger sauce and ketchup in a seeded bun.', price: 5.50, image: '/images/products/quarter-pounder.jpg', mealPrice: 3.99 },
   { id: 301, slug: '3-wings', name: '3 Wings', category: 'Sides & Extras', description: '', price: 3.29, image: '/placeholder.svg' },
   { id: 302, slug: '3-tender-strips', name: '3 Tender Strips', category: 'Sides & Extras', description: '', price: 3.49, image: '/placeholder.svg' },
   { id: 303, slug: 'mozzarella-sticks', name: 'Mozzarella Sticks', category: 'Sides & Extras', description: '', price: 3.49, image: '/placeholder.svg' },

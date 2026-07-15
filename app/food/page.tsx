@@ -1,4 +1,5 @@
 import { ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import SpiceLevelAnimation from '@/components/food/SpiceLevelAnimation';
 import NewsletterSection from '@/components/home/NewsletterSection';
 
@@ -88,9 +89,19 @@ export default function FoodPage() {
 
       <div className="page-container space-y-5 py-5 sm:space-y-6 sm:py-7 lg:space-y-7 lg:py-8">
 
-        <section className="relative isolate overflow-visible rounded-[22px] border border-[#F1D8C8] bg-[#FFF1E4] sm:rounded-[28px] lg:min-h-[310px]">
-          <div aria-hidden="true" className="absolute -right-12 top-1/2 h-64 w-[48%] -translate-y-1/2 rounded-[48%_52%_44%_56%] bg-[var(--maeme-yellow)]/22" />
-          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
+        <section className="relative isolate overflow-hidden rounded-[22px] border border-[#F1D8C8] bg-[#FFF1E4] sm:rounded-[28px] lg:min-h-[420px]">
+          <img
+            src="/images/piri-piri-frame.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 hidden h-full w-full object-cover object-center lg:block"
+          />
+          <img
+            src="/images/flame-grilled-perfection.png"
+            alt="Flame-grilled chicken perfection"
+            className="absolute -right-[3%] top-[58%] z-[1] hidden h-[125%] w-[60%] -translate-y-1/2 object-contain object-center lg:block"
+          />
+          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[420px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
             <div className="min-w-0 max-w-xl">
               <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Piri Piri</h2>
               <DecorativeWave />
@@ -98,50 +109,85 @@ export default function FoodPage() {
                 Our signature marinades and carefully developed recipes create bold, flame-grilled flavour. Every chicken is marinated for up to 24 hours and grilled fresh for a juicy, satisfying result.
               </p>
             </div>
-            <div className="relative mx-auto flex w-full max-w-[380px] min-w-0 items-center justify-center overflow-visible">
-              <ImagePlaceholder label="WHOLE FLAME-GRILLED CHICKEN IMAGE" className="aspect-[4/3] rounded-[20px] bg-white/48 sm:rounded-[24px]" />
-              <span className="pointer-events-none absolute bottom-3 right-4 rotate-[-5deg] rounded-full bg-[var(--maeme-red)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--maeme-yellow)] sm:right-6">
-                Flamingly Good
-              </span>
+            <div className="relative mx-auto flex aspect-[16/9] w-full max-w-[680px] min-w-0 items-center justify-center overflow-hidden rounded-[20px] sm:rounded-[24px] lg:hidden">
+              <img
+                src="/images/piri-piri-frame.jpg"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-cover object-[70%_center]"
+              />
+              <img
+                src="/images/flame-grilled-perfection.png"
+                alt="Flame-grilled chicken perfection"
+                className="absolute inset-0 h-full w-full translate-y-[6%] scale-[1.4] object-contain object-center p-2"
+              />
             </div>
           </div>
         </section>
 
-        <section className="relative overflow-visible rounded-[22px] border border-[#F1D8C8] bg-[#FFF4D6] sm:rounded-[28px] lg:min-h-[250px]">
-          <div className="grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
-            <div className="relative min-w-0 lg:order-2">
+        <section className="relative overflow-hidden rounded-[22px] border border-[#F1D8C8] bg-[#FFF4D6] sm:rounded-[28px] lg:min-h-[460px]">
+          <img
+            src="/images/iconic-dishes-frame-3.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <img
+            src="/images/maemes-fan-favorites-box.png"
+            alt="Maeme’s Fan Favorites chicken and rice box"
+            className="absolute left-[1%] top-[54%] z-[1] hidden h-[95%] w-[48%] -translate-y-1/2 object-contain object-center lg:block"
+          />
+          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[460px] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
+            <div className="relative min-w-0 lg:order-2 lg:-translate-y-5">
               <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Iconic Dishes</h2>
               <DecorativeWave />
               <p className="mt-4 max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-[#3A1715]/76">
                 Chicken made bold, prepared with premium ingredients and packed with Maeme&apos;s signature flame-grilled flavour.
               </p>
             </div>
-            <div className="relative mx-auto flex w-full max-w-[430px] min-w-0 items-center justify-center overflow-visible lg:order-1">
-              <ImagePlaceholder label="CHICKEN AND RICE IMAGE" className="aspect-[16/10] rounded-[20px] bg-white/44 sm:rounded-[24px]" />
-              <HeartBadge lines={['Fan Faves']} className="absolute -right-3 top-1/2 -translate-y-1/2 rotate-[7deg] sm:-right-5 lg:-right-8" />
+            <div aria-hidden="true" className="hidden lg:block lg:order-1" />
+            <div className="relative mx-auto aspect-square w-full max-w-[480px] overflow-hidden lg:hidden lg:order-1">
+              <img
+                src="/images/maemes-fan-favorites-box.png"
+                alt="Maeme’s Fan Favorites chicken and rice box"
+                className="absolute inset-0 h-full w-full object-contain object-center"
+              />
             </div>
           </div>
         </section>
 
-        <section className="relative overflow-visible rounded-[22px] border border-[#DDE6D5] bg-[#F2F7E9] sm:rounded-[28px] lg:min-h-[185px]">
-          <div className="grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,48px)]">
+        <section className="relative overflow-hidden rounded-[22px] border border-[#DDE6D5] bg-[#F2F7E9] sm:rounded-[28px] lg:min-h-[320px]">
+          <img
+            src="/images/dips-frame-5.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:min-h-[320px] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,48px)]">
             <div className="min-w-0">
               <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Dips</h2>
               <p className="max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-[#3A1715]/76">
                 Freshly prepared to add the perfect finishing touch to every bite.
               </p>
             </div>
-            <div className="relative mx-auto flex w-full max-w-[340px] min-w-0 items-center justify-center overflow-visible">
-              <ImagePlaceholder label="DIP PRODUCT IMAGE" className="aspect-[16/8] rounded-[20px] bg-white/48 sm:rounded-[24px]" />
-              <HeartBadge lines={["Maeme's", 'Garlic Mayo']} tone="green" className="absolute -left-3 top-1/2 -translate-y-1/2 rotate-[-7deg] sm:-left-7" />
-              <span aria-hidden="true" className="pointer-events-none absolute -left-6 top-5 z-20 h-3 w-3 rotate-12 rounded-[70%_30%_65%_35%] bg-[#67A36C] sm:-left-10" />
-              <span aria-hidden="true" className="pointer-events-none absolute -left-4 bottom-5 z-20 h-2 w-2 -rotate-12 rounded-[65%_35%_70%_30%] bg-[#67A36C] sm:-left-8" />
+            <div className="relative mx-auto aspect-square w-full max-w-[360px] min-w-0 overflow-hidden">
+              <img
+                src="/images/maemes-dip-heart-sticker.png"
+                alt="Maeme’s dip"
+                className="absolute inset-0 h-full w-full object-contain object-center"
+              />
             </div>
           </div>
         </section>
 
-        <section className="relative overflow-visible rounded-[22px] border border-[#EECFC6] bg-[#FFF0EB] sm:rounded-[28px] lg:min-h-[230px]">
-          <div className="grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
+        <section className="relative overflow-hidden rounded-[22px] border border-[#EECFC6] bg-[#FFF0EB] sm:rounded-[28px] lg:min-h-[420px]">
+          <img
+            src="/images/innovation-frame-6.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
             <div className="min-w-0 lg:order-2">
               <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Innovation</h2>
               <DecorativeWave tone="red" />
@@ -149,8 +195,12 @@ export default function FoodPage() {
                 We continue to create new dishes, seasonal flavours and exciting combinations while staying true to the Maeme&apos;s flame-grilled experience.
               </p>
             </div>
-            <div className="relative mx-auto flex w-full max-w-[440px] min-w-0 items-center justify-center overflow-visible lg:order-1">
-              <ImagePlaceholder label="QUARTER CHICKEN, RICE AND STEAMED VEGETABLES IMAGE" className="aspect-[16/9] rounded-[20px] bg-white/44 sm:rounded-[24px]" />
+            <div className="relative mx-auto h-[420px] w-full max-w-[650px] min-w-0 overflow-hidden lg:order-1">
+              <img
+                src="/images/maemes-grilled-box.png"
+                alt="Maeme’s Grilled Box"
+                className="absolute inset-0 h-full w-full scale-110 object-contain object-center"
+              />
             </div>
           </div>
         </section>
@@ -166,13 +216,13 @@ export default function FoodPage() {
                 Our franchise partners are carefully selected, locally connected and part of their communities. Together, we grow the Maeme&apos;s family.
               </p>
             </div>
-            <div className="relative mx-auto w-full max-w-[440px] min-w-0 overflow-visible px-3 py-2 sm:px-5">
-              <div aria-hidden="true" className="absolute inset-x-5 inset-y-2 rotate-[2deg] rounded-[20px] bg-[var(--maeme-yellow)]/32" />
-              <div className="relative -rotate-[1deg] rounded-[22px] bg-white p-2 shadow-[0_12px_28px_rgba(58,23,21,0.10)]">
-                <ImagePlaceholder label="FRANCHISE TEAM / STORE IMAGE" className="aspect-[16/10] rounded-[17px] bg-[#F7EFE8]" />
+            <div className="relative mx-auto mt-5 w-full max-w-[440px] min-w-0 overflow-visible px-3 py-2 sm:mt-7 sm:px-5 lg:translate-y-5">
+              <div className="relative rotate-[2deg] overflow-hidden rounded-[22px] bg-white p-2 shadow-[0_12px_28px_rgba(58,23,21,0.10)]">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-[17px] bg-white">
+                  <Image src="/images/franchise-partners.jpg" alt="Maeme's franchise partners" fill sizes="(min-width: 1024px) 440px, 90vw" className="object-contain object-center" />
+                </div>
               </div>
-              <HeartBadge lines={["Maeme's"]} className="absolute -left-2 bottom-[-5px] rotate-[-7deg] sm:-left-5" />
-              <span aria-hidden="true" className="pointer-events-none absolute -left-5 bottom-16 z-20 h-5 w-10 rotate-[-28deg] rounded-[70%_30%_60%_40%] bg-[#E78935] sm:-left-9" />
+              <HeartBadge lines={["Maeme's"]} className="absolute -left-2 -top-7 scale-110 rotate-[-7deg] sm:-left-5 sm:-top-9" />
             </div>
           </div>
         </section>

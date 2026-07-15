@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AtSign, CreditCard, Globe, Mail, MapPin, Phone, QrCode, Smartphone, Sparkles } from 'lucide-react';
+import { AtSign, CreditCard, Globe, Mail, MapPin, Phone, Smartphone, Sparkles } from 'lucide-react';
 
 const quickLinks = [
   { label: 'Menu', href: '/menu' },
@@ -73,7 +73,11 @@ export default function Footer() {
                 <Smartphone size={19} className="text-[var(--maeme-yellow)]" /> Google Play
               </div>
               <div className="mt-2 flex h-24 w-24 items-center justify-center rounded-2xl bg-white text-[var(--maeme-red)]">
-                <QrCode size={64} />
+                <img
+                  src="/images/maemes-app-qr.png"
+                  alt="QR code to download the Maeme's app"
+                  className="h-full w-full rounded-2xl object-contain p-2"
+                />
               </div>
             </div>
           </div>

@@ -45,177 +45,108 @@ export default function FoodPage() {
         </div>
       </section>
 
-      <div className="page-container space-y-5 py-5 sm:space-y-6 sm:py-7 lg:space-y-7 lg:py-8">
+      <div className="page-container py-8 sm:py-12 lg:py-16">
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
+          <ScrollRevealSection className="group relative isolate overflow-hidden rounded-[28px] border border-[#A90C22]/35 bg-[#B90023] text-white shadow-[0_26px_70px_rgba(113,7,28,0.18)] sm:rounded-[36px] lg:col-span-12">
+            <img src="/images/piri-piri-new-background-1.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
+            <div className="relative grid min-h-[480px] items-center gap-8 px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.82fr_1.18fr] lg:px-[clamp(48px,6vw,96px)] lg:py-14">
+              <div className="food-scroll-text relative z-10 max-w-[560px]">
+                <span className="mb-5 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-yellow)] backdrop-blur-sm">The Maeme&apos;s signature</span>
+                <h2 className="text-[clamp(40px,5vw,76px)] font-black uppercase leading-[0.88] tracking-[-0.055em]">Piri Piri</h2>
+                <DecorativeWave />
+                <p className="mt-6 max-w-[520px] text-[clamp(15px,1.2vw,18px)] leading-[1.75] text-white/86">
+                  Our signature marinades and carefully developed recipes create bold, flame-grilled flavour. Every chicken is marinated for up to 24 hours and grilled fresh for a juicy, satisfying result.
+                </p>
+              </div>
+              <div className="food-scroll-image relative mx-auto h-[300px] w-full max-w-[760px] sm:h-[390px] lg:h-[470px]">
+                <img src="/images/flame-grilled-perfection.png" alt="Flame-grilled chicken perfection" className="absolute inset-0 h-full w-full translate-x-3 translate-y-4 scale-[1.08] object-contain object-center drop-shadow-[0_28px_32px_rgba(64,5,12,0.24)] transition-transform duration-700 ease-out group-hover:translate-x-3 group-hover:translate-y-4 group-hover:scale-[1.1] sm:translate-x-5 sm:translate-y-5 sm:group-hover:translate-x-5 sm:group-hover:translate-y-5" />
+              </div>
+            </div>
+          </ScrollRevealSection>
 
-        <ScrollRevealSection className="relative isolate overflow-hidden rounded-[22px] border border-[#A9080B] bg-[#CB090D] text-white sm:rounded-[28px] lg:min-h-[420px]">
-          <img
-            src="/images/piri-piri-frame-13.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <img
-            src="/images/flame-grilled-perfection.png"
-            alt="Flame-grilled chicken perfection"
-            className="food-scroll-image absolute -right-[3%] top-[58%] z-[1] hidden h-[125%] w-[60%] -translate-y-1/2 object-contain object-center lg:block"
-          />
-          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[420px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
-            <div className="food-scroll-text min-w-0 max-w-xl">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Piri Piri</h2>
-              <DecorativeWave />
-              <p className="mt-4 max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-white/88">
-                Our signature marinades and carefully developed recipes create bold, flame-grilled flavour. Every chicken is marinated for up to 24 hours and grilled fresh for a juicy, satisfying result.
-              </p>
+          <ScrollRevealSection className="group relative overflow-hidden rounded-[28px] border border-[#F0CF88] bg-[linear-gradient(145deg,#FFF9EA_0%,#FFE8A7_100%)] shadow-[0_22px_58px_rgba(99,57,13,0.10)] sm:rounded-[34px] lg:col-span-7">
+            <div className="relative flex h-full min-h-[560px] flex-col px-6 pb-8 pt-8 sm:px-10 sm:pb-10 lg:px-12">
+              <div className="food-scroll-text relative z-10 max-w-[540px]">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">Customer favourites</span>
+                <h2 className="mt-3 text-[clamp(34px,4vw,58px)] font-black uppercase leading-[0.92] tracking-[-0.045em]">Iconic Dishes</h2>
+                <DecorativeWave />
+                <p className="mt-5 max-w-[500px] text-[clamp(14px,1.1vw,17px)] leading-[1.7] text-[#3A1715]/76">
+                  Chicken made bold, prepared with premium ingredients and packed with Maeme&apos;s signature flame-grilled flavour.
+                </p>
+              </div>
+              <div className="food-scroll-image relative mt-auto h-[300px] w-full sm:h-[350px]">
+                <img src="/images/maemes-fan-favorites-box.png" alt="Maeme’s Fan Favorites chicken and rice box" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_24px_30px_rgba(95,45,9,0.18)] transition-transform duration-700 ease-out group-hover:scale-[1.02]" />
+              </div>
             </div>
-            <div className="food-scroll-image relative mx-auto flex aspect-[16/9] w-full max-w-[680px] min-w-0 items-center justify-center overflow-hidden rounded-[20px] sm:rounded-[24px] lg:hidden">
-              <img
-                src="/images/piri-piri-frame-13.jpg"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-cover object-[70%_center]"
-              />
-              <img
-                src="/images/flame-grilled-perfection.png"
-                alt="Flame-grilled chicken perfection"
-                className="absolute inset-0 h-full w-full translate-y-[6%] scale-[1.4] object-contain object-center p-2"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
+          </ScrollRevealSection>
 
-        <ScrollRevealSection className="relative overflow-hidden rounded-[22px] border border-[#E6A921] bg-[#FDB515] sm:rounded-[28px] lg:min-h-[460px]">
-          <img
-            src="/images/iconic-dishes-frame-12.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <img
-            src="/images/maemes-fan-favorites-box.png"
-            alt="Maeme’s Fan Favorites chicken and rice box"
-            className="food-scroll-image absolute left-[1%] top-[54%] z-[1] hidden h-[95%] w-[48%] -translate-y-1/2 object-contain object-center lg:block"
-          />
-          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[460px] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
-            <div className="food-scroll-text relative min-w-0 lg:order-2 lg:-translate-y-5">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Iconic Dishes</h2>
-              <DecorativeWave />
-              <p className="mt-4 max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-[#3A1715]/76">
-                Chicken made bold, prepared with premium ingredients and packed with Maeme&apos;s signature flame-grilled flavour.
-              </p>
+          <ScrollRevealSection className="group relative overflow-hidden rounded-[28px] border border-[#D83A43]/45 bg-[linear-gradient(155deg,#FFF8F3_0%,#FFE9E3_100%)] shadow-[0_22px_58px_rgba(102,20,25,0.09)] sm:rounded-[34px] lg:col-span-5">
+            <div className="relative flex h-full min-h-[560px] flex-col px-6 pb-8 pt-8 sm:px-10 sm:pb-10">
+              <div className="food-scroll-text relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">The finishing touch</span>
+                <h2 className="mt-3 text-[clamp(34px,4vw,58px)] font-black uppercase leading-[0.92] tracking-[-0.045em]">Dips</h2>
+                <div className="mt-4 h-1.5 w-16 rounded-full bg-[var(--maeme-red)]" />
+                <p className="mt-5 max-w-[420px] text-[clamp(14px,1.1vw,17px)] leading-[1.7] text-[#3A1715]/76">
+                  Freshly prepared to add the perfect finishing touch to every bite.
+                </p>
+              </div>
+              <div className="food-scroll-image relative mt-auto h-[290px] w-full sm:h-[350px]">
+                <img src="/images/maemes-dip-heart-sticker.png" alt="Maeme’s dip" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_22px_26px_rgba(90,18,18,0.16)] transition-transform duration-700 ease-out group-hover:scale-[1.025]" />
+              </div>
             </div>
-            <div aria-hidden="true" className="hidden lg:block lg:order-1" />
-            <div className="food-scroll-image relative mx-auto aspect-square w-full max-w-[480px] overflow-hidden lg:hidden lg:order-1">
-              <img
-                src="/images/maemes-fan-favorites-box.png"
-                alt="Maeme’s Fan Favorites chicken and rice box"
-                className="absolute inset-0 h-full w-full object-contain object-center"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
+          </ScrollRevealSection>
 
-        <ScrollRevealSection className="relative overflow-hidden rounded-[22px] border border-[#9F171C] bg-[#B91D22] text-white sm:rounded-[28px] lg:min-h-[320px]">
-          <img
-            src="/images/dips-frame-11.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:min-h-[320px] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,48px)]">
-            <div className="food-scroll-text min-w-0">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Dips</h2>
-              <p className="max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-white/88">
-                Freshly prepared to add the perfect finishing touch to every bite.
-              </p>
+          <ScrollRevealSection className="group relative overflow-hidden rounded-[28px] border border-[#E9B624]/55 bg-[#FFCA08] shadow-[0_24px_64px_rgba(112,70,7,0.11)] sm:rounded-[36px] lg:col-span-12">
+            <img src="/images/innovation-frame-8.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
+            <div className="relative grid min-h-[480px] items-center gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.12fr_0.88fr] lg:px-[clamp(48px,6vw,92px)]">
+              <div className="food-scroll-image relative h-[320px] w-full sm:h-[400px] lg:h-[460px]">
+                <img src="/images/maemes-grilled-box.png" alt="Maeme’s Grilled Box" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_28px_34px_rgba(105,55,4,0.18)] transition-transform duration-700 ease-out group-hover:scale-[1.018]" />
+              </div>
+              <div className="food-scroll-text max-w-[540px] lg:justify-self-end">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">Always evolving</span>
+                <h2 className="mt-3 text-[clamp(38px,4.5vw,66px)] font-black uppercase leading-[0.9] tracking-[-0.05em]">Innovation</h2>
+                <DecorativeWave tone="red" />
+                <p className="mt-6 text-[clamp(14px,1.1vw,18px)] leading-[1.75] text-[#3A1715]/76">
+                  We continue to create new dishes, seasonal flavours and exciting combinations while staying true to the Maeme&apos;s flame-grilled experience.
+                </p>
+              </div>
             </div>
-            <div className="food-scroll-image relative mx-auto aspect-square w-full max-w-[360px] min-w-0 overflow-hidden">
-              <img
-                src="/images/maemes-dip-heart-sticker.png"
-                alt="Maeme’s dip"
-                className="absolute inset-0 h-full w-full object-contain object-center"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
+          </ScrollRevealSection>
 
-        <ScrollRevealSection className="relative overflow-hidden rounded-[22px] border border-[#E8B62C] bg-[#FFCA08] sm:rounded-[28px] lg:min-h-[420px]">
-          <img
-            src="/images/innovation-frame-10.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div className="relative grid items-center gap-6 px-5 py-7 sm:gap-7 sm:px-9 sm:py-9 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
-            <div className="food-scroll-text min-w-0 lg:order-2">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Innovation</h2>
-              <DecorativeWave tone="red" />
-              <p className="mt-4 max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-[#3A1715]/76">
-                We continue to create new dishes, seasonal flavours and exciting combinations while staying true to the Maeme&apos;s flame-grilled experience.
-              </p>
+          <ScrollRevealSection className="group relative overflow-hidden rounded-[28px] border border-[#EDC9B9] bg-[linear-gradient(145deg,#FFF9F3_0%,#FFE9DD_100%)] shadow-[0_22px_58px_rgba(91,35,24,0.09)] sm:rounded-[34px] lg:col-span-7">
+            <div className="relative flex min-h-[600px] flex-col px-6 pb-6 pt-8 sm:px-10 sm:pt-10 lg:px-12">
+              <div className="food-scroll-text relative z-10 max-w-[520px]">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">Growing together</span>
+                <h2 className="mt-3 text-[clamp(34px,4vw,58px)] font-black uppercase leading-[0.9] tracking-[-0.045em]">
+                  <span className="block">Franchise</span>
+                  <span className="block text-[var(--maeme-red)]">Partners</span>
+                </h2>
+                <p className="mt-6 max-w-[510px] text-[clamp(14px,1.1vw,17px)] leading-[1.72] text-[#3A1715]/76">
+                  Our franchise partners are carefully selected, locally connected and part of their communities. Together, we grow the Maeme&apos;s family.
+                </p>
+              </div>
+              <div className="food-scroll-image relative mt-auto h-[340px] w-full sm:h-[390px]">
+                <Image src="/images/maemes-family-composition.png" alt="Maeme's family franchise partners" fill sizes="(min-width: 1024px) 720px, 94vw" className="object-contain object-center drop-shadow-[0_24px_30px_rgba(89,25,18,0.16)] transition-transform duration-700 ease-out group-hover:scale-[1.015]" />
+              </div>
             </div>
-            <div className="food-scroll-image relative mx-auto h-[420px] w-full max-w-[650px] min-w-0 overflow-hidden lg:order-1">
-              <img
-                src="/images/maemes-grilled-box.png"
-                alt="Maeme’s Grilled Box"
-                className="absolute inset-0 h-full w-full translate-y-4 scale-110 object-contain object-center sm:translate-y-5"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
+          </ScrollRevealSection>
 
-        <ScrollRevealSection className="relative overflow-hidden rounded-[22px] border border-[#C91F22] bg-[var(--maeme-red)] text-white sm:rounded-[28px] lg:min-h-[420px]">
-          <img
-            src="/images/franchise-frame-9.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div className="relative grid items-center gap-5 px-5 py-7 sm:px-9 sm:py-9 lg:min-h-[420px] lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:gap-[clamp(20px,3vw,48px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(32px,4vw,60px)]">
-            <div className="food-scroll-text min-w-0 max-w-[520px]">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">
-                <span className="block">Franchise</span>
-                <span className="block text-[var(--maeme-yellow)]">Partners</span>
-              </h2>
-              <p className="max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-white/88">
-                Our franchise partners are carefully selected, locally connected and part of their communities. Together, we grow the Maeme&apos;s family.
-              </p>
+          <ScrollRevealSection className="group relative overflow-hidden rounded-[28px] border border-[#E7C84F] bg-[linear-gradient(155deg,#FFFDF1_0%,#FFF0A8_100%)] shadow-[0_22px_58px_rgba(100,78,9,0.10)] sm:rounded-[34px] lg:col-span-5">
+            <div className="relative flex h-full min-h-[600px] flex-col px-6 pb-8 pt-8 sm:px-10 sm:pb-10">
+              <div className="food-scroll-text relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[#4D7B50]">Standards that matter</span>
+                <h2 className="mt-3 text-[clamp(34px,4vw,58px)] font-black uppercase leading-[0.92] tracking-[-0.045em]">Quality</h2>
+                <DecorativeWave tone="green" />
+                <p className="mt-5 max-w-[440px] text-[clamp(14px,1.1vw,17px)] leading-[1.72] text-[#3A1715]/76">
+                  Our preparation processes and operational standards are carefully maintained to provide a consistent, high-quality Maeme&apos;s experience.
+                </p>
+              </div>
+              <div className="food-scroll-image relative mt-auto h-[320px] w-full sm:h-[380px]">
+                <img src="/images/fired-up-with-flavor-composition.png" alt="Fired up with flavor, flame-grilled chicken" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_24px_30px_rgba(83,58,5,0.16)] transition-transform duration-700 ease-out group-hover:scale-[1.015]" />
+              </div>
             </div>
-            <div className="food-scroll-image relative mx-auto mt-3 h-[340px] w-full max-w-[650px] min-w-0 sm:h-[420px] lg:mt-0 lg:h-[480px]">
-              <Image
-                src="/images/maemes-family-composition.png"
-                alt="Maeme's family franchise partners"
-                fill
-                sizes="(min-width: 1024px) 650px, 94vw"
-                className="object-contain object-center"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
-
-        <ScrollRevealSection className="relative overflow-hidden rounded-[22px] border border-[#E8C23D] bg-[#FFCA08] sm:rounded-[28px] lg:min-h-[420px]">
-          <img
-            src="/images/quality-frame-8.jpg"
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div className="relative grid items-center gap-6 px-5 py-9 sm:gap-7 sm:px-9 sm:py-12 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-[clamp(32px,5vw,80px)] lg:px-[clamp(32px,5vw,72px)] lg:py-[clamp(44px,5vw,70px)]">
-            <div className="food-scroll-text min-w-0 lg:order-2">
-              <h2 className="mb-[18px] text-[clamp(30px,3vw,54px)] font-black uppercase leading-[0.95] tracking-[-0.035em]">Quality</h2>
-              <DecorativeWave tone="green" />
-              <p className="mt-4 max-w-[520px] text-[clamp(14px,1.2vw,18px)] leading-[1.65] text-[#3A1715]/76">
-                Our preparation processes and operational standards are carefully maintained to provide a consistent, high-quality Maeme&apos;s experience.
-              </p>
-            </div>
-            <div className="food-scroll-image relative mx-auto h-[280px] w-full max-w-[620px] min-w-0 overflow-visible sm:h-[340px] lg:order-1 lg:h-[390px]">
-              <img
-                src="/images/fired-up-with-flavor-composition.png"
-                alt="Fired up with flavor, flame-grilled chicken"
-                className="absolute inset-0 h-full w-full object-contain object-center"
-              />
-            </div>
-          </div>
-        </ScrollRevealSection>
+          </ScrollRevealSection>
+        </div>
       </div>
 
       <NewsletterSection />

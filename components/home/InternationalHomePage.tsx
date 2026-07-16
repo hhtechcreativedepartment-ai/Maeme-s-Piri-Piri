@@ -245,7 +245,6 @@ export default function InternationalHomePage() {
             </button>
           </div>
           <div className="relative flex min-h-[340px] items-center justify-center sm:min-h-[440px]">
-            <div className="absolute bottom-8 h-24 w-[78%] rounded-full bg-[rgba(var(--maeme-red-rgb),0.08)] blur-3xl" />
             <img
               src="/images/grilled-composition.png"
               alt="Maeme's grilled chicken meal composition"

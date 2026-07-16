@@ -100,7 +100,7 @@ export default function FoodPage() {
             <img src="/images/innovation-frame-8.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
             <div className="relative grid min-h-[480px] items-center gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.12fr_0.88fr] lg:px-[clamp(48px,6vw,92px)]">
               <div className="food-scroll-image relative h-[320px] w-full sm:h-[400px] lg:h-[460px]">
-                <img src="/images/maemes-grilled-box.png" alt="Maeme’s Grilled Box" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_28px_34px_rgba(105,55,4,0.18)] transition-transform duration-700 ease-out group-hover:scale-[1.018]" />
+                <img src="/images/maemes-grilled-box.png" alt="Maeme’s Grilled Box" className="absolute inset-0 h-full w-full translate-y-4 object-contain object-center drop-shadow-[0_28px_34px_rgba(105,55,4,0.18)] transition-transform duration-700 ease-out group-hover:translate-y-4 group-hover:scale-[1.018] sm:translate-y-5 sm:group-hover:translate-y-5" />
               </div>
               <div className="food-scroll-text max-w-[540px] lg:justify-self-end">
                 <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">Always evolving</span>

@@ -88,11 +88,28 @@ export default function InternationalHomePage() {
     const carousel = menuCarouselRef.current;
     if (!carousel) return;
 
-    const firstCard = carousel.querySelector<HTMLElement>('[data-menu-category-card]');
-    const scrollAmount = firstCard ? firstCard.offsetWidth + 20 : carousel.clientWidth * 0.8;
+    const cards = Array.from(
+      carousel.querySelectorAll<HTMLElement>('[data-menu-category-card]'),
+    );
+    if (!cards.length) return;
 
-    carousel.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
+    const firstCardOffset = cards[0].offsetLeft;
+    const currentIndex = cards.reduce((nearestIndex, card, index) => {
+      const cardScrollPosition = card.offsetLeft - firstCardOffset;
+      const nearestScrollPosition = cards[nearestIndex].offsetLeft - firstCardOffset;
+
+      return Math.abs(cardScrollPosition - carousel.scrollLeft) <
+        Math.abs(nearestScrollPosition - carousel.scrollLeft)
+        ? index
+        : nearestIndex;
+    }, 0);
+    const targetIndex = Math.max(
+      0,
+      Math.min(cards.length - 1, currentIndex + (direction === 'left' ? -1 : 1)),
+    );
+
+    carousel.scrollTo({
+      left: cards[targetIndex].offsetLeft - firstCardOffset,
       behavior: 'smooth',
     });
   };
@@ -172,7 +189,7 @@ export default function InternationalHomePage() {
 
             <div
               ref={menuCarouselRef}
-              className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory items-stretch gap-4 overflow-x-auto scroll-smooth px-1 pb-7 pt-2 [scrollbar-width:none] sm:gap-5 sm:px-0 [&::-webkit-scrollbar]:hidden"
+              className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory scroll-px-2 items-stretch gap-4 overflow-x-auto scroll-smooth px-2 pb-7 pt-2 [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
             >
               {MENU_CATEGORY_DATA.map((category) => (
               <Link

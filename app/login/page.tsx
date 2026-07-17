@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
@@ -130,13 +131,20 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#fff8ed]">
-      <div className="grid min-h-screen min-w-0 grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
+    <div className="-mt-20 h-dvh min-h-0 overflow-hidden bg-[#fff8ed]">
+      <div className="grid h-full min-h-0 min-w-0 grid-cols-1 overflow-hidden lg:grid-cols-[1.08fr_0.92fr]">
         <div className="relative hidden overflow-hidden lg:flex">
-          <div className="absolute inset-0 bg-[url('/images/premium-hero-chicken.png')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-[url('/images/grilled-composition.png')] bg-cover bg-center" />
           <div className="absolute inset-0 bg-gradient-to-br from-[#6b0714]/90 via-[#99041e]/85 to-[#3b050c]/95" />
           <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
-            <img src="/images/maemes-logo.png" alt="Maeme's logo" className="h-16 w-auto" />
+            <Image
+              src="/images/maemes-logo.png"
+              alt="Maeme's logo"
+              width={1536}
+              height={1536}
+              priority
+              className="h-48 w-48 shrink-0 object-contain"
+            />
             <div className="max-w-md">
               <p className="text-4xl font-black leading-tight text-white">Fresh food.<br />Simple ordering.</p>
               <p className="mt-5 text-base leading-7 text-white/80">
@@ -146,7 +154,7 @@ function LoginPageContent() {
           </div>
         </div>
 
-        <div className="flex w-screen max-w-full min-w-0 items-center justify-start overflow-hidden bg-white px-6 py-10 sm:justify-center sm:px-8 lg:w-auto lg:px-10">
+        <div className="flex h-full w-screen max-w-full min-w-0 items-center justify-start overflow-hidden bg-white px-6 py-10 sm:justify-center sm:px-8 lg:w-auto lg:px-10">
           <div className="w-full max-w-[340px] min-w-0 sm:max-w-[480px]">
             <button
               onClick={() => router.back()}
@@ -157,7 +165,14 @@ function LoginPageContent() {
             </button>
 
             <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <img src="/images/maemes-logo.png" alt="Maeme's logo" className="h-12 w-auto" />
+              <Image
+                src="/images/maemes-logo.png"
+                alt="Maeme's logo"
+                width={1536}
+                height={1536}
+                priority
+                className="h-28 w-28 shrink-0 object-contain"
+              />
               <div>
                 <p className="text-lg font-black text-[#1a120f]">Maeme's</p>
                 <p className="text-sm text-[#6b5b55]">Fresh food. Simple ordering.</p>

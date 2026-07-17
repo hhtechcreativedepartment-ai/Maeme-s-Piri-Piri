@@ -5,6 +5,7 @@ import BrandButton from '@/components/common/BrandButton';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function ContactPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,7 +16,7 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setIsSubmitted(true);
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
   };
 
@@ -153,7 +154,19 @@ export default function ContactPage() {
                 />
               </div>
 
-              <BrandButton variant="primary" size="lg" className="w-full">
+              {isSubmitted && (
+                <p role="status" className="rounded-xl border border-[#b9dfc7] bg-[#f0fbf4] px-4 py-3 text-sm font-semibold text-[#176b3a]">
+                  Thanks for getting in touch. We&apos;ll get back to you soon.
+                </p>
+              )}
+
+              <BrandButton
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => setIsSubmitted(false)}
+              >
                 SEND MESSAGE
               </BrandButton>
             </form>

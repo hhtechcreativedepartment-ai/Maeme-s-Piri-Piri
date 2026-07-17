@@ -29,10 +29,16 @@ export const promoStore = {
     return promo;
   },
 
-  calculateDiscount(subtotal: number, promo = this.appliedPromo) {
-    if (!promo) return 0;
-    if (promo.discountAmount) return Math.min(promo.discountAmount, subtotal);
-    if (promo.discountPercent) return Number((subtotal * (promo.discountPercent / 100)).toFixed(2));
+  calculateDiscount(subtotal: number, promo?: Promo | null) {
+    const activePromo = promo === undefined
+      ? readStorage<Promo | null>(APPLIED_PROMO_KEY, null)
+      : promo;
+
+    if (!activePromo) return 0;
+    if (activePromo.discountAmount) return Math.min(activePromo.discountAmount, subtotal);
+    if (activePromo.discountPercent) {
+      return Number((subtotal * (activePromo.discountPercent / 100)).toFixed(2));
+    }
     return 0;
   },
 };

@@ -7,6 +7,7 @@ import { faqs } from '@/lib/data';
 import { TrendingUp, Users, Zap, Award } from 'lucide-react';
 
 export default function FranchisingPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -31,7 +32,7 @@ export default function FranchisingPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Franchising form submitted:', formData);
+    setIsSubmitted(true);
     setFormData({ name: '', email: '', phone: '', location: '', experience: '', message: '' });
   };
 
@@ -223,7 +224,19 @@ export default function FranchisingPage() {
               />
             </div>
 
-            <BrandButton variant="primary" size="lg" className="w-full">
+            {isSubmitted && (
+              <p role="status" className="rounded-xl border border-[#b9dfc7] bg-[#f0fbf4] px-4 py-3 text-sm font-semibold text-[#176b3a]">
+                Thanks for your enquiry. Our franchise team will be in touch soon.
+              </p>
+            )}
+
+            <BrandButton
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => setIsSubmitted(false)}
+            >
               SEND ENQUIRY
             </BrandButton>
           </form>

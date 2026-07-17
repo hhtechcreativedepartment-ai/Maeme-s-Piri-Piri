@@ -90,15 +90,10 @@ export async function processPayment(
   // This is a placeholder for payment processing
   // In production, this would integrate with Stripe API
   
-  if (PAYMENT_CONFIG.paymentGateway === 'stripe' && PAYMENT_CONFIG.stripeEnabled) {
-    // Stripe integration would go here
-    console.log('[v0] Stripe payment would be processed here');
-  }
-
   // Simulate payment processing
   return new Promise((resolve) => {
     setTimeout(() => {
-      const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
       resolve({
         success: true,
         transactionId,

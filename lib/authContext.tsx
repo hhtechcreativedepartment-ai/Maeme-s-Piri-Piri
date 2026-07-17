@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setOtpSent(true);
       // In production, this would call an SMS provider like Twilio
       // For now, we use mock OTP: 1234
-      console.log('[v0] OTP sent to', phone, '- Mock OTP: 1234');
     } catch (error) {
       console.error('Failed to send OTP:', error);
       throw error;

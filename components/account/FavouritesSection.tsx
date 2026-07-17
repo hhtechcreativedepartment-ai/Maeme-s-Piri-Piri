@@ -78,14 +78,24 @@ export default function FavouritesSection() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-lg sm:text-xl font-black text-[#1A1A1A]">
-                    £{(item.price).toFixed(2)}
+                    £{item.price.toFixed(2)}
                   </p>
                   {item.kcal && (
                     <p className="text-xs text-[#999999]">{item.kcal}</p>
                   )}
                 </div>
                 <button
-                  onClick={() => addToCart(parseInt(item.id), item.name, item.price)}
+                  onClick={() =>
+                    addToCart({
+                      productId: Number(item.id),
+                      quantity: 1,
+                      name: item.name,
+                      price: item.price,
+                      image: item.image,
+                      unitPrice: item.price,
+                      totalPrice: item.price,
+                    })
+                  }
                   className="px-4 py-2 bg-[#FFC107] text-[#1A1A1A] font-bold rounded-full hover:bg-[#FFB300] transition-colors text-sm"
                 >
                   + Add

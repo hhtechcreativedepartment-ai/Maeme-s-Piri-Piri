@@ -47,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-[#ededed]">
+    <html lang="en" className="bg-[#ededed]" suppressHydrationWarning>
       <body className="antialiased bg-[#ededed] text-[#1F1F1F]">
         <AuthProvider>
           <CartProvider>

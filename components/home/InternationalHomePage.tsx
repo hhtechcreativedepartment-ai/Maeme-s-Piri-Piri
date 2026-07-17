@@ -24,10 +24,11 @@ import NewsletterSection from '@/components/home/NewsletterSection';
 import { MENU_CATEGORY_DATA } from '@/lib/menuData';
 
 const heroSlides = [
+  { name: 'Maeme’s App Rewards Offer', image: '/images/banners/maemes-app-rewards-offer.png' },
   { name: 'Chicken Rice Box', image: '/images/banners/chicken-rice-box.png' },
   { name: '5 Spicy Wings Meal', image: '/images/banners/spicy-wings-meal.png' },
-  { name: '5 Chicken Nuggets Meal', image: '/images/banners/chicken-nuggets-meal.png' },
-  { name: 'Signature Milkshakes', image: '/images/banners/signature-milkshakes.png' },
+  { name: '5 Chicken Nuggets Meal', image: '/images/banners/chicken-nuggets-meal-new.png' },
+  { name: 'Signature Milkshakes', image: '/images/banners/signature-milkshakes-new.png' },
 ];
 
 const processSteps = [
@@ -129,10 +130,10 @@ export default function InternationalHomePage() {
   };
 
   return (
-    <main className="w-full overflow-x-hidden bg-white text-[#1f1210]">
-      <section className="relative bg-white pb-10 pt-8 lg:pb-14">
-        <div className="page-container">
-          <div className="relative aspect-[1920/750] min-h-[168px] min-w-0 overflow-hidden rounded-[26px] border border-[#ead7c7] bg-[#fff8ef] shadow-[0_26px_80px_rgba(63,24,18,0.10)] sm:min-h-[260px] lg:min-h-0">
+    <main className="w-full overflow-x-hidden bg-white text-[#1f1210] max-md:max-w-full max-md:min-w-0">
+      <section className="relative bg-white pb-10 pt-8 max-md:box-border max-md:w-full max-md:max-w-full max-md:pb-5 max-md:pt-3 lg:pb-14">
+        <div className="page-container max-md:box-border max-md:w-full max-md:max-w-full">
+          <div className="relative aspect-[1920/750] min-h-[168px] min-w-0 overflow-hidden rounded-[26px] border border-[#ead7c7] bg-[#fff8ef] shadow-[0_26px_80px_rgba(63,24,18,0.10)] max-md:box-border max-md:h-auto max-md:w-full max-md:max-w-full max-md:min-h-0 max-md:rounded-[18px] sm:min-h-[260px] lg:min-h-0">
             {heroSlides.map((slide, index) => (
               <Image
                 key={slide.name}
@@ -142,12 +143,12 @@ export default function InternationalHomePage() {
                 sizes="100vw"
                 priority={index === 0}
                 quality={100}
-                className="absolute inset-0 object-contain transition-opacity duration-700 ease-out"
+                className="absolute inset-0 object-contain transition-opacity duration-700 ease-out max-md:h-full max-md:w-full max-md:max-w-full"
                 style={{ opacity: index === activeHeroSlide ? 1 : 0 }}
               />
             ))}
           </div>
-          <div className="flex justify-center gap-2 bg-white pt-5">
+          <div className="flex w-full max-w-full justify-center gap-2 bg-white pt-5 max-md:box-border max-md:pt-3">
             {heroSlides.map((slide, dot) => (
               <button
                 key={slide.name}
@@ -160,23 +161,23 @@ export default function InternationalHomePage() {
         </div>
       </section>
 
-      <section className="maeme-menu-carousel-section bg-white py-14 sm:py-16 lg:py-20">
-        <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <section className="maeme-menu-carousel-section bg-white py-14 max-md:w-full max-md:max-w-full max-md:py-7 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-[1320px] px-4 max-md:box-border max-md:w-full max-md:min-w-0 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-5 max-md:mb-6 max-md:gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--maeme-red)]">Explore our</p>
-              <h2 className="mt-2 text-[32px] font-black uppercase tracking-tight sm:text-5xl">
+              <h2 className="mt-2 text-[32px] font-black uppercase tracking-tight max-md:text-[clamp(25px,7.4vw,30px)] max-md:leading-none sm:text-5xl">
                 <span>Menu </span>
                 <span className="text-[var(--maeme-red)]">Categories</span>
               </h2>
-              <div className="mt-4 h-1.5 w-20 rounded-full bg-[var(--maeme-yellow)]" />
+              <div className="mt-4 h-1.5 w-20 rounded-full bg-[var(--maeme-yellow)] max-md:mt-3" />
             </div>
             <Link href="/menu" className="inline-flex items-center gap-2 text-sm font-black text-[var(--maeme-red)]">
               View Full Menu <ArrowRight size={17} />
             </Link>
           </div>
 
-          <div className="flex items-center gap-4 py-3">
+          <div className="flex min-w-0 items-center gap-4 py-3 max-md:w-full max-md:max-w-full max-md:gap-0 max-md:py-0">
             <button
               type="button"
               onClick={() => scrollMenuCarousel('left')}
@@ -189,23 +190,23 @@ export default function InternationalHomePage() {
 
             <div
               ref={menuCarouselRef}
-              className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory scroll-px-2 items-stretch gap-4 overflow-x-auto scroll-smooth px-2 pb-7 pt-2 [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
+              className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory scroll-px-2 items-stretch gap-4 overflow-x-auto scroll-smooth px-2 pb-7 pt-2 [scrollbar-width:none] max-md:w-full max-md:max-w-full max-md:touch-pan-x max-md:gap-3 max-md:overscroll-x-contain max-md:pb-2 max-md:pt-1 sm:gap-5 [&::-webkit-scrollbar]:hidden"
             >
               {MENU_CATEGORY_DATA.map((category) => (
               <Link
                 key={category.id}
                 data-menu-category-card
                 href={`/menu#${category.anchor}`}
-                className="maeme-menu-category-card group flex h-[232px] w-[78vw] min-w-[236px] max-w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-[16px] border border-[#ead8c6] bg-[#FFFFFF] p-4 text-left shadow-[0_10px_26px_rgba(31,18,16,0.045)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(var(--maeme-red-rgb),0.22)] hover:shadow-[0_16px_34px_rgba(31,18,16,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/30 sm:h-[244px] sm:w-[calc((100%-40px)/3)] sm:min-w-[226px] sm:max-w-none lg:w-[calc((100%-80px)/5)] lg:min-w-[0]"
+                className="maeme-menu-category-card group flex h-[232px] w-[78vw] min-w-[236px] max-w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-[16px] border border-[#ead8c6] bg-[#FFFFFF] p-4 text-left shadow-[0_10px_26px_rgba(31,18,16,0.045)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(var(--maeme-red-rgb),0.22)] hover:shadow-[0_16px_34px_rgba(31,18,16,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/30 max-md:h-[clamp(184px,50vw,215px)] max-md:w-[clamp(190px,62vw,246px)] max-md:min-w-[clamp(190px,62vw,246px)] max-md:max-w-[246px] max-md:p-3 sm:h-[244px] sm:w-[calc((100%-40px)/3)] sm:min-w-[226px] sm:max-w-none lg:w-[calc((100%-80px)/5)] lg:min-w-[0]"
               >
-                <h3 className="min-h-[38px] text-sm font-black uppercase leading-tight tracking-[0.025em] text-[#1f1210] sm:text-[15px]">
+                <h3 className="min-h-[38px] text-sm font-black uppercase leading-tight tracking-[0.025em] text-[#1f1210] max-md:min-h-[30px] max-md:text-xs sm:text-[15px]">
                   {category.title}
                 </h3>
-                <span className="mt-3 flex min-h-0 flex-1 items-center justify-center px-3 py-4">
+                <span className="mt-3 flex min-h-0 flex-1 items-center justify-center px-3 py-4 max-md:mt-1 max-md:px-1 max-md:py-2">
                   <img
                     src={category.image}
                     alt={`${category.title} category`}
-                    className="max-h-[150px] w-full object-contain object-center transition-transform duration-300 ease-out group-hover:scale-[1.018] sm:max-h-[158px]"
+                    className="max-h-[150px] w-full object-contain object-center transition-transform duration-300 ease-out group-hover:scale-[1.018] max-md:h-full max-md:max-h-[132px] max-md:max-w-full sm:max-h-[158px]"
                   />
                 </span>
               </Link>

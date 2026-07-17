@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import ScrollRevealSection from '@/components/food/ScrollRevealSection';
-import SpiceLevelAnimation from '@/components/food/SpiceLevelAnimation';
 import NewsletterSection from '@/components/home/NewsletterSection';
 
 function DecorativeWave({ tone = 'yellow' }: { tone?: 'yellow' | 'red' | 'green' }) {
@@ -16,33 +15,20 @@ function DecorativeWave({ tone = 'yellow' }: { tone?: 'yellow' | 'red' | 'green'
 export default function FoodPage() {
   return (
     <div className="min-h-screen overflow-x-clip bg-[#FFF8F2] text-[#3A1715]">
-      <section className="relative isolate w-full max-w-none overflow-hidden border-y border-[#F1D8C8] bg-[#FFF3E6] md:min-h-[520px] lg:min-h-[clamp(560px,48vw,730px)]">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-0 hidden w-[58%] bg-[var(--maeme-red)] [clip-path:ellipse(88%_112%_at_0%_50%)] md:block" />
-        <div aria-hidden="true" className="pointer-events-none absolute right-[-3%] top-[-30%] z-0 hidden h-[150%] w-[54%] opacity-[0.13] md:block [background:repeating-conic-gradient(from_2deg_at_50%_50%,var(--maeme-yellow)_0deg_4deg,transparent_4deg_12deg)] [mask-image:radial-gradient(circle,black_0%,transparent_68%)]" />
-
-        <div className="relative z-10 grid items-center gap-7 bg-[var(--maeme-red)] px-5 pb-8 pt-10 sm:px-7 md:min-h-[520px] md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:bg-transparent md:px-9 md:py-12 lg:min-h-[clamp(560px,48vw,730px)] lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-[clamp(40px,5vw,88px)] lg:px-[clamp(40px,6vw,110px)] lg:py-[clamp(48px,6vw,90px)]">
-          <div className="relative z-20 min-w-0 max-w-[640px] text-white">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--maeme-yellow)] sm:text-sm">Maeme&apos;s Piri Piri</p>
-              <h1 className="mt-5 text-[clamp(2.8rem,5.6vw,5.9rem)] font-black uppercase leading-[0.88] tracking-[-0.055em]">
-                <span className="block">Our Food,</span>
-                <span className="mt-2 block text-[var(--maeme-yellow)]">Our Flavour</span>
-              </h1>
-              <p className="mt-6 max-w-lg text-sm font-semibold leading-6 text-white/84 sm:text-base sm:leading-7">
-                Enjoy fresh, flame-grilled food with a choice of bold and delicious flavours.
-              </p>
-          </div>
-
-          <div className="relative z-20 mx-auto flex min-h-[300px] w-full min-w-0 items-center justify-center overflow-visible md:min-h-[360px] lg:min-h-[420px]">
-            <SpiceLevelAnimation />
-            <Image
-              src="/images/signature-flavours-sticker.png"
-              alt="Signature Flavours"
-              width={1280}
-              height={1280}
-              className="pointer-events-none absolute bottom-0 right-0 z-30 h-auto w-[clamp(120px,20vw,270px)] object-contain sm:bottom-1 sm:right-2 md:bottom-0 md:right-[2%] lg:bottom-[-2%] lg:right-[3%]"
-            />
-          </div>
-        </div>
+      <section className="w-full overflow-hidden bg-[var(--maeme-red)]" aria-label="Our Food, Our Flavour">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          aria-label="Maeme's Our Food and signature flavours"
+          className="block h-auto w-full max-w-full object-contain"
+        >
+          <source src="/videos/our-food/our-food-hero-banner.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </section>
 
       <div className="page-container py-8 sm:py-12 lg:py-16">

@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AtSign, CreditCard, Globe, Mail, MapPin, Phone, Smartphone, Sparkles } from 'lucide-react';
+import { CreditCard, Mail, MapPin, Phone, Smartphone } from 'lucide-react';
+import { socialIcons } from './SocialIcons';
 
 const quickLinks = [
   { label: 'Menu', href: '/menu' },
   { label: 'Our Food', href: '/food' },
   { label: 'Stores', href: '/branches' },
-  { label: 'Rewards', href: '/#app' },
+  { label: 'Our App', href: '/app' },
   { label: 'Franchising', href: '/franchising' },
 ];
 
@@ -42,9 +43,9 @@ export default function Footer() {
               Maeme&apos;s Piri Piri serves freshly grilled chicken, bold sauces and fast ordering for delivery or collection across local branches.
             </p>
             <div className="mt-5 flex gap-3">
-              {[AtSign, Globe, Sparkles].map((Icon, index) => (
+              {socialIcons.map((Icon, index) => (
                 <span key={index} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-[var(--maeme-yellow)]">
-                  <Icon size={18} />
+                  <Icon className="h-[18px] w-[18px]" />
                 </span>
               ))}
             </div>

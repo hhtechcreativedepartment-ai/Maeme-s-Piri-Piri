@@ -6,6 +6,7 @@ import { MapPin, Menu, ShoppingCart, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cartContext';
 import LeftDrawer from './LeftDrawer';
+import { socialIcons } from './SocialIcons';
 
 export default function Header() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function Header() {
     { label: 'Menu', href: '/menu' },
     { label: 'Our Food', href: '/food' },
     { label: 'Stores', href: '/branches' },
-    { label: 'Rewards', href: '/#app' },
+    { label: 'Our App', href: '/app' },
     { label: 'Franchising', href: '/franchising' },
   ];
 
@@ -68,7 +69,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-7 lg:flex xl:gap-8">
+        <nav className="hidden min-w-0 flex-1 items-center justify-end gap-6 pr-2 lg:flex xl:gap-7 xl:pr-3">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -83,6 +84,17 @@ export default function Header() {
         </nav>
 
         <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-3">
+          <div className="hidden items-center gap-3 border-l border-[#ead7c7] pl-5 text-[var(--maeme-red)] lg:flex xl:gap-4 xl:pl-6">
+            {socialIcons.map((Icon, index) => (
+              <span
+                key={index}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(var(--maeme-red-rgb),0.18)] bg-[rgba(var(--maeme-red-rgb),0.06)] transition-colors hover:bg-[rgba(var(--maeme-red-rgb),0.12)]"
+              >
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
+            ))}
+          </div>
+
           <button
             data-open-postcode-modal
             className="hidden h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full border border-[#ead7c7] bg-white text-sm font-black leading-none text-[#1f1210] transition hover:bg-[#fff8f2] sm:flex sm:h-11 sm:w-auto sm:px-4"

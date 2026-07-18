@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils, X } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { useOrders } from '@/lib/ordersContext';
 import { Order } from '@/lib/orderUtils';
@@ -64,6 +64,7 @@ export default function PremiumAccountPage() {
   const { orders, currentOrder, cancelOrder: cancelOrderByNumber } = useOrders();
   const { favourites, removeFavourite } = useFavourites();
   const [activeTab, setActiveTab] = useState<AccountTab>('profile');
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [profile, setProfile] = useState({ name: '', phone: '', email: '', dob: '' });
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [addressForm, setAddressForm] = useState<SavedAddress>({
@@ -100,10 +101,25 @@ export default function PremiumAccountPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'orders') setActiveTab('history');
-    if (tab === 'tracking') setActiveTab('tracking');
-    if (tab === 'favourites' || tab === 'addresses' || tab === 'promos') setActiveTab(tab);
+    let requestedTab: AccountTab | null = null;
+    if (tab === 'orders') requestedTab = 'history';
+    if (tab === 'tracking') requestedTab = 'tracking';
+    if (tab === 'favourites' || tab === 'addresses' || tab === 'promos') requestedTab = tab;
+
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+      if (window.matchMedia('(max-width: 1023px)').matches) setMobilePanelOpen(true);
+    }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!mobilePanelOpen || !window.matchMedia('(max-width: 1023px)').matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobilePanelOpen]);
 
   useEffect(() => {
     const saved = localStorage.getItem('maemes.checkout.savedAddresses');
@@ -254,14 +270,17 @@ export default function PremiumAccountPage() {
 
         <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="min-w-0">
-            <nav className="sticky top-28 flex gap-2 overflow-x-auto rounded-[24px] border border-[#f0d59d] bg-white p-3 shadow-[0_14px_38px_rgba(50,24,16,0.08)] lg:block lg:space-y-2 lg:overflow-visible">
+            <nav className="sticky top-28 flex flex-col gap-2 overflow-visible rounded-[24px] border border-[#f0d59d] bg-white p-3 shadow-[0_14px_38px_rgba(50,24,16,0.08)] lg:block lg:space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex min-w-max items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition lg:w-full ${
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setMobilePanelOpen(true);
+                    }}
+                    className={`flex w-full min-w-0 items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
                       activeTab === tab.id ? 'bg-[#99041e] text-white' : 'text-[#1a120f] hover:bg-[#fff8ed]'
                     }`}
                   >
@@ -270,14 +289,14 @@ export default function PremiumAccountPage() {
                   </button>
                 );
               })}
-              <div className="hidden border-t border-[#f0d59d] pt-2 lg:block" />
+              <div className="border-t border-[#f0d59d] pt-2" />
               {profileLinks.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={`${item.label}-${item.href}`}
                     href={item.href}
-                    className="flex min-w-max items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black text-[#1a120f] transition hover:bg-[#fff8ed] lg:w-full"
+                    className="flex w-full min-w-0 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black text-[#1a120f] transition hover:bg-[#fff8ed]"
                   >
                     <Icon size={18} className="text-[#99041e]" />
                     {item.label}
@@ -286,7 +305,7 @@ export default function PremiumAccountPage() {
               })}
               <button
                 onClick={user ? handleLogout : handleLogin}
-                className={`flex min-w-max items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition lg:w-full ${
+                className={`flex w-full min-w-0 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black transition ${
                   user ? 'bg-[#99041e] text-white hover:bg-[#7f0318]' : 'bg-[#ffc257] text-[#1a120f] hover:bg-[#e5a93e]'
                 }`}
               >
@@ -296,7 +315,23 @@ export default function PremiumAccountPage() {
             </nav>
           </aside>
 
-          <section className="min-w-0 rounded-[28px] border border-[#f0d59d] bg-white p-5 shadow-[0_18px_50px_rgba(50,24,16,0.08)] sm:p-7">
+          <section
+            className={`${mobilePanelOpen ? 'fixed inset-0 z-[90] block overflow-y-auto bg-white p-5' : 'hidden'} min-w-0 lg:static lg:block lg:overflow-visible lg:rounded-[28px] lg:border lg:border-[#f0d59d] lg:bg-white lg:p-7 lg:shadow-[0_18px_50px_rgba(50,24,16,0.08)]`}
+          >
+            <div className="sticky top-0 z-20 -mx-5 -mt-5 mb-6 flex items-center gap-3 border-b border-[#f0d59d] bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobilePanelOpen(false)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-black text-[#99041e]"
+              >
+                <ArrowLeft size={20} />
+                Back
+              </button>
+              <p className="min-w-0 flex-1 truncate text-right text-sm font-black text-[#1a120f]">
+                {tabs.find((tab) => tab.id === activeTab)?.label}
+              </p>
+            </div>
+
             {!user && (
               <LoginPrompt onLogin={handleLogin} />
             )}

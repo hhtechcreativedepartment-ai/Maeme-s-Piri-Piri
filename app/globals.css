@@ -298,6 +298,18 @@
   }
 }
 
+@media (max-width: 639px) {
+  .food-scroll-section .food-scroll-image {
+    margin-inline: auto;
+  }
+
+  .food-scroll-section .food-scroll-image > img {
+    object-position: 50% 50% !important;
+    transform: translate3d(0, 0, 0) scale(0.86) !important;
+    transform-origin: center center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .food-scroll-section,
   .food-scroll-section .food-scroll-image,

@@ -10,7 +10,7 @@ import { MENU_DATA, MENU_CATEGORIES, MenuItem } from '@/lib/menuData';
 import { useCart } from '@/lib/cartContext';
 
 function MenuPageContent() {
-  const [selectedCategory, setSelectedCategory] = useState('Grilled Collection');
+  const [selectedCategory, setSelectedCategory] = useState('Offers');
   const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -18,7 +18,9 @@ function MenuPageContent() {
   const [toast, setToast] = useState<{ message: string; productName: string } | null>(null);
   const { selectedBranch, selectedOrderType } = useCart();
 
-  const filteredProducts = MENU_DATA.filter(p => p.category === selectedCategory);
+  const filteredProducts = MENU_DATA.filter((product) => (
+    selectedCategory === 'Offers' ? product.offer : product.category === selectedCategory
+  ));
 
   const handleAddToCart = (product: typeof MENU_DATA[0]) => {
     if (!selectedBranch || !selectedOrderType) {

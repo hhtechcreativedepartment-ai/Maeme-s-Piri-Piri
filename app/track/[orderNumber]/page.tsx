@@ -176,8 +176,14 @@ export default function TrackOrderPage() {
                 <p className="text-xs text-[#999999] font-semibold uppercase mb-1">
                   {order.orderType === 'delivery' ? 'Delivering To' : 'Collection Location'}
                 </p>
-                <p className="font-semibold text-[#1A1A1A] text-sm">{order.branchName}</p>
-                <p className="text-xs text-[#666666] mt-1">{order.branchAddress}</p>
+                <p className="font-semibold text-[#1A1A1A] text-sm">
+                  {order.orderType === 'delivery' ? 'Delivery address' : order.branchName}
+                </p>
+                <p className="text-xs text-[#666666] mt-1">
+                  {order.orderType === 'delivery'
+                    ? order.deliveryAddress || order.branchAddress
+                    : order.branchAddress}
+                </p>
               </div>
             </div>
           </div>

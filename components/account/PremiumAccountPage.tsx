@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils } from 'lucide-react';
+import { ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils, X } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { useOrders } from '@/lib/ordersContext';
 import { Order } from '@/lib/orderUtils';
@@ -48,12 +48,20 @@ const promoCards = [
 ];
 
 const inputClass = 'min-h-12 w-full rounded-2xl border border-[#ead8c6] bg-white px-4 text-sm font-semibold outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10';
+const cancellationReasons = [
+  'Ordered by mistake',
+  'Need to change my order',
+  'Delivery is taking too long',
+  'Wrong delivery address',
+  'Payment issue',
+  'Other',
+];
 
 export default function PremiumAccountPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading, logout } = useAuth();
-  const { orders, currentOrder, updateOrderStatus } = useOrders();
+  const { orders, currentOrder, cancelOrder: cancelOrderByNumber } = useOrders();
   const { favourites, removeFavourite } = useFavourites();
   const [activeTab, setActiveTab] = useState<AccountTab>('profile');
   const [profile, setProfile] = useState({ name: '', phone: '', email: '', dob: '' });
@@ -69,6 +77,9 @@ export default function PremiumAccountPage() {
   });
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [orderPendingCancellation, setOrderPendingCancellation] = useState<Order | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [otherCancellationReason, setOtherCancellationReason] = useState('');
 
   useEffect(() => {
     if (isLoading) {
@@ -172,9 +183,41 @@ export default function PremiumAccountPage() {
     setAddresses((current) => current.map((address) => ({ ...address, isDefault: address.id === id })));
   };
 
-  const cancelOrder = (order: Order) => {
-    if (order.currentStep > 0) return;
-    updateOrderStatus(order.orderNumber, 'cancelled' as Order['status'], order.currentStep);
+  const requestOrderCancellation = (order: Order) => {
+    if (order.status !== 'received' || order.currentStep !== 0) {
+      showToast('This order is already being prepared and cannot be cancelled');
+      return;
+    }
+    setOrderPendingCancellation(order);
+    setCancellationReason('');
+    setOtherCancellationReason('');
+  };
+
+  const closeCancellationDialog = () => {
+    setOrderPendingCancellation(null);
+    setCancellationReason('');
+    setOtherCancellationReason('');
+  };
+
+  const confirmOrderCancellation = () => {
+    if (!orderPendingCancellation) return;
+    const reason = cancellationReason === 'Other'
+      ? otherCancellationReason.trim()
+      : cancellationReason;
+
+    if (!reason) {
+      showToast(cancellationReason === 'Other' ? 'Please enter a cancellation reason' : 'Please select a cancellation reason');
+      return;
+    }
+
+    const cancelled = cancelOrderByNumber(orderPendingCancellation.orderNumber, reason);
+    if (!cancelled) {
+      closeCancellationDialog();
+      showToast('This order is already being prepared and cannot be cancelled');
+      return;
+    }
+
+    closeCancellationDialog();
     showToast('Order cancelled');
   };
 
@@ -272,7 +315,7 @@ export default function PremiumAccountPage() {
             )}
 
             {user && activeTab === 'history' && (
-              <OrderHistoryPanel liveOrder={liveOrder} pastOrders={pastOrders} onCancel={cancelOrder} />
+              <OrderHistoryPanel liveOrder={liveOrder} pastOrders={pastOrders} onCancel={requestOrderCancellation} />
             )}
 
             {user && activeTab === 'tracking' && (
@@ -361,6 +404,73 @@ export default function PremiumAccountPage() {
           </section>
         </div>
       </div>
+      {orderPendingCancellation && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4" role="presentation" onMouseDown={closeCancellationDialog}>
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-order-title"
+            className="w-full max-w-lg rounded-[28px] border border-[#f0d59d] bg-white p-5 shadow-2xl sm:p-7"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#99041e]">Cancel order</p>
+                <h2 id="cancel-order-title" className="mt-2 text-3xl font-black">Why are you cancelling?</h2>
+                <p className="mt-2 text-sm leading-6 text-[#6b5b55]">
+                  Order {orderPendingCancellation.orderNumber} can only be cancelled before preparation begins.
+                </p>
+              </div>
+              <button type="button" onClick={closeCancellationDialog} className="rounded-xl border border-[#f0d59d] p-2 text-[#99041e]" aria-label="Close cancellation form">
+                <X size={20} />
+              </button>
+            </div>
+
+            <fieldset className="mt-6 space-y-2">
+              <legend className="sr-only">Select a cancellation reason</legend>
+              {cancellationReasons.map((reason) => (
+                <label key={reason} className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                  cancellationReason === reason ? 'border-[#99041e] bg-[#fff8ed]' : 'border-[#f0d59d] bg-white hover:border-[#ffc257]'
+                }`}>
+                  <input
+                    type="radio"
+                    name="cancellationReason"
+                    value={reason}
+                    checked={cancellationReason === reason}
+                    onChange={() => setCancellationReason(reason)}
+                    className="h-4 w-4 accent-[#99041e]"
+                  />
+                  {reason}
+                </label>
+              ))}
+            </fieldset>
+
+            {cancellationReason === 'Other' && (
+              <textarea
+                value={otherCancellationReason}
+                onChange={(event) => setOtherCancellationReason(event.target.value)}
+                placeholder="Please tell us why you are cancelling"
+                maxLength={300}
+                className="mt-4 min-h-28 w-full resize-none rounded-2xl border border-[#f0d59d] px-4 py-3 text-sm font-semibold outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
+              />
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeCancellationDialog} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-sm font-black text-[#99041e]">
+                Keep order
+              </button>
+              <button
+                type="button"
+                onClick={confirmOrderCancellation}
+                disabled={!cancellationReason || (cancellationReason === 'Other' && !otherCancellationReason.trim())}
+                className="rounded-2xl bg-[#99041e] px-5 py-3 text-sm font-black text-white transition hover:bg-[#7f0318] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Confirm cancellation
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {toast && <div className="fixed bottom-8 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-xl lg:left-auto lg:right-8 lg:mx-0">{toast}</div>}
     </main>
   );
@@ -468,7 +578,7 @@ function LiveOrderCard({ order, onCancel }: { order: Order; onCancel?: (order: O
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <Link href={`/account/orders/${order.orderNumber}`} className="rounded-2xl bg-[#99041e] px-5 py-3 text-center text-sm font-black text-white">View details</Link>
         <Link href={`/track/${order.orderNumber}`} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-center text-sm font-black text-[#99041e]">Track Order</Link>
-        {onCancel && order.currentStep === 0 && <button onClick={() => onCancel(order)} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-sm font-black text-[#99041e]">Cancel order</button>}
+        {onCancel && order.status === 'received' && order.currentStep === 0 && <button onClick={() => onCancel(order)} className="rounded-2xl border border-[#f0d59d] bg-white px-5 py-3 text-sm font-black text-[#99041e]">Cancel order</button>}
       </div>
     </article>
   );

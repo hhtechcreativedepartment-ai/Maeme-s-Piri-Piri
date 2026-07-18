@@ -22,12 +22,15 @@ export default function FoodPage() {
           loop
           playsInline
           preload="auto"
+          poster="/images/our-food-hero-poster.jpg"
+          controls={false}
+          controlsList="nodownload noremoteplayback"
           disablePictureInPicture
+          disableRemotePlayback
           aria-label="Maeme's Our Food and signature flavours"
           className="block h-auto w-full max-w-full object-contain"
         >
           <source src="/videos/our-food/our-food-hero-banner.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
         </video>
       </section>
 
@@ -45,7 +48,7 @@ export default function FoodPage() {
                 </p>
               </div>
               <div className="food-scroll-image relative mx-auto h-[300px] w-full max-w-[760px] sm:h-[390px] lg:h-[470px]">
-                <img src="/images/flame-grilled-perfection.png" alt="Flame-grilled chicken perfection" className="absolute inset-0 h-full w-full translate-x-3 translate-y-4 scale-[1.08] object-contain object-center drop-shadow-[0_28px_32px_rgba(64,5,12,0.24)] transition-transform duration-700 ease-out group-hover:translate-x-3 group-hover:translate-y-4 group-hover:scale-[1.1] sm:translate-x-5 sm:translate-y-5 sm:group-hover:translate-x-5 sm:group-hover:translate-y-5" />
+                <img src="/images/flame-grilled-perfection.png" alt="Flame-grilled chicken perfection" className="absolute inset-0 h-full w-full translate-x-5 translate-y-7 scale-[1.14] object-contain object-center drop-shadow-[0_28px_32px_rgba(64,5,12,0.24)] transition-transform duration-700 ease-out group-hover:translate-x-5 group-hover:translate-y-7 group-hover:scale-[1.16] sm:translate-x-10 sm:translate-y-10 sm:scale-[1.18] sm:group-hover:translate-x-10 sm:group-hover:translate-y-10 sm:group-hover:scale-[1.2]" />
               </div>
             </div>
           </ScrollRevealSection>
@@ -61,7 +64,7 @@ export default function FoodPage() {
                 </p>
               </div>
               <div className="food-scroll-image relative mt-auto h-[300px] w-full sm:h-[350px]">
-                <img src="/images/maemes-fan-favorites-box.png" alt="Maeme’s Fan Favorites chicken and rice box" className="absolute inset-0 h-full w-full object-contain object-center drop-shadow-[0_24px_30px_rgba(95,45,9,0.18)] transition-transform duration-700 ease-out group-hover:scale-[1.02]" />
+                <img src="/images/maemes-fan-favorites-box.png" alt="Maeme’s Fan Favorites chicken and rice box" className="absolute inset-0 h-full w-full translate-x-6 -translate-y-2 scale-[1.1] object-contain object-center drop-shadow-[0_24px_30px_rgba(95,45,9,0.18)] transition-transform duration-700 ease-out group-hover:translate-x-6 group-hover:-translate-y-2 group-hover:scale-[1.13] sm:translate-x-14 sm:-translate-y-4 sm:scale-[1.3] sm:group-hover:translate-x-14 sm:group-hover:-translate-y-4 sm:group-hover:scale-[1.33]" />
               </div>
             </div>
           </ScrollRevealSection>
@@ -86,7 +89,7 @@ export default function FoodPage() {
             <img src="/images/innovation-frame-8.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
             <div className="relative grid min-h-[480px] items-center gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.12fr_0.88fr] lg:px-[clamp(48px,6vw,92px)]">
               <div className="food-scroll-image relative h-[320px] w-full sm:h-[400px] lg:h-[460px]">
-                <img src="/images/maemes-grilled-box.png" alt="Maeme’s Grilled Box" className="absolute inset-0 h-full w-full translate-y-4 object-contain object-center drop-shadow-[0_28px_34px_rgba(105,55,4,0.18)] transition-transform duration-700 ease-out group-hover:translate-y-4 group-hover:scale-[1.018] sm:translate-y-5 sm:group-hover:translate-y-5" />
+                <img src="/images/maemes-grilled-box.png" alt="Maeme’s Grilled Box" className="absolute inset-0 h-full w-full translate-y-8 scale-[1.2] object-contain object-center drop-shadow-[0_28px_34px_rgba(105,55,4,0.18)] transition-transform duration-700 ease-out group-hover:translate-y-8 group-hover:scale-[1.23] sm:translate-y-10 sm:group-hover:translate-y-10" />
               </div>
               <div className="food-scroll-text max-w-[540px] lg:justify-self-end">
                 <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--maeme-red)]">Always evolving</span>

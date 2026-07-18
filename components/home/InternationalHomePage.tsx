@@ -25,10 +25,10 @@ import { MENU_CATEGORY_DATA } from '@/lib/menuData';
 
 const heroSlides = [
   { name: 'Maeme’s App Rewards Offer', image: '/images/banners/maemes-app-rewards-offer.png' },
-  { name: 'Chicken Rice Box', image: '/images/banners/chicken-rice-box.png' },
-  { name: '5 Spicy Wings Meal', image: '/images/banners/spicy-wings-meal.png' },
-  { name: '5 Chicken Nuggets Meal', image: '/images/banners/chicken-nuggets-meal-new.png' },
-  { name: 'Signature Milkshakes', image: '/images/banners/signature-milkshakes-new.png' },
+  { name: 'Chicken Rice Box', image: '/images/banners/carousel-image-no-2.jpg' },
+  { name: '5 Spicy Wings Meal', image: '/images/banners/carousel-image-no-3.jpg' },
+  { name: '5 Chicken Nuggets Meal', image: '/images/banners/carousel-image-no-4.jpg' },
+  { name: 'Signature Milkshakes', image: '/images/banners/carousel-image-no-5.jpg' },
 ];
 
 const processSteps = [
@@ -49,18 +49,9 @@ export default function InternationalHomePage() {
   const router = useRouter();
   const { selectedBranch, selectedOrderType } = useCart();
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const menuCarouselRef = useRef<HTMLDivElement>(null);
   const [canScrollMenuLeft, setCanScrollMenuLeft] = useState(false);
   const [canScrollMenuRight, setCanScrollMenuRight] = useState(true);
-
-  useEffect(() => {
-    const slideTimer = window.setInterval(() => {
-      setActiveHeroSlide((currentSlide) => (currentSlide + 1) % heroSlides.length);
-    }, 5000);
-
-    return () => window.clearInterval(slideTimer);
-  }, []);
 
   const updateMenuCarouselState = () => {
     const carousel = menuCarouselRef.current;
@@ -143,18 +134,18 @@ export default function InternationalHomePage() {
                 sizes="100vw"
                 priority={index === 0}
                 quality={100}
-                className="absolute inset-0 object-contain transition-opacity duration-700 ease-out max-md:h-full max-md:w-full max-md:max-w-full"
-                style={{ opacity: index === activeHeroSlide ? 1 : 0 }}
+                className="maeme-hero-slide pointer-events-none absolute inset-0 object-cover max-md:h-full max-md:w-full max-md:max-w-full"
+                style={{ animationDelay: `${index * 2.5 - 0.5}s` }}
               />
             ))}
           </div>
           <div className="flex w-full max-w-full justify-center gap-2 bg-white pt-5 max-md:box-border max-md:pt-3">
             {heroSlides.map((slide, dot) => (
-              <button
+              <span
                 key={slide.name}
-                onClick={() => setActiveHeroSlide(dot)}
-                className={`h-2.5 rounded-full transition ${dot === activeHeroSlide ? 'w-8 bg-[var(--maeme-red)]' : 'w-2.5 bg-[#d8d0ca]'}`}
-                aria-label={`Go to promotional slide ${dot + 1}`}
+                className="maeme-hero-dot h-2.5 rounded-full"
+                style={{ animationDelay: `${dot * 2.5 - 0.5}s` }}
+                aria-hidden="true"
               />
             ))}
           </div>

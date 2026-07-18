@@ -24,6 +24,7 @@ const DIRECT_ADD_CATEGORY_SLUGS = new Set([
   'sides-and-extras',
   'ice-cream',
   'dips',
+  'milkshakes',
   'drinks',
 ]);
 
@@ -43,7 +44,9 @@ export default function CompleteMenuPage() {
   const productsByCategory = useMemo(() => (
     MENU_CATEGORY_DATA.map((category) => ({
       category,
-      products: MENU_DATA.filter((product) => product.category === category.title),
+      products: MENU_DATA.filter((product) => (
+        category.id === 'offers' ? product.offer : product.category === category.title
+      )),
     }))
   ), []);
 

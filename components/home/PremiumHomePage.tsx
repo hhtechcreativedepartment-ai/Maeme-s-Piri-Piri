@@ -41,6 +41,7 @@ const heroFeatures = [
 ];
 
 const categoryImage: Record<string, string> = {
+  Offers: '/images/exclusive-deals-sign.png',
   'Grilled Collection': '/images/hero-chicken.png',
   'Maeme’s Burgers': '/images/premium-hero-chicken.png',
   'Vegetarian Collection': '/images/chicken-wrap.png',
@@ -51,6 +52,7 @@ const categoryImage: Record<string, string> = {
   'Sides & Extras': '/images/chicken-fries.png',
   'Ice Cream': '/images/premium-hero-chicken.png',
   Dips: '/images/chicken-fries.png',
+  Milkshakes: '/Milkshakes.jpg.jpg',
   Drinks: '/images/meal-bowl.png',
 };
 

@@ -128,11 +128,17 @@ export default function OrderHistorySection() {
           {/* Order Info */}
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div>
-              <p className="text-xs font-bold text-[#999999] uppercase mb-2">Branch</p>
-              <p className="font-bold text-[#1A1A1A] mb-1">{selectedOrder.branchName}</p>
+              <p className="text-xs font-bold text-[#999999] uppercase mb-2">
+                {selectedOrder.orderType === 'delivery' ? 'Delivery Address' : 'Collection Branch'}
+              </p>
+              <p className="font-bold text-[#1A1A1A] mb-1">
+                {selectedOrder.orderType === 'delivery' ? 'Delivering to' : selectedOrder.branchName}
+              </p>
               <p className="text-sm text-[#666666] flex items-start gap-2">
                 <MapPin size={16} className="text-[#99041e] flex-shrink-0 mt-0.5" />
-                {selectedOrder.branchAddress}
+                {selectedOrder.orderType === 'delivery'
+                  ? selectedOrder.deliveryAddress || selectedOrder.branchAddress
+                  : selectedOrder.branchAddress}
               </p>
             </div>
             <div>

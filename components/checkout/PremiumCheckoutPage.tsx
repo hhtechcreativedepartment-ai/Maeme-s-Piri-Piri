@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
   CreditCard,
@@ -25,7 +25,7 @@ import { categorySlug } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
-type PaymentMethod = 'cash' | 'card' | 'wallet';
+type PaymentMethod = 'cash' | 'card';
 
 interface SavedAddress {
   id: string;
@@ -83,7 +83,6 @@ const fieldClass =
 
 export default function PremiumCheckoutPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const {
     items,
     selectedBranch,
@@ -125,7 +124,6 @@ export default function PremiumCheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState('');
   const [validationMessage, setValidationMessage] = useState('');
-  const hasAutoCompletedRef = useRef(false);
 
   useEffect(() => {
     const addresses = localStorage.getItem('maemes.checkout.savedAddresses');
@@ -159,7 +157,12 @@ export default function PremiumCheckoutPage() {
         if (parsed.deliverySearch) setDeliverySearch(parsed.deliverySearch);
         if (parsed.pickupSearch) setPickupSearch(parsed.pickupSearch);
         if (parsed.addressForm) setAddressForm(parsed.addressForm);
-        if (parsed.paymentMethod) setPaymentMethod(parsed.paymentMethod);
+        if (parsed.selectedAddressId) setSelectedAddressId(parsed.selectedAddressId);
+        if (parsed.paymentMethod === 'cash' || parsed.paymentMethod === 'card') {
+          setPaymentMethod(parsed.paymentMethod);
+        } else if (parsed.paymentMethod === 'wallet') {
+          setPaymentMethod('card');
+        }
         if (parsed.voucher) setVoucher(parsed.voucher);
         if (parsed.notes) setNotes(parsed.notes);
       } catch {
@@ -201,18 +204,9 @@ export default function PremiumCheckoutPage() {
   useEffect(() => {
     localStorage.setItem(
       'maemes.checkout.draft',
-      JSON.stringify({ orderType, deliverySearch, pickupSearch, addressForm, paymentMethod, voucher, notes })
+      JSON.stringify({ orderType, deliverySearch, pickupSearch, selectedAddressId, addressForm, paymentMethod, voucher, notes })
     );
-  }, [addressForm, deliverySearch, notes, orderType, paymentMethod, pickupSearch, voucher]);
-
-  useEffect(() => {
-    const shouldCompleteOrder = searchParams.get('completeOrder') === '1';
-
-    if (shouldCompleteOrder && user && items.length > 0 && !hasAutoCompletedRef.current) {
-      hasAutoCompletedRef.current = true;
-      completeOrder();
-    }
-  }, [items.length, searchParams, user]);
+  }, [addressForm, deliverySearch, notes, orderType, paymentMethod, pickupSearch, selectedAddressId, voucher]);
 
   const productTotal = getCartTotal();
   const deliveryFee = orderType === 'delivery' ? branch?.deliveryFee ?? 2.49 : 0;
@@ -315,7 +309,7 @@ export default function PremiumCheckoutPage() {
     if (orderType === 'delivery' && !selectedAddressId && !addressForm.address) {
       return 'Please select or add a delivery address.';
     }
-    if ((paymentMethod === 'card' || paymentMethod === 'wallet') && !selectedCardId && paymentMethod === 'card' && !cardForm.cardNumber) {
+    if (paymentMethod === 'card' && !selectedCardId && !cardForm.cardNumber) {
       return 'Please select or add a card before placing the order.';
     }
     return '';
@@ -324,7 +318,7 @@ export default function PremiumCheckoutPage() {
   const saveDraftBeforeLogin = () => {
     localStorage.setItem(
       'maemes.checkout.draft',
-      JSON.stringify({ orderType, deliverySearch, pickupSearch, addressForm, paymentMethod, voucher, notes })
+      JSON.stringify({ orderType, deliverySearch, pickupSearch, selectedAddressId, addressForm, paymentMethod, voucher, notes })
     );
   };
 
@@ -335,10 +329,16 @@ export default function PremiumCheckoutPage() {
       price: itemUnitPrice(item),
       quantity: item.quantity,
     }));
+    const deliveryAddress = orderType === 'delivery'
+      ? currentAddress
+        ? `${currentAddress.recipientName}, ${currentAddress.address}, ${currentAddress.city}, ${currentAddress.postcode}`
+        : [addressForm.recipientName, addressForm.address, addressForm.city, addressForm.postcode].filter(Boolean).join(', ')
+      : undefined;
 
     const newOrder = createOrder({
       branchName: branch?.branchName || "Maeme's",
       branchAddress: branch?.address || '',
+      deliveryAddress,
       orderType,
       items: orderItems,
       subtotal: productTotal,
@@ -363,7 +363,7 @@ export default function PremiumCheckoutPage() {
 
     if (!user) {
       saveDraftBeforeLogin();
-      router.push(`/login?redirect=${encodeURIComponent('/checkout?completeOrder=1')}`);
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
       return;
     }
 
@@ -533,12 +533,11 @@ export default function PremiumCheckoutPage() {
             )}
 
             <CheckoutSection icon={<CreditCard size={20} />} title="Payment Method">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 {orderType === 'delivery' && (
                   <PaymentButton active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} title="Cash on Delivery" detail="Pay at your door" />
                 )}
                 <PaymentButton active={paymentMethod === 'card'} onClick={() => setPaymentMethod('card')} title="Debit/Credit Card" detail="Use saved or new card" />
-                <PaymentButton active={paymentMethod === 'wallet'} onClick={() => setPaymentMethod('wallet')} title="Apple Pay / Google Pay" detail="Mock wallet checkout" />
               </div>
 
               {paymentMethod === 'card' && (

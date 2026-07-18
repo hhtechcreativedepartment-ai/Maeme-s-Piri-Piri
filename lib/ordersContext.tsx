@@ -10,6 +10,7 @@ interface OrdersContextType {
   getOrderByNumber: (orderNumber: string) => Order | null;
   getAllOrders: () => Order[];
   updateOrderStatus: (orderNumber: string, newStatus: Order['status'], currentStep: Order['currentStep']) => void;
+  cancelOrder: (orderNumber: string, reason: string) => boolean;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -23,11 +24,42 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const savedOrders = localStorage.getItem('userOrders');
     const savedCurrentOrder = localStorage.getItem('currentOrder');
+    const savedAddresses = localStorage.getItem('maemes.checkout.savedAddresses');
+    let fallbackDeliveryAddress = '';
+
+    if (savedAddresses) {
+      try {
+        const addresses = JSON.parse(savedAddresses) as Array<{
+          recipientName?: string;
+          address?: string;
+          city?: string;
+          postcode?: string;
+        }>;
+        const address = addresses[0];
+        if (address) {
+          fallbackDeliveryAddress = [
+            address.recipientName,
+            address.address,
+            address.city,
+            address.postcode,
+          ].filter(Boolean).join(', ');
+        }
+      } catch {
+        fallbackDeliveryAddress = '';
+      }
+    }
+
+    const addLegacyDeliveryAddress = (order: Order): Order => (
+      order.orderType === 'delivery' && !order.deliveryAddress && fallbackDeliveryAddress
+        ? { ...order, deliveryAddress: fallbackDeliveryAddress }
+        : order
+    );
 
     if (savedOrders) {
       try {
-        const parsedOrders = JSON.parse(savedOrders);
+        const parsedOrders = (JSON.parse(savedOrders) as Order[]).map(addLegacyDeliveryAddress);
         setOrders(parsedOrders);
+        localStorage.setItem('userOrders', JSON.stringify(parsedOrders));
       } catch (e) {
         console.error('Failed to parse saved orders', e);
       }
@@ -35,8 +67,9 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
 
     if (savedCurrentOrder) {
       try {
-        const parsedCurrentOrder = JSON.parse(savedCurrentOrder);
+        const parsedCurrentOrder = addLegacyDeliveryAddress(JSON.parse(savedCurrentOrder) as Order);
         setCurrentOrder(parsedCurrentOrder);
+        localStorage.setItem('currentOrder', JSON.stringify(parsedCurrentOrder));
       } catch (e) {
         console.error('Failed to parse current order', e);
       }
@@ -67,7 +100,9 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     setOrders(prevOrders => {
       const newOrders = prevOrders.map(order =>
         order.orderNumber === orderNumber
-          ? { ...order, status: newStatus, currentStep }
+          ? order.status === 'cancelled'
+            ? order
+            : { ...order, status: newStatus, currentStep }
           : order
       );
       localStorage.setItem('userOrders', JSON.stringify(newOrders));
@@ -75,10 +110,54 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (currentOrder?.orderNumber === orderNumber) {
+      if (currentOrder.status === 'cancelled') return;
       const updated = { ...currentOrder, status: newStatus, currentStep };
       setCurrentOrder(updated);
       localStorage.setItem('currentOrder', JSON.stringify(updated));
     }
+  };
+
+  const cancelOrder = (orderNumber: string, reason: string): boolean => {
+    const targetOrder = orders.find((order) => order.orderNumber === orderNumber)
+      || (currentOrder?.orderNumber === orderNumber ? currentOrder : null);
+
+    if (!targetOrder || targetOrder.status !== 'received' || targetOrder.currentStep !== 0 || !reason.trim()) {
+      return false;
+    }
+
+    const cancelledOrder: Order = {
+      ...targetOrder,
+      status: 'cancelled',
+      cancellationReason: reason.trim(),
+      cancelledAt: Date.now(),
+    };
+
+    setOrders((previousOrders) => {
+      const nextOrders = previousOrders.map((order) => (
+        order.orderNumber === orderNumber ? cancelledOrder : order
+      ));
+      localStorage.setItem('userOrders', JSON.stringify(nextOrders));
+      return nextOrders;
+    });
+
+    if (currentOrder?.orderNumber === orderNumber) {
+      setCurrentOrder(cancelledOrder);
+      localStorage.setItem('currentOrder', JSON.stringify(cancelledOrder));
+    }
+
+    const lastOrder = localStorage.getItem('lastOrder');
+    if (lastOrder) {
+      try {
+        const parsedLastOrder = JSON.parse(lastOrder) as Order;
+        if (parsedLastOrder.orderNumber === orderNumber) {
+          localStorage.setItem('lastOrder', JSON.stringify(cancelledOrder));
+        }
+      } catch {
+        // Ignore malformed legacy order data.
+      }
+    }
+
+    return true;
   };
 
   return (
@@ -90,6 +169,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         getOrderByNumber,
         getAllOrders,
         updateOrderStatus,
+        cancelOrder,
       }}
     >
       {children}

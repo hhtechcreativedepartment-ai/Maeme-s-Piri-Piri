@@ -12,6 +12,7 @@ export interface Order {
   timestamp: number;
   branchName: string;
   branchAddress: string;
+  deliveryAddress?: string;
   orderType: 'delivery' | 'pickup';
   status: OrderStatus;
   items: OrderItem[];
@@ -21,6 +22,8 @@ export interface Order {
   paymentMethod: 'card' | 'cash';
   estimatedTime: number; // minutes
   currentStep: 0 | 1 | 2 | 3; // 0: received, 1: preparing, 2: ready/out, 3: completed
+  cancellationReason?: string;
+  cancelledAt?: number;
 }
 
 const ORDER_STATUS_STEPS = ['Order Received', 'Preparing', 'Ready / Out for Delivery', 'Completed'] as const;
@@ -34,6 +37,7 @@ export function generateOrderNumber(): string {
 export function createOrder(data: {
   branchName: string;
   branchAddress: string;
+  deliveryAddress?: string;
   orderType: 'delivery' | 'pickup';
   items: OrderItem[];
   subtotal: number;
@@ -46,6 +50,7 @@ export function createOrder(data: {
     timestamp: Date.now(),
     branchName: data.branchName,
     branchAddress: data.branchAddress,
+    deliveryAddress: data.deliveryAddress,
     orderType: data.orderType,
     status: 'received',
     items: data.items,
@@ -81,6 +86,9 @@ export function getMockOrderProgress(orderNumber: string): Order {
   const lastOrder = getLastOrder();
   if (!lastOrder || lastOrder.orderNumber !== orderNumber) {
     return lastOrder || ({} as Order);
+  }
+  if (lastOrder.status === 'cancelled') {
+    return lastOrder;
   }
 
   // Simulate order progress based on time elapsed

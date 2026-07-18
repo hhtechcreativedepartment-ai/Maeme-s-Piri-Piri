@@ -28,6 +28,9 @@ export default function PremiumOrderDetailPage() {
   const discount = Math.max(order.subtotal + order.deliveryFee + serviceCharge - order.total, 0);
   const subtotal = order.subtotal;
   const destinationLabel = order.orderType === 'delivery' ? 'Delivery address' : 'Collection branch';
+  const destinationAddress = order.orderType === 'delivery'
+    ? order.deliveryAddress || order.branchAddress || order.branchName
+    : order.branchAddress || order.branchName;
 
   return (
     <main className="min-h-screen bg-[#fff8ed] px-4 py-10 text-[#1a120f] sm:px-6 lg:px-8 lg:py-14">
@@ -49,7 +52,7 @@ export default function PremiumOrderDetailPage() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <InfoCard icon={<Truck size={20} />} label="Order type" value={order.orderType} />
-            <InfoCard icon={<MapPin size={20} />} label={destinationLabel} value={order.branchAddress || order.branchName} />
+            <InfoCard icon={<MapPin size={20} />} label={destinationLabel} value={destinationAddress} />
             <InfoCard icon={<ReceiptText size={20} />} label="Payment method" value={order.paymentMethod === 'card' ? 'Debit/Credit Card' : 'Cash'} />
           </div>
 
@@ -59,6 +62,13 @@ export default function PremiumOrderDetailPage() {
             <p className="mt-1 text-sm leading-6 text-[#6b5b55]">{order.branchAddress}</p>
             <p className="mt-2 text-sm font-black">Payment status: {order.paymentMethod === 'card' ? 'Paid' : 'Pending'}</p>
           </div>
+
+          {order.status === 'cancelled' && order.cancellationReason && (
+            <div className="mt-6 rounded-2xl border border-[#99041e]/20 bg-[#99041e]/5 p-5">
+              <p className="text-sm font-black text-[#99041e]">Cancellation reason</p>
+              <p className="mt-2 text-sm leading-6 text-[#6b5b55]">{order.cancellationReason}</p>
+            </div>
+          )}
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
             <section>

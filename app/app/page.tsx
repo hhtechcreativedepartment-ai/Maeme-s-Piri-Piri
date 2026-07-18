@@ -67,12 +67,15 @@ export default function OurAppPage() {
           loop
           playsInline
           preload="auto"
+          poster="/images/our-app-hero-poster.jpg"
+          controls={false}
+          controlsList="nodownload noremoteplayback"
           disablePictureInPicture
+          disableRemotePlayback
           aria-label="Maeme's app offers and rewards"
           className="block h-auto w-full max-w-full object-contain"
         >
           <source src="/videos/our-app-hero-banner.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
         </video>
       </section>
 

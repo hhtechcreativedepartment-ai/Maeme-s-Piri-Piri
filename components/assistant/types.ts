@@ -77,6 +77,7 @@ export interface AssistantServices {
   cart: {
     items: CartItem[];
     total: () => number;
+    add: (item: CartItem) => void;
     remove: (item: CartItem) => void;
     quantity: (item: CartItem, quantity: number) => void;
     clear: () => void;

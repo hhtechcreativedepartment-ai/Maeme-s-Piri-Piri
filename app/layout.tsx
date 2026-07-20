@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import PostcodeModalHost from '@/components/ordering/PostcodeModalHost'
+import AssistantLoader from '@/components/assistant/AssistantLoader'
 import { AuthProvider } from '@/lib/authContext'
 import { CartProvider } from '@/lib/cartContext'
 import { FavouritesProvider } from '@/lib/favouritesContext'
@@ -55,6 +56,7 @@ export default function RootLayout({
               <FavouritesProvider>
             <Header />
             <PostcodeModalHost />
+            <AssistantLoader />
             <main className="min-h-screen pt-20">
               {children}
             </main>

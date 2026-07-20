@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
@@ -22,6 +22,10 @@ export default function PremiumProductCustomizationModal({
   editingItem,
 }: PremiumProductCustomizationModalProps) {
   const { addToCart, removeFromCart } = useCart();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [selectedSize, setSelectedSize] = useState('Regular');
   const [goLarge, setGoLarge] = useState(false);
   const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
@@ -80,6 +84,8 @@ export default function PremiumProductCustomizationModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    setIsSubmitting(false);
+    setValidationAttempted(false);
     const savedSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
     const savedFriedMealConfiguration = editingItem?.customization?.friedMealConfiguration || editingItem?.customization?.friedWingsConfiguration;
     const savedFriedWingsOption = savedFriedMealConfiguration?.option;
@@ -124,6 +130,46 @@ export default function PremiumProductCustomizationModal({
     setSelectedFriedWingsFriesModifierId(savedFriedMealConfiguration?.fries?.modifier?.id || null);
     setSelectedFreeToppingIds((editingItem?.customization?.selectedFreeToppings || []).map((topping) => topping.id));
   }, [editingItem, goLargeOption.name, isFriedMealProduct, isOpen, product?.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !modalRef.current) return;
+
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    window.requestAnimationFrame(() => modalRef.current?.querySelector<HTMLElement>('button')?.focus());
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      restoreFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   const optionVisibility = useMemo(
     () => getProductOptionVisibility(product?.category || ''),
@@ -269,14 +315,28 @@ export default function PremiumProductCustomizationModal({
   };
 
   const handleAddToCart = () => {
-    if (!platterSidesComplete || !kidsDrinkComplete || !boxMealDrinkComplete || !sharingDipsComplete || !friedWingsConfigurationComplete) return;
-
+    if (isSubmitting) return;
     const missingRequiredMealOptions = mealSelected
       ? MEAL_OPTION_GROUPS.filter((group) => group.required && !selectedMealOptions[group.id]).map((group) => group.id)
       : [];
 
-    if (missingRequiredMealOptions.length > 0) {
+    const hasIncompleteRequiredGroup = (
+      !platterSidesComplete
+      || !kidsDrinkComplete
+      || !boxMealDrinkComplete
+      || !sharingDipsComplete
+      || !friedWingsConfigurationComplete
+      || missingRequiredMealOptions.length > 0
+    );
+
+    if (hasIncompleteRequiredGroup) {
+      setValidationAttempted(true);
       setMealOptionErrors(missingRequiredMealOptions);
+      window.requestAnimationFrame(() => {
+        const firstInvalid = modalRef.current?.querySelector<HTMLElement>('[data-invalid="true"]');
+        firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid?.focus({ preventScroll: true });
+      });
       return;
     }
 
@@ -432,6 +492,7 @@ export default function PremiumProductCustomizationModal({
       },
     };
 
+    setIsSubmitting(true);
     if (editingItem) removeFromCart(editingItem.productId, editingItem.customization);
     addToCart(cartItem);
     onAdded?.(product);
@@ -440,43 +501,49 @@ export default function PremiumProductCustomizationModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden p-4">
+      <div className="fixed inset-0 z-[70] bg-[#2b0710]/60" onClick={onClose} />
+      <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden p-2 sm:p-4">
         <div
+          ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="product-detail-title"
-          className="relative h-[calc(100dvh-2rem)] max-h-[720px] w-full max-w-5xl overflow-hidden rounded-[24px] border border-[#f0d59d] bg-white shadow-[0_30px_90px_rgba(26,18,15,0.32)]"
+          className="product-config-modal relative flex h-[calc(100dvh-1rem)] max-h-[94dvh] w-full max-w-[620px] flex-col overflow-hidden rounded-[24px] border border-[#f0d59d] bg-[#f7f4f1] shadow-[0_30px_90px_rgba(26,18,15,0.32)] sm:h-[min(94dvh,900px)]"
         >
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 z-20 rounded-xl border border-[#ead8c6] bg-white/95 p-2 text-[#1a120f] shadow-sm transition hover:bg-[#ffc257]"
+            className="absolute right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-[#99041e] text-white shadow-lg transition hover:bg-[#7f0318] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:right-4 sm:top-4"
             aria-label="Close product details"
           >
             <X size={22} />
           </button>
 
-          <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[0.92fr_1.08fr] lg:grid-rows-1">
-            <div className="flex shrink-0 items-center justify-center overflow-hidden bg-[#fff8ed] p-4 sm:p-6 lg:p-7">
-              <div className="aspect-square w-[min(240px,30dvh)] overflow-hidden rounded-[22px] bg-white shadow-[0_18px_55px_rgba(50,24,16,0.12)] sm:w-[min(300px,34dvh)] lg:w-full">
-                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex h-[190px] shrink-0 items-center justify-center overflow-hidden bg-white px-14 py-4 sm:h-[240px] sm:px-20">
+              <div className="h-full w-full overflow-hidden bg-white">
+                <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
               </div>
             </div>
 
-            <div className="flex min-h-0 flex-col overflow-hidden bg-white">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-5 [scrollbar-color:#ead8c6_transparent] [scrollbar-width:thin] sm:p-7 lg:p-8">
-                <div className="pr-10">
-                  <h2 id="product-detail-title" className="text-3xl font-black leading-tight text-[#1a120f] sm:text-4xl">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="product-config-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 pt-5 [scrollbar-color:#99041e_transparent] [scrollbar-width:thin] sm:px-7">
+                <div className="product-config-options space-y-4">
+                <div className="rounded-2xl bg-white p-5 text-center shadow-[0_8px_24px_rgba(50,24,16,0.06)]">
+                  <h2 id="product-detail-title" className="text-2xl font-black leading-tight text-[#99041e] sm:text-3xl">
                     {product.name}
                   </h2>
-                  <p className="mt-3 text-sm leading-6 text-[#6b5b55] sm:text-base">{product.description}</p>
-                  <p className="mt-4 text-2xl font-black text-[#99041e]">
+                  {product.description && <p className="mt-3 text-sm leading-6 text-[#6b5b55]">{product.description}</p>}
+                  {product.kcal != null && <p className="mt-2 text-xs font-semibold text-[#8b7a73]">{product.kcal} kcal</p>}
+                  <p className="mt-3 text-2xl font-black text-[#99041e]">
                     {product.startingPrice ? 'From ' : ''}£{product.price.toFixed(2)}
                   </p>
                 </div>
 
                 {isKidsMeal && (
-                  <section>
+                  <section
+                    data-invalid={validationAttempted && !kidsDrinkComplete}
+                    tabIndex={validationAttempted && !kidsDrinkComplete ? -1 : undefined}
+                  >
                     <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Fruit Shoot</h3>
                     {fruitShootOptions.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
@@ -504,14 +571,17 @@ export default function PremiumProductCustomizationModal({
                         Fruit Shoot Drink Included
                       </div>
                     )}
-                    {!kidsDrinkComplete && (
+                    {validationAttempted && !kidsDrinkComplete && (
                       <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one Fruit Shoot.</p>
                     )}
                   </section>
                 )}
 
                 {isBoxMeal && product.requiresIncludedDrink && (
-                  <section>
+                  <section
+                    data-invalid={validationAttempted && !boxMealDrinkComplete}
+                    tabIndex={validationAttempted && !boxMealDrinkComplete ? -1 : undefined}
+                  >
                     <div className="mb-3 flex items-center gap-2">
                       <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Drink</h3>
                       {boxMealDrinkOptions.length > 0 && <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>}
@@ -543,14 +613,17 @@ export default function PremiumProductCustomizationModal({
                         Drink Included
                       </div>
                     )}
-                    {!boxMealDrinkComplete && (
+                    {validationAttempted && !boxMealDrinkComplete && (
                       <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one drink.</p>
                     )}
                   </section>
                 )}
 
                 {isSharingMeal && (
-                  <section>
+                  <section
+                    data-invalid={validationAttempted && !sharingDipsComplete}
+                    tabIndex={validationAttempted && !sharingDipsComplete ? -1 : undefined}
+                  >
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Dips</h3>
@@ -592,7 +665,7 @@ export default function PremiumProductCustomizationModal({
                         );
                       })}
                     </div>
-                    {!sharingDipsComplete && (
+                    {validationAttempted && !sharingDipsComplete && (
                       <p className="mt-2 text-xs font-bold text-[#99041e]">Please select exactly {requiredSharingDipCount} dips to continue.</p>
                     )}
                   </section>
@@ -601,7 +674,10 @@ export default function PremiumProductCustomizationModal({
                 {isFriedMealProduct && (
                   <>
                     {isFriedWings && (
-                      <section>
+                      <section
+                        data-invalid={validationAttempted && selectedFriedWingsFlavour === null}
+                        tabIndex={validationAttempted && selectedFriedWingsFlavour === null ? -1 : undefined}
+                      >
                         <div className="mb-3 flex items-center gap-2">
                           <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Flavour</h3>
                           <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
@@ -623,7 +699,7 @@ export default function PremiumProductCustomizationModal({
                             </button>
                           ))}
                         </div>
-                        {selectedFriedWingsFlavour === null && (
+                        {validationAttempted && selectedFriedWingsFlavour === null && (
                           <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one flavour.</p>
                         )}
                       </section>
@@ -687,7 +763,10 @@ export default function PremiumProductCustomizationModal({
                             </button>
                           )}
                         </section>
-                        <section>
+                        <section
+                          data-invalid={validationAttempted && selectedFriedWingsDrinkId === null}
+                          tabIndex={validationAttempted && selectedFriedWingsDrinkId === null ? -1 : undefined}
+                        >
                           <div className="mb-3 flex items-center gap-2">
                             <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Drink</h3>
                             <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
@@ -709,9 +788,12 @@ export default function PremiumProductCustomizationModal({
                               );
                             })}
                           </div>
-                          {selectedFriedWingsDrinkId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one drink.</p>}
+                          {validationAttempted && selectedFriedWingsDrinkId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one drink.</p>}
                         </section>
-                        <section>
+                        <section
+                          data-invalid={validationAttempted && selectedFriedWingsDipId === null}
+                          tabIndex={validationAttempted && selectedFriedWingsDipId === null ? -1 : undefined}
+                        >
                           <div className="mb-3 flex items-center gap-2">
                             <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Dip</h3>
                             <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
@@ -733,7 +815,7 @@ export default function PremiumProductCustomizationModal({
                               );
                             })}
                           </div>
-                          {selectedFriedWingsDipId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one dip.</p>}
+                          {validationAttempted && selectedFriedWingsDipId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one dip.</p>}
                         </section>
                       </>
                     )}
@@ -742,7 +824,10 @@ export default function PremiumProductCustomizationModal({
 
                 {isPlatter && (
                   <>
-                    <section>
+                    <section
+                      data-invalid={validationAttempted && !platterSidesComplete}
+                      tabIndex={validationAttempted && !platterSidesComplete ? -1 : undefined}
+                    >
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Add 3 Sides to any Platter for only £6.00</h3>
@@ -811,7 +896,7 @@ export default function PremiumProductCustomizationModal({
                           })}
                         </div>
                       )}
-                      {platterSidesEnabled && !platterSidesComplete && (
+                      {validationAttempted && platterSidesEnabled && !platterSidesComplete && (
                         <p className="mt-2 text-xs font-bold text-[#99041e]">Please select exactly 3 sides to continue.</p>
                       )}
                     </section>
@@ -890,6 +975,7 @@ export default function PremiumProductCustomizationModal({
                       {mealSizeOptions.map((size) => (
                         <button
                           key={size.name}
+                          type="button"
                           onClick={() => {
                             setSelectedSize(size.name);
                             if (size.name !== 'Meal') {
@@ -897,6 +983,7 @@ export default function PremiumProductCustomizationModal({
                               setSelectedMealOptions({});
                             }
                           }}
+                          aria-pressed={selectedSize === size.name}
                           className={`rounded-2xl border px-4 py-3 text-left transition ${
                             selectedSize === size.name
                               ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
@@ -914,7 +1001,9 @@ export default function PremiumProductCustomizationModal({
                       <div className="mt-3 grid grid-cols-1 gap-3">
                         <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Meal Option</h3>
                         <button
+                          type="button"
                           onClick={() => setGoLarge((current) => !current)}
+                          aria-pressed={goLarge}
                           className={`rounded-2xl border px-4 py-3 text-left transition ${
                             goLarge
                               ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
@@ -938,7 +1027,9 @@ export default function PremiumProductCustomizationModal({
                       {FLAVOUR_OPTIONS.map((flavour) => (
                         <button
                           key={flavour}
+                          type="button"
                           onClick={() => setSelectedFlavour(flavour)}
+                          aria-pressed={selectedFlavour === flavour}
                           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                             selectedFlavour === flavour
                               ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -954,7 +1045,10 @@ export default function PremiumProductCustomizationModal({
 
                 {product.popupModifiers && product.popupModifiers.length > 0 && (
                   <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Extras</h3>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Extras</h3>
+                      <span className="rounded-full border border-[#ffc257] bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Optional</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {product.popupModifiers.map((modifier) => {
                         const selected = selectedProductModifierIds.includes(modifier.id);
@@ -979,7 +1073,11 @@ export default function PremiumProductCustomizationModal({
                 )}
 
                 {optionVisibility.showSize && mealSelected && MEAL_OPTION_GROUPS.map((group) => (
-                  <section key={group.id}>
+                    <section
+                      key={group.id}
+                      data-invalid={mealOptionErrors.includes(group.id)}
+                      tabIndex={mealOptionErrors.includes(group.id) ? -1 : undefined}
+                    >
                     <div className="mb-3 flex items-center gap-2">
                       <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">{group.title}</h3>
                       {group.required && <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>}
@@ -994,7 +1092,9 @@ export default function PremiumProductCustomizationModal({
                         return (
                           <div key={option.id || option.name} className="flex flex-col items-start gap-1">
                             <button
+                              type="button"
                               onClick={() => toggleMealOption(group, option)}
+                              aria-pressed={selected}
                               className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                                 selected
                                   ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -1033,7 +1133,10 @@ export default function PremiumProductCustomizationModal({
 
                 {product.freeToppings && product.freeToppings.length > 0 && (
                   <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">19 Free Toppings</h3>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">19 Free Toppings</h3>
+                      <span className="rounded-full border border-[#ffc257] bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Optional</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {product.freeToppings.map((topping) => {
                         const selected = selectedFreeToppingIds.includes(topping.id);
@@ -1059,24 +1162,31 @@ export default function PremiumProductCustomizationModal({
 
                 {optionVisibility.showSpecialInstructions && (
                   <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Special Instructions</h3>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Special Instructions</h3>
+                      <span className="rounded-full border border-[#ffc257] bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Optional</span>
+                    </div>
                     <textarea
                       value={specialInstructions}
                       onChange={(event) => setSpecialInstructions(event.target.value)}
                       placeholder="Allergies or preparation notes?"
+                      maxLength={240}
                       rows={3}
                       className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-4 text-sm font-medium text-[#1a120f] outline-none transition placeholder:text-[#8b7a73] focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/25"
                     />
+                    <p className="mt-2 text-right text-xs font-semibold text-[#8b7a73]">{240 - specialInstructions.length} characters remaining</p>
                   </section>
                 )}
+                </div>
               </div>
 
-              <div className="shrink-0 border-t border-[#ead8c6] bg-white/96 p-4 shadow-[0_-12px_34px_rgba(50,24,16,0.08)] backdrop-blur sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="flex h-12 items-center justify-between rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-1 sm:w-36">
+              <div className="shrink-0 border-t border-[#e5a93e] bg-[#ffc257] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-12px_34px_rgba(50,24,16,0.10)] sm:px-6">
+                <div className="flex flex-col gap-3">
+                  <div className="mx-auto flex h-12 w-40 items-center justify-between rounded-full border border-[#99041e]/20 bg-white/45 p-1">
                     <button
                       onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-[#99041e] transition hover:bg-white"
+                      disabled={quantity <= 1}
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-[#99041e] transition hover:bg-white/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#99041e]/25 disabled:opacity-40"
                       aria-label="Decrease quantity"
                     >
                       <Minus size={18} />
@@ -1084,7 +1194,7 @@ export default function PremiumProductCustomizationModal({
                     <span className="min-w-8 text-center text-base font-black text-[#1a120f]">{quantity}</span>
                     <button
                       onClick={() => setQuantity((current) => current + 1)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-[#99041e] transition hover:bg-white"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-[#99041e] transition hover:bg-white/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#99041e]/25"
                       aria-label="Increase quantity"
                     >
                       <Plus size={18} />
@@ -1093,10 +1203,11 @@ export default function PremiumProductCustomizationModal({
 
                   <button
                     onClick={handleAddToCart}
-                    disabled={!platterSidesComplete || !kidsDrinkComplete || !boxMealDrinkComplete || !sharingDipsComplete || !friedWingsConfigurationComplete}
-                    className="min-h-12 flex-1 rounded-2xl bg-[#ffc257] px-6 py-3 text-base font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isSubmitting}
+                    aria-busy={isSubmitting}
+                    className="min-h-14 w-full rounded-full bg-[#99041e] px-6 py-3 text-base font-black text-white shadow-[0_8px_0_#5f0213] transition hover:bg-[#7f0318] active:translate-y-0.5 active:shadow-[0_5px_0_#5f0213] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Add to cart · £{calculatedTotal.toFixed(2)}
+                    {isSubmitting ? 'Adding…' : `${editingItem ? 'Update Cart' : 'Add to Cart'} · £${calculatedTotal.toFixed(2)}`}
                   </button>
                 </div>
               </div>

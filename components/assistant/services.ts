@@ -68,6 +68,7 @@ export function useAssistantServices(): AssistantServices {
     cart: {
       items: cart.items,
       total: cart.getCartTotal,
+      add: cart.addToCart,
       remove: (item) => cart.removeFromCart(item.productId, item.customization),
       quantity: (item, quantity) => cart.updateQuantity(item.productId, quantity, item.customization),
       clear: cart.clearCart,

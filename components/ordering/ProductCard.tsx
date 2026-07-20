@@ -12,6 +12,7 @@ interface ProductCardProps {
   product: MenuItem;
   onAdd: (product: MenuItem, selectedOptions?: MenuQuickAddOption[]) => void;
   onFavourite?: (product: MenuItem) => void;
+  isSelected?: boolean;
 }
 
 const CATEGORIES_WITHOUT_DESCRIPTION = new Set([
@@ -47,7 +48,7 @@ function toFavouriteItem(product: MenuItem) {
   };
 }
 
-export default function ProductCard({ product, onAdd, onFavourite }: ProductCardProps) {
+export default function ProductCard({ product, onAdd, onFavourite, isSelected = false }: ProductCardProps) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { addFavourite, removeFavourite, isFavourite } = useFavourites();
@@ -58,6 +59,7 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
   const selectedQuickOptions = product.quickAddOptions?.filter((option) => selectedQuickOptionIds.includes(option.id)) || [];
   const displayedPrice = product.price + selectedQuickOptions.reduce((total, option) => total + option.price, 0);
   const isCompactMealPriceProduct = ['fried-wings', 'fried-chicken', 'fried-boneless'].includes(categorySlug(product.category));
+  const isUnavailable = product.available === false;
 
   useEffect(() => {
     if (!user || isLoading) return;
@@ -69,7 +71,9 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
     localStorage.removeItem(PENDING_FAVOURITE_KEY);
   }, [addFavourite, isLoading, product, productId, user]);
 
-  const orderProduct = () => onAdd(product, selectedQuickOptions);
+  const orderProduct = () => {
+    if (!isUnavailable) onAdd(product, selectedQuickOptions);
+  };
 
   const handleFavouriteClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -99,11 +103,14 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
   return (
     <article
       role="button"
-      tabIndex={0}
+      tabIndex={isUnavailable ? -1 : 0}
       aria-label={`Order ${product.name}`}
+      aria-disabled={isUnavailable}
+      data-selected={isSelected}
+      data-unavailable={isUnavailable}
       onClick={orderProduct}
       onKeyDown={handleCardKeyDown}
-      className="group relative flex h-full min-h-[470px] cursor-pointer flex-col overflow-hidden rounded-lg border border-[#eee8e2] bg-white shadow-[0_6px_20px_rgba(50,24,16,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#ead8c6] hover:shadow-[0_14px_32px_rgba(50,24,16,0.09)] active:scale-[0.995] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/70"
+      className="menu-product-card group relative flex h-full min-h-[470px] cursor-pointer flex-col overflow-hidden rounded-lg border-2 border-transparent bg-white shadow-[0_6px_20px_rgba(50,24,16,0.05)]"
     >
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-white">
         <Image
@@ -111,7 +118,7 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
           alt={product.name}
           fill
           sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1279px) 50vw, 310px"
-          className="object-contain p-6 transition duration-300 group-hover:scale-[1.025]"
+          className="menu-product-card-image object-contain p-6"
         />
         {product.popular && (
           <span className="absolute left-3 top-3 rounded-full bg-[#ffc257] px-3 py-1.5 text-[10px] font-black leading-none text-[#99041e] shadow-sm">

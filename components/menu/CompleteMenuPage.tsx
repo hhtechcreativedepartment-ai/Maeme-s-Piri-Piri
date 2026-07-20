@@ -379,7 +379,12 @@ export default function CompleteMenuPage() {
               {products.length > 0 ? (
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={handleAddProduct}
+                      isSelected={showProductModal && selectedProduct?.id === product.id}
+                    />
                   ))}
                 </div>
               ) : (

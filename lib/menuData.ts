@@ -21,6 +21,7 @@ export interface MenuItem {
   mealTotalPrice?: number
   goLargePrice?: number
   offer?: boolean
+  available?: boolean
 }
 
 export interface MenuQuickAddOption {

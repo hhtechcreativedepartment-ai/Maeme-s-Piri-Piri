@@ -2,6 +2,7 @@
 
 import { KeyboardEvent, PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import ProductCard from '@/components/ordering/ProductCard';
@@ -28,8 +29,10 @@ const DIRECT_ADD_CATEGORY_SLUGS = new Set([
 ]);
 
 export default function CompleteMenuPage() {
+  const router = useRouter();
   const {
     items,
+    isHydrated,
     selectedBranch,
     selectedOrderType,
     addToCart,
@@ -239,6 +242,12 @@ export default function CompleteMenuPage() {
   }, [selectedBranch, selectedOrderType, setOrderType]);
 
   useEffect(() => {
+    if (isHydrated && (!selectedBranch || !selectedOrderType)) {
+      router.replace('/order');
+    }
+  }, [isHydrated, router, selectedBranch, selectedOrderType]);
+
+  useEffect(() => {
     const targetId = window.location.hash.slice(1);
     if (!targetId) return;
 
@@ -275,6 +284,14 @@ export default function CompleteMenuPage() {
     setToast('Added to cart');
     window.setTimeout(() => setToast(null), 2600);
   };
+
+  if (!isHydrated || !selectedBranch || !selectedOrderType) {
+    return (
+      <main className="flex min-h-[100svh] items-center justify-center bg-[#fff8ed] px-4">
+        <p className="text-sm font-black text-[#99041e]">Loading your ordering details…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fff8ed] pb-24 text-[#1a120f]">

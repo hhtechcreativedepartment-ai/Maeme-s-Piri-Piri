@@ -1,5 +1,5 @@
-import CompleteMenuPage from '@/components/menu/CompleteMenuPage';
+import { redirect } from 'next/navigation';
 
-export default function MenuPage() {
-  return <CompleteMenuPage />;
+export default function LegacyMenuPage() {
+  redirect('/order');
 }

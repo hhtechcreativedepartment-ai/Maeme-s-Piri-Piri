@@ -15,7 +15,7 @@ export default function Header() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Menu', href: '/menu' },
+    { label: 'Menu', href: '/order' },
     { label: 'Our Food', href: '/food' },
     { label: 'Stores', href: '/branches' },
     { label: 'Our App', href: '/app' },
@@ -23,7 +23,7 @@ export default function Header() {
   ];
 
   const handleOrderNow = () => {
-    router.push('/menu');
+    router.push('/order');
   };
 
   useEffect(() => {

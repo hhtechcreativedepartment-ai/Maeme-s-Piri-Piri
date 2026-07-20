@@ -103,15 +103,15 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
       aria-label={`Order ${product.name}`}
       onClick={orderProduct}
       onKeyDown={handleCardKeyDown}
-      className="group relative flex h-full min-h-[430px] cursor-pointer flex-col overflow-hidden rounded-[20px] border border-[#f0d59d]/80 bg-white shadow-[0_8px_24px_rgba(50,24,16,0.045)] transition duration-200 hover:-translate-y-1 hover:border-[#ead8c6] hover:shadow-[0_16px_38px_rgba(50,24,16,0.09)] active:scale-[0.995] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/70"
+      className="group relative flex h-full min-h-[470px] cursor-pointer flex-col overflow-hidden rounded-lg border border-[#eee8e2] bg-white shadow-[0_6px_20px_rgba(50,24,16,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#ead8c6] hover:shadow-[0_14px_32px_rgba(50,24,16,0.09)] active:scale-[0.995] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/70"
     >
-      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden border-b border-[#f0d59d]/60 bg-[#fff8ed]">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-white">
         <Image
           src={product.image}
           alt={product.name}
           fill
           sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1279px) 50vw, 310px"
-          className="object-contain p-5 transition duration-300 group-hover:scale-[1.035]"
+          className="object-contain p-6 transition duration-300 group-hover:scale-[1.025]"
         />
         {product.popular && (
           <span className="absolute left-3 top-3 rounded-full bg-[#ffc257] px-3 py-1.5 text-[10px] font-black leading-none text-[#99041e] shadow-sm">
@@ -120,7 +120,7 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
         )}
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col p-5">
+      <div className="relative flex min-w-0 flex-1 flex-col px-5 pb-5 pt-3">
         <button
           type="button"
           onClick={handleFavouriteClick}
@@ -169,27 +169,16 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
           );
         })}
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-[#f0d59d]/70 pt-4">
-          <div className="min-w-0">
+        <div className="mt-auto border-t border-[#f0d59d]/70 pt-4">
+          <div className="flex min-w-0 items-end justify-between gap-3">
             <p className="text-xl font-black leading-none text-[#99041e]">£{displayedPrice.toFixed(2)}</p>
-            {product.kcal != null && (
-              <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#8a7a6a]">{product.kcal} kcal</p>
-            )}
-            {isCompactMealPriceProduct && product.mealTotalPrice !== undefined && (
-              <p className="mt-1.5 text-xs font-black leading-none text-[#6b5b55]">Meal £{product.mealTotalPrice.toFixed(2)}</p>
-            )}
+            <p className="text-right text-xs font-semibold text-[#6b5b55]">
+              {product.kcal != null ? `${product.kcal} kcal` : 'kcal unavailable'}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              orderProduct();
-            }}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#99041e] px-4 text-xs font-black text-white shadow-sm transition hover:bg-[#7f0318] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
-            aria-label={`Add ${product.name} to cart`}
-          >
-            Add to Cart
-          </button>
+          {isCompactMealPriceProduct && product.mealTotalPrice !== undefined && (
+            <p className="mt-2 text-xs font-black leading-none text-[#6b5b55]">Meal £{product.mealTotalPrice.toFixed(2)}</p>
+          )}
         </div>
       </div>
     </article>

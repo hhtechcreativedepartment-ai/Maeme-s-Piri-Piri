@@ -47,6 +47,7 @@
 
 :root {
   color-scheme: light;
+  --site-header-height: 5rem;
   /* Maeme's premium ordering brand system */
   --color-brand-red: #99041e;
   --color-brand-red-dark: #7f0318;

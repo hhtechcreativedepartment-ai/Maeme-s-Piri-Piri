@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapPin, Menu, ShoppingCart, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cartContext';
@@ -11,17 +11,16 @@ import { socialIcons } from './SocialIcons';
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const headerRef = useRef<HTMLElement>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   let cartCount = 0;
   let cartTotal = 0;
   let branchLabel = 'Select Location';
-  let hasOrderSetup = false;
   try {
     const cart = useCart();
     cartCount = cart.getCartCount();
     cartTotal = cart.getCartTotal();
     branchLabel = cart.selectedBranch ? cart.selectedBranch.postcode : 'Select Location';
-    hasOrderSetup = Boolean(cart.selectedBranch && cart.selectedOrderType);
   } catch {
     // Cart context not available (e.g., on homepage)
   }
@@ -35,20 +34,29 @@ export default function Header() {
   ];
 
   const handleOrderNow = () => {
-    if (!hasOrderSetup) {
-      window.dispatchEvent(new CustomEvent('maemes:open-postcode-modal'));
-      return;
-    }
-
     router.push('/menu');
   };
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeaderHeight = () => {
+      document.documentElement.style.setProperty('--site-header-height', `${header.offsetHeight}px`);
+    };
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    updateHeaderHeight();
+
+    return () => observer.disconnect();
+  }, []);
 
   if (pathname === '/login') {
     return null;
   }
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-[70] w-full border-b border-[#ead7c7] bg-white/95 shadow-[0_8px_28px_rgba(63,24,18,0.035)] backdrop-blur-xl">
+    <header ref={headerRef} className="fixed left-0 right-0 top-0 z-[70] w-full border-b border-[#ead7c7] bg-white/95 shadow-[0_8px_28px_rgba(63,24,18,0.035)] backdrop-blur-xl">
       <div className="page-container flex h-20 items-center justify-between gap-2 sm:gap-3">
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4 lg:w-[220px]">
           <button

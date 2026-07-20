@@ -2,6 +2,7 @@
 
 import { MouseEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Heart } from 'lucide-react';
 import { MenuItem, MenuQuickAddOption } from '@/lib/menuData';
 import { useAuth } from '@/lib/authContext';
@@ -89,11 +90,13 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
 
   return (
     <article className="group relative flex min-h-[160px] items-center gap-4 overflow-hidden rounded-[18px] border border-[#f0d59d]/80 bg-white p-4 shadow-[0_8px_24px_rgba(50,24,16,0.045)] transition hover:-translate-y-0.5 hover:border-[#ead8c6] hover:shadow-[0_14px_34px_rgba(50,24,16,0.075)]">
-      <div className="relative h-[120px] w-[120px] shrink-0 self-center overflow-hidden rounded-[14px] bg-white">
-        <img
+      <div className="relative h-[112px] w-[112px] shrink-0 self-center overflow-hidden rounded-[14px] bg-[#fff8ed] sm:h-[120px] sm:w-[120px]">
+        <Image
           src={product.image}
           alt={product.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+          fill
+          sizes="(max-width: 639px) 112px, 120px"
+          className="object-contain p-1.5 transition duration-500 group-hover:scale-[1.025]"
         />
         {product.popular && (
           <span className="absolute left-2 top-2 rounded-full bg-[#ffc257] px-2.5 py-1 text-[10px] font-black leading-none text-[#1a120f] shadow-sm">
@@ -162,7 +165,7 @@ export default function ProductCard({ product, onAdd, onFavourite }: ProductCard
             className="inline-flex h-[42px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#99041e] px-[18px] text-xs font-black text-white shadow-sm transition hover:bg-[#7f0318]"
             aria-label={`Add ${product.name}`}
           >
-            + Add to Cart
+            Add to Cart
           </button>
         </div>
       </div>

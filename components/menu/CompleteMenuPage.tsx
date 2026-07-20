@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ShoppingBag, Store, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
@@ -40,6 +40,7 @@ export default function CompleteMenuPage() {
   const [canScrollCategoryLeft, setCanScrollCategoryLeft] = useState(false);
   const [canScrollCategoryRight, setCanScrollCategoryRight] = useState(true);
   const categoryRailRef = useRef<HTMLDivElement>(null);
+  const categoryNavRef = useRef<HTMLDivElement>(null);
 
   const productsByCategory = useMemo(() => (
     MENU_CATEGORY_DATA.map((category) => ({
@@ -139,6 +140,29 @@ export default function CompleteMenuPage() {
     setCanScrollCategoryRight(rail.scrollLeft < maxScrollLeft - 6);
   };
 
+  const handleCategoryWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const rail = categoryRailRef.current;
+    if (!rail || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+    event.preventDefault();
+    rail.scrollLeft += event.deltaY;
+  };
+
+  const handleCategoryKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return;
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button[data-category]'));
+    const currentIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (currentIndex < 0) return;
+
+    event.preventDefault();
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? buttons.length - 1
+        : Math.min(buttons.length - 1, Math.max(0, currentIndex + (event.key === 'ArrowRight' ? 1 : -1)));
+    buttons[nextIndex]?.focus();
+    buttons[nextIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  };
+
   useEffect(() => {
     const rail = categoryRailRef.current;
     if (!rail) return;
@@ -150,6 +174,19 @@ export default function CompleteMenuPage() {
     return () => {
       rail.removeEventListener('scroll', updateCategoryRailState);
       window.removeEventListener('resize', updateCategoryRailState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const nav = categoryNavRef.current;
+    if (!nav) return;
+    const updateHeight = () => document.documentElement.style.setProperty('--menu-nav-height', `${nav.offsetHeight}px`);
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(nav);
+    updateHeight();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--menu-nav-height');
     };
   }, []);
 
@@ -279,7 +316,7 @@ export default function CompleteMenuPage() {
         </div>
       </section>
 
-      <div className="menu-category-carousel sticky top-20 z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
+      <div ref={categoryNavRef} className="menu-category-carousel sticky top-[var(--site-header-height)] z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
         <div className="page-container flex items-center gap-3">
           <button
             onClick={() => scrollCategoryRail('left')}
@@ -291,6 +328,10 @@ export default function CompleteMenuPage() {
           </button>
           <div
             ref={categoryRailRef}
+            onWheel={handleCategoryWheel}
+            onKeyDown={handleCategoryKeyDown}
+            role="navigation"
+            aria-label="Menu categories"
             className="flex flex-1 snap-x snap-mandatory gap-2 overflow-x-auto py-4 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {MENU_CATEGORY_DATA.map((category) => (
@@ -322,7 +363,12 @@ export default function CompleteMenuPage() {
       <div className="page-container py-10 lg:py-12">
         <div className="space-y-14">
           {productsByCategory.map(({ category, products }) => (
-            <section key={category.id} id={category.anchor} data-menu-section={category.id} className="scroll-mt-40">
+            <section
+              key={category.id}
+              id={category.anchor}
+              data-menu-section={category.id}
+              style={{ scrollMarginTop: 'calc(var(--site-header-height) + var(--menu-nav-height, 76px) + 1rem)' }}
+            >
               <div className="mb-5 flex items-end justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
                 <div>
                   <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category.title}</h2>
@@ -333,7 +379,7 @@ export default function CompleteMenuPage() {
               </div>
 
               {products.length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
                   ))}

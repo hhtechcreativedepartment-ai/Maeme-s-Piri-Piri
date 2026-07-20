@@ -391,14 +391,36 @@
 }
 
 .product-config-options section button[aria-pressed] {
+  display: flex;
+  width: 100%;
   min-height: 48px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
   border-width: 2px;
-  border-radius: 12px;
+  border-radius: 8px;
+  text-align: left;
   cursor: pointer;
   transition:
     border-color 180ms ease-out,
     background-color 180ms ease-out,
     color 180ms ease-out;
+}
+
+.product-config-options section button[aria-pressed]::before {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #99041e;
+  border-radius: 3px;
+  color: white;
+  content: '';
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .product-config-options section button[aria-pressed='false']:hover {
@@ -411,6 +433,23 @@
   background: #fff1d7;
   color: #99041e;
   box-shadow: none;
+}
+
+.product-config-options section button[aria-pressed='true']::before {
+  background: #99041e;
+  content: '✓';
+}
+
+.product-config-options section > .flex.flex-wrap,
+.product-config-options section > .grid,
+.product-config-options section > div > .flex.flex-wrap,
+.product-config-options section > div > .grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.product-config-options section > .flex.flex-wrap,
+.product-config-options section > div > .flex.flex-wrap {
+  display: grid;
 }
 
 .product-config-options section button:focus-visible,

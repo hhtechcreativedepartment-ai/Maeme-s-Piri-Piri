@@ -58,7 +58,6 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
   const [selectedQuickOptionIds, setSelectedQuickOptionIds] = useState<string[]>([]);
   const selectedQuickOptions = product.quickAddOptions?.filter((option) => selectedQuickOptionIds.includes(option.id)) || [];
   const displayedPrice = product.price + selectedQuickOptions.reduce((total, option) => total + option.price, 0);
-  const isCompactMealPriceProduct = ['fried-wings', 'fried-chicken', 'fried-boneless'].includes(categorySlug(product.category));
   const isUnavailable = product.available === false;
 
   useEffect(() => {
@@ -183,9 +182,6 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
               {product.kcal != null ? `${product.kcal} kcal` : 'kcal unavailable'}
             </p>
           </div>
-          {isCompactMealPriceProduct && product.mealTotalPrice !== undefined && (
-            <p className="mt-2 text-xs font-black leading-none text-[#6b5b55]">Meal £{product.mealTotalPrice.toFixed(2)}</p>
-          )}
         </div>
       </div>
     </article>

@@ -1,4 +1,4 @@
-import { MENU_DATA } from './menuData';
+import { MENU_DATA, MenuItem } from './menuData';
 
 export const FULL_OPTION_CATEGORY_SLUGS = new Set([
   'grilled-collection',
@@ -7,17 +7,7 @@ export const FULL_OPTION_CATEGORY_SLUGS = new Set([
   'fried-collection',
 ]);
 
-export const MEAL_SIZE_OPTIONS = [
-  { name: 'Regular', price: 0 },
-  { name: 'Meal', price: 3.99 },
-];
-
 export const GO_LARGE_OPTION = { name: 'Go Large', price: 2 };
-
-const VEGETARIAN_MEAL_SIZE_OPTIONS = [
-  { name: 'Regular', price: 0 },
-  { name: 'Meal', price: 2 },
-];
 
 const VEGETARIAN_GO_LARGE_OPTION = { name: 'Go Large', price: 0.5 };
 
@@ -145,24 +135,28 @@ export function categorySlug(value: string) {
     .replace(/(^-|-$)/g, '');
 }
 
-export function getProductOptionVisibility(category: string) {
-  const slug = categorySlug(category);
-  const hasFullOptions = FULL_OPTION_CATEGORY_SLUGS.has(slug);
-  const supportsFlavour = hasFullOptions && slug !== 'maemes-burgers';
-
-  return {
-    showSize: hasFullOptions,
-    showGoLarge: hasFullOptions,
-    showFlavour: supportsFlavour,
-    showSpecialInstructions: hasFullOptions || slug === 'box-meals' || slug === 'sharing-meal' || slug === 'fried-wings' || slug === 'fried-chicken' || slug === 'fried-boneless',
-    requiresSize: hasFullOptions,
-  };
+export function getBaseCategorySlug(category: string) {
+  return categorySlug(category).replace(/-meal$/, '');
 }
 
-export function getMealSizeOptions(category: string, mealPrice?: number) {
-  if (mealPrice !== undefined) return [{ name: 'Regular', price: 0 }, { name: 'Meal', price: mealPrice }];
-  const slug = categorySlug(category);
-  return slug === 'vegetarian-collection' || slug === 'fried-collection' ? VEGETARIAN_MEAL_SIZE_OPTIONS : MEAL_SIZE_OPTIONS;
+export function getProductConfiguration(product: Pick<MenuItem, 'category' | 'isMealVariant' | 'price' | 'kcal'>) {
+  const category = categorySlug(product.category);
+  const baseCategory = getBaseCategorySlug(product.category);
+  const isMealVariant = product.isMealVariant === true || category.endsWith('-meal');
+  const hasFullOptions = FULL_OPTION_CATEGORY_SLUGS.has(baseCategory);
+  const supportsFlavour = hasFullOptions && baseCategory !== 'maemes-burgers';
+
+  return {
+    isMealVariant,
+    baseCategorySlug: baseCategory,
+    basePrice: product.price,
+    baseKcal: product.kcal,
+    showMealOptions: isMealVariant && hasFullOptions,
+    showGoLarge: isMealVariant && hasFullOptions,
+    showFlavour: supportsFlavour,
+    showSpecialInstructions: hasFullOptions || baseCategory === 'box-meals' || baseCategory === 'sharing-meal' || baseCategory === 'fried-wings' || baseCategory === 'fried-chicken' || baseCategory === 'fried-boneless',
+    requiresSize: false,
+  };
 }
 
 export function getGoLargeOption(category: string, goLargePrice?: number) {

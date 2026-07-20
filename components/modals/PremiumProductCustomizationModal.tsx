@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
-import { FLAVOUR_OPTIONS, MEAL_OPTION_GROUPS, MealOptionChoice, MealOptionGroup, MealOptionModifier, categorySlug, getGoLargeOption, getMealSizeOptions, getProductOptionVisibility } from '@/lib/productOptionConfig';
+import { FLAVOUR_OPTIONS, MEAL_OPTION_GROUPS, MealOptionChoice, MealOptionGroup, MealOptionModifier, categorySlug, getGoLargeOption, getProductConfiguration } from '@/lib/productOptionConfig';
 
 interface PremiumProductCustomizationModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export default function PremiumProductCustomizationModal({
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationAttempted, setValidationAttempted] = useState(false);
-  const [selectedSize, setSelectedSize] = useState('Regular');
+  const [selectedSize, setSelectedSize] = useState('');
   const [goLarge, setGoLarge] = useState(false);
   const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
   const [mealOptionErrors, setMealOptionErrors] = useState<string[]>([]);
@@ -48,15 +48,19 @@ export default function PremiumProductCustomizationModal({
   const [selectedFriedWingsFriesModifierId, setSelectedFriedWingsFriesModifierId] = useState<string | null>(null);
   const [selectedFreeToppingIds, setSelectedFreeToppingIds] = useState<string[]>([]);
 
-  const isPlatter = categorySlug(product?.category || '') === 'maemes-platter';
-  const isKidsMeal = categorySlug(product?.category || '') === 'kids-meal';
-  const isBoxMeal = categorySlug(product?.category || '') === 'box-meals';
-  const isSharingMeal = categorySlug(product?.category || '') === 'sharing-meal';
-  const isFriedWings = categorySlug(product?.category || '') === 'fried-wings';
-  const isFriedChicken = categorySlug(product?.category || '') === 'fried-chicken';
-  const isFriedBoneless = categorySlug(product?.category || '') === 'fried-boneless';
+  const productConfiguration = useMemo(
+    () => getProductConfiguration(product || { category: '', price: 0 }),
+    [product],
+  );
+  const baseCategorySlug = productConfiguration.baseCategorySlug;
+  const isPlatter = baseCategorySlug === 'maemes-platter';
+  const isKidsMeal = baseCategorySlug === 'kids-meal';
+  const isBoxMeal = baseCategorySlug === 'box-meals';
+  const isSharingMeal = baseCategorySlug === 'sharing-meal';
+  const isFriedWings = baseCategorySlug === 'fried-wings';
+  const isFriedChicken = baseCategorySlug === 'fried-chicken';
+  const isFriedBoneless = baseCategorySlug === 'fried-boneless';
   const isFriedMealProduct = isFriedWings || isFriedChicken || isFriedBoneless;
-  const mealSizeOptions = getMealSizeOptions(product?.category || '', product?.mealPrice);
   const goLargeOption = getGoLargeOption(product?.category || '', product?.goLargePrice);
   const eligiblePlatterSides = useMemo(() => MENU_DATA.filter((item) => (
     categorySlug(item.category) === 'sides-and-extras'
@@ -89,7 +93,7 @@ export default function PremiumProductCustomizationModal({
     const savedSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
     const savedFriedMealConfiguration = editingItem?.customization?.friedMealConfiguration || editingItem?.customization?.friedWingsConfiguration;
     const savedFriedWingsOption = savedFriedMealConfiguration?.option;
-    setSelectedSize(isFriedMealProduct ? savedFriedWingsOption || 'Single' : savedSize.startsWith('Meal') ? 'Meal' : 'Regular');
+    setSelectedSize(productConfiguration.isMealVariant ? 'Meal' : isFriedMealProduct ? savedFriedWingsOption || 'Single' : '');
     setGoLarge(savedSize.includes(goLargeOption.name));
     const savedAddOns = editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [];
     const restoredMealOptions: Record<string, MealOptionChoice | MealOptionChoice[]> = {};
@@ -107,7 +111,7 @@ export default function PremiumProductCustomizationModal({
       .filter((modifier) => savedAddOns.some((addOn) => addOn.id === modifier.id))
       .map((modifier) => modifier.id));
     setMealOptionErrors([]);
-    setSelectedFlavour(categorySlug(product?.category || '') === 'maemes-burgers'
+    setSelectedFlavour(baseCategorySlug === 'maemes-burgers'
       ? ''
       : editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour || 'Medium');
     setQuantity(editingItem?.quantity || 1);
@@ -129,7 +133,7 @@ export default function PremiumProductCustomizationModal({
     setSelectedFriedWingsDipId(savedFriedMealConfiguration?.dip?.id || null);
     setSelectedFriedWingsFriesModifierId(savedFriedMealConfiguration?.fries?.modifier?.id || null);
     setSelectedFreeToppingIds((editingItem?.customization?.selectedFreeToppings || []).map((topping) => topping.id));
-  }, [editingItem, goLargeOption.name, isFriedMealProduct, isOpen, product?.id]);
+  }, [baseCategorySlug, editingItem, goLargeOption.name, isFriedMealProduct, isOpen, product?.id, productConfiguration.isMealVariant]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -171,14 +175,8 @@ export default function PremiumProductCustomizationModal({
     };
   }, [isOpen, onClose]);
 
-  const optionVisibility = useMemo(
-    () => getProductOptionVisibility(product?.category || ''),
-    [product?.category],
-  );
-  const selectedSizeOption = optionVisibility.showSize
-    ? mealSizeOptions.find((option) => option.name === selectedSize) || mealSizeOptions[0]
-    : { name: '', price: 0 };
-  const mealSelected = selectedSize === 'Meal';
+  const optionVisibility = productConfiguration;
+  const mealSelected = productConfiguration.isMealVariant;
   const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? goLargeOption.price : 0;
   const mealOptionsList = useMemo(() => Object.values(selectedMealOptions).flat(), [selectedMealOptions]);
   const mealOptionsTotal = mealSelected
@@ -208,11 +206,11 @@ export default function PremiumProductCustomizationModal({
   const selectedProductModifiers = (product?.popupModifiers || []).filter((modifier) => selectedProductModifierIds.includes(modifier.id));
   const selectedFreeToppings = (product?.freeToppings || []).filter((topping) => selectedFreeToppingIds.includes(topping.id));
   const productModifiersTotal = selectedProductModifiers.reduce((total, modifier) => total + modifier.price, 0);
-  const friedWingsMealCharge = friedWingsMealSelected ? product?.mealPrice || 0 : 0;
+  const friedWingsMealCharge = 0;
   const friedWingsFriesModifierPrice = friedWingsMealSelected && selectedFriedWingsFriesModifierId === friedWingsFriesModifier?.id
     ? friedWingsFriesModifier.price
     : 0;
-  const unitPrice = product ? product.price + selectedSizeOption.price + goLargePrice + mealOptionsTotal + platterAddOnsTotal + productModifiersTotal + friedWingsMealCharge + friedWingsFriesModifierPrice : 0;
+  const unitPrice = product ? product.price + goLargePrice + mealOptionsTotal + platterAddOnsTotal + productModifiersTotal + friedWingsMealCharge + friedWingsFriesModifierPrice : 0;
   const calculatedTotal = unitPrice * quantity;
 
   if (!isOpen || !product) return null;
@@ -340,10 +338,8 @@ export default function PremiumProductCustomizationModal({
       return;
     }
 
-    const selectedSizeLabel = optionVisibility.showSize
-      ? product.mealPrice !== undefined || ['vegetarian-collection', 'fried-collection'].includes(categorySlug(product.category))
-        ? `${selectedSize}${selectedSizeOption.price > 0 ? ` +£${selectedSizeOption.price.toFixed(2)}` : ''}${goLargePrice > 0 ? `, ${goLargeOption.name} +£${goLargePrice.toFixed(2)}` : ''}`
-        : `${selectedSize}${goLargePrice > 0 ? `, ${goLargeOption.name}` : ''}`
+    const selectedSizeLabel = goLargePrice > 0
+      ? `${goLargeOption.name} +£${goLargePrice.toFixed(2)}`
       : undefined;
 
     const selectedDrink = platterDrinks.find((drink) => String(drink.id) === selectedPlatterDrinkId);
@@ -705,40 +701,6 @@ export default function PremiumProductCustomizationModal({
                       </section>
                     )}
 
-                    <section>
-                      <div className="mb-3 flex items-center gap-2">
-                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Option</h3>
-                        <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        {(['Single', 'Meal'] as const).map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSize(option);
-                              if (option === 'Single') {
-                                setSelectedFriedWingsDrinkId(null);
-                                setSelectedFriedWingsDipId(null);
-                                setSelectedFriedWingsFriesModifierId(null);
-                              }
-                            }}
-                            aria-pressed={selectedSize === option}
-                            className={`rounded-2xl border px-4 py-3 text-left transition ${
-                              selectedSize === option
-                                ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                                : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                            }`}
-                          >
-                            <span className="block text-sm font-medium">{option}</span>
-                            <span className={`mt-1 block text-xs font-semibold ${selectedSize === option ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                              {option === 'Meal' ? `+£${(product.mealPrice || 0).toFixed(2)}` : 'Included'}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-
                     {friedWingsMealSelected && (
                       <>
                         <section>
@@ -907,6 +869,7 @@ export default function PremiumProductCustomizationModal({
                         <button
                           type="button"
                           onClick={() => setSelectedPlatterDrinkId(null)}
+                          aria-pressed={selectedPlatterDrinkId === null}
                           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                             selectedPlatterDrinkId === null
                               ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -920,6 +883,7 @@ export default function PremiumProductCustomizationModal({
                             key={drink.id}
                             type="button"
                             onClick={() => setSelectedPlatterDrinkId(String(drink.id))}
+                            aria-pressed={selectedPlatterDrinkId === String(drink.id)}
                             className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                               selectedPlatterDrinkId === String(drink.id)
                                 ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -938,6 +902,7 @@ export default function PremiumProductCustomizationModal({
                         <button
                           type="button"
                           onClick={() => setSelectedPlatterCakeId(null)}
+                          aria-pressed={selectedPlatterCakeId === null}
                           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                             selectedPlatterCakeId === null
                               ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -951,6 +916,7 @@ export default function PremiumProductCustomizationModal({
                             key={cake.id}
                             type="button"
                             onClick={() => setSelectedPlatterCakeId(cake.id)}
+                            aria-pressed={selectedPlatterCakeId === cake.id}
                             className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                               selectedPlatterCakeId === cake.id
                                 ? 'border-[#99041e] bg-[#99041e] text-white'
@@ -965,58 +931,23 @@ export default function PremiumProductCustomizationModal({
                   </>
                 )}
 
-                {optionVisibility.showSize && (
+                {optionVisibility.showGoLarge && (
                   <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Size</h3>
-                      <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Go Large</h3>
+                      <span className="rounded-full border border-[#ffc257] bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Optional</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {mealSizeOptions.map((size) => (
-                        <button
-                          key={size.name}
-                          type="button"
-                          onClick={() => {
-                            setSelectedSize(size.name);
-                            if (size.name !== 'Meal') {
-                              setGoLarge(false);
-                              setSelectedMealOptions({});
-                            }
-                          }}
-                          aria-pressed={selectedSize === size.name}
-                          className={`rounded-2xl border px-4 py-3 text-left transition ${
-                            selectedSize === size.name
-                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                          }`}
-                        >
-                          <span className="block text-sm font-medium">{size.name}</span>
-                          <span className={`mt-1 block text-xs font-semibold ${selectedSize === size.name ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                            {size.price > 0 ? `+£${size.price.toFixed(2)}` : 'Included'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    {mealSelected && (
-                      <div className="mt-3 grid grid-cols-1 gap-3">
-                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Meal Option</h3>
-                        <button
-                          type="button"
-                          onClick={() => setGoLarge((current) => !current)}
-                          aria-pressed={goLarge}
-                          className={`rounded-2xl border px-4 py-3 text-left transition ${
-                            goLarge
-                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                          }`}
-                        >
-                          <span className="block text-sm font-medium">{goLargeOption.name}</span>
-                          <span className={`mt-1 block text-xs font-semibold ${goLarge ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                            +£{goLargeOption.price.toFixed(2)}
-                          </span>
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setGoLarge((current) => !current)}
+                      aria-pressed={goLarge}
+                      className="border border-[#ead8c6] bg-white px-4 py-3 text-left text-sm font-medium text-[#1a120f]"
+                    >
+                      <span className="flex flex-1 items-center justify-between gap-4">
+                        <span>{goLargeOption.name}</span>
+                        <span className="font-black text-[#99041e]">+£{goLargeOption.price.toFixed(2)}</span>
+                      </span>
+                    </button>
                   </section>
                 )}
 
@@ -1072,7 +1003,7 @@ export default function PremiumProductCustomizationModal({
                   </section>
                 )}
 
-                {optionVisibility.showSize && mealSelected && MEAL_OPTION_GROUPS.map((group) => (
+                {optionVisibility.showMealOptions && MEAL_OPTION_GROUPS.map((group) => (
                     <section
                       key={group.id}
                       data-invalid={mealOptionErrors.includes(group.id)}

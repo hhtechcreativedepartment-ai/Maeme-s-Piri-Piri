@@ -31,8 +31,7 @@ import {
   FLAVOUR_OPTIONS,
   MEAL_OPTION_GROUPS,
   getGoLargeOption,
-  getMealSizeOptions,
-  getProductOptionVisibility,
+  getProductConfiguration,
 } from '@/lib/productOptionConfig';
 import { parseIntent } from './intentParser';
 import {
@@ -865,11 +864,9 @@ function InlineProductCustomiser({
   onAdd: (item: CartItem) => void;
   onCancel: () => void;
 }) {
-  const visibility = getProductOptionVisibility(product.category);
-  const sizeOptions = getMealSizeOptions(product.category, product.mealPrice);
+  const visibility = getProductConfiguration(product);
   const goLargeOption = getGoLargeOption(product.category, product.goLargePrice);
   const restoredSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
-  const [size, setSize] = useState(restoredSize.startsWith('Meal') ? 'Meal' : 'Regular');
   const [goLarge, setGoLarge] = useState(restoredSize.includes('Go Large'));
   const [flavour, setFlavour] = useState(
     editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour || 'Medium'
@@ -901,10 +898,7 @@ function InlineProductCustomiser({
     editingItem?.customization?.selectedFreeToppings?.map((topping) => topping.id) || []
   );
 
-  const mealSelected = size === 'Meal';
-  const sizePrice = visibility.showSize
-    ? sizeOptions.find((option) => option.name === size)?.price || 0
-    : 0;
+  const mealSelected = visibility.isMealVariant;
   const largePrice = mealSelected && goLarge ? goLargeOption.price : 0;
   const mealAddOns = mealSelected
     ? MEAL_OPTION_GROUPS.flatMap((group) => group.options
@@ -932,10 +926,8 @@ function InlineProductCustomiser({
   const addOnTotal = addOns.reduce((sum, addOn) => (
     sum + addOn.price + (addOn.modifiers?.reduce((modifierSum, modifier) => modifierSum + modifier.price, 0) || 0)
   ), 0);
-  const unitPrice = product.price + sizePrice + largePrice + addOnTotal;
-  const selectedSize = visibility.showSize
-    ? `${size}${sizePrice ? ` +£${sizePrice.toFixed(2)}` : ''}${largePrice ? `, Go Large +£${largePrice.toFixed(2)}` : ''}`
-    : undefined;
+  const unitPrice = product.price + largePrice + addOnTotal;
+  const selectedSize = largePrice ? `${goLargeOption.name} +£${largePrice.toFixed(2)}` : undefined;
 
   const toggleOption = (groupId: string, optionId: string, multiple: boolean) => {
     setSelectedOptions((current) => {
@@ -987,24 +979,8 @@ function InlineProductCustomiser({
         </div>
       </div>
 
-      {visibility.showSize && (
-        <OptionSection title="Choose size">
-          {sizeOptions.map((option) => (
-            <OptionButton key={option.name} selected={size === option.name} onClick={() => {
-              setSize(option.name);
-              if (option.name !== 'Meal') {
-                setGoLarge(false);
-                setSelectedOptions({});
-              }
-            }}>
-              {option.name}{option.price ? ` +£${option.price.toFixed(2)}` : ' · Included'}
-            </OptionButton>
-          ))}
-        </OptionSection>
-      )}
-
-      {visibility.showGoLarge && mealSelected && (
-        <OptionSection title="Meal size">
+      {visibility.showGoLarge && (
+        <OptionSection title="Go Large">
           <OptionButton selected={goLarge} onClick={() => setGoLarge((current) => !current)}>
             Go Large +£{goLargeOption.price.toFixed(2)}
           </OptionButton>

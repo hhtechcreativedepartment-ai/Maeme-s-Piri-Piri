@@ -122,19 +122,12 @@ export const SMASH_BURGER_FREE_TOPPINGS: MenuQuickAddOption[] = [
 ]
 
 export const MENU_CATEGORY_DATA: MenuCategory[] = [
-  { id: 'grilled-collection-meal', title: 'Grilled Collection Meal', slug: 'grilled-collection-meal', anchor: 'category-grilled-collection-meal', image: '/images/categories/original-brand/grilled-collection.jpg' },
   { id: 'grilled-collection', title: 'Grilled Collection', slug: 'grilled-collection', anchor: 'category-grilled-collection', image: '/images/categories/original-brand/grilled-collection.jpg' },
-  { id: 'maemes-burgers-meal', title: 'Maeme’s Burgers Meal', slug: 'maemes-burgers-meal', anchor: 'category-maemes-burgers-meal', image: '/images/categories/original-brand/maemes-burgers.jpg' },
   { id: 'maemes-burgers', title: 'Maeme’s Burgers', slug: 'maemes-burgers', anchor: 'category-maemes-burgers', image: '/images/categories/original-brand/maemes-burgers.jpg' },
-  { id: 'fried-wings-meal', title: 'Fried Wings Meal', slug: 'fried-wings-meal', anchor: 'category-fried-wings-meal', image: '/images/categories/fried/fried-wings.jpg' },
   { id: 'fried-wings', title: 'Fried Wings', slug: 'fried-wings', anchor: 'fried-wings', image: '/images/categories/fried/fried-wings.jpg' },
-  { id: 'fried-chicken-meal', title: 'Fried Chicken Meal', slug: 'fried-chicken-meal', anchor: 'category-fried-chicken-meal', image: '/images/categories/fried/fried-chicken.jpg' },
   { id: 'fried-chicken', title: 'Fried Chicken', slug: 'fried-chicken', anchor: 'fried-chicken', image: '/images/categories/fried/fried-chicken.jpg' },
-  { id: 'fried-boneless-meal', title: 'Fried Boneless Meal', slug: 'fried-boneless-meal', anchor: 'category-fried-boneless-meal', image: '/images/categories/fried/fried-boneless.jpg' },
   { id: 'fried-boneless', title: 'Fried Boneless', slug: 'fried-boneless', anchor: 'fried-boneless', image: '/images/categories/fried/fried-boneless.jpg' },
-  { id: 'vegetarian-collection-meal', title: 'Vegetarian Collection Meal', slug: 'vegetarian-collection-meal', anchor: 'category-vegetarian-collection-meal', image: '/images/categories/original-brand/vegetarian-collection.jpg' },
   { id: 'vegetarian-collection', title: 'Vegetarian Collection', slug: 'vegetarian-collection', anchor: 'category-vegetarian-collection', image: '/images/categories/original-brand/vegetarian-collection.jpg' },
-  { id: 'fried-collection-meal', title: 'Fried Collection Meal', slug: 'fried-collection-meal', anchor: 'category-fried-collection-meal', image: '/images/categories/original-brand/fried-collection.jpg' },
   { id: 'fried-collection', title: 'Fried Collection', slug: 'fried-collection', anchor: 'category-fried-collection', image: '/images/categories/original-brand/fried-collection.jpg' },
   { id: 'offers', title: 'Offers', slug: 'offers', anchor: 'category-offers', image: '/images/exclusive-deals-sign.png' },
   { id: 'box-meals', title: 'Box Meals', slug: 'box-meals', anchor: 'box-meals', image: '/images/categories/fried/box-meals.jpg' },
@@ -260,48 +253,7 @@ const BASE_MENU_DATA: MenuItem[] = [
   { id: 415, slug: 'lotus-biscoff-milkshake', name: 'Lotus Biscoff Milkshake', category: 'Milkshakes', description: 'Creamy milkshake blended with Lotus Biscoff and caramel biscuit notes.', price: 5.49, kcal: 460, image: DEFAULT_MENU_ITEM_IMAGE },
 ]
 
-const MEAL_VARIANT_CATEGORIES = new Set([
-  'Grilled Collection',
-  'Maeme’s Burgers',
-  'Fried Wings',
-  'Fried Chicken',
-  'Fried Boneless',
-  'Vegetarian Collection',
-  'Fried Collection',
-])
-
-const MEAL_VARIANT_ID_OFFSET = 100000
-
-function getMealVariantPrice(product: MenuItem) {
-  if (product.mealTotalPrice !== undefined) return product.mealTotalPrice
-  if (product.mealPrice !== undefined) return product.price + product.mealPrice
-  const category = product.category
-  const defaultMealCharge = category === 'Vegetarian Collection' || category === 'Fried Collection' ? 2 : 3.99
-  return product.price + defaultMealCharge
-}
-
-function createMealVariant(product: MenuItem): MenuItem {
-  return {
-    ...product,
-    id: product.id + MEAL_VARIANT_ID_OFFSET,
-    baseProductId: product.id,
-    isMealVariant: true,
-    slug: `${product.slug || product.id}-meal`,
-    name: `${product.name} — Meal`,
-    category: `${product.category} Meal`,
-    price: getMealVariantPrice(product),
-    startingPrice: false,
-    mealPrice: undefined,
-    mealTotalPrice: undefined,
-    offer: false,
-  }
-}
-
-const MEAL_VARIANTS = BASE_MENU_DATA
-  .filter((product) => MEAL_VARIANT_CATEGORIES.has(product.category))
-  .map(createMealVariant)
-
-export const MENU_DATA: MenuItem[] = [...BASE_MENU_DATA, ...MEAL_VARIANTS]
+export const MENU_DATA: MenuItem[] = BASE_MENU_DATA
 
 export const getProductsByCategory = (category: string) => MENU_DATA.filter(product => product.category === category)
 export const getFeaturedProducts = () => MENU_DATA.filter(product => product.popular).slice(0, 6)

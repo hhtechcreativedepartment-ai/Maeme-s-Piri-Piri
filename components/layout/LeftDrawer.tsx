@@ -6,7 +6,7 @@ import { X, FileText, Gift, MapPinIcon, Utensils } from 'lucide-react';
 interface LeftDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onOrderEntry: (trigger: HTMLElement) => void;
+  onOrderEntry: () => void;
 }
 
 const menuItems = [
@@ -64,7 +64,7 @@ export default function LeftDrawer({ isOpen, onClose, onOrderEntry }: LeftDrawer
                 onClick={(event) => {
                   if (item.label === 'Menu') {
                     event.preventDefault();
-                    onOrderEntry(event.currentTarget);
+                    onOrderEntry();
                   } else {
                     onClose();
                   }

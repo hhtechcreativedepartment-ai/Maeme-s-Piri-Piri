@@ -4,7 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingBag, Truck, UserRound } from 'lucide-react';
 import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
+import OrderEntryNoticeModal from '@/components/ordering/OrderEntryNoticeModal';
 import { OrderType, useCart } from '@/lib/cartContext';
 import { useAuth } from '@/lib/authContext';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
@@ -20,6 +22,21 @@ export default function OrderEntryPage() {
   const { user } = useAuth();
   const [pendingOrderType, setPendingOrderType] = useState<OrderType>(selectedOrderType || 'pickup');
   const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [showNotice, setShowNotice] = useState(false);
+  const collectionButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('notice') !== '1') return;
+    url.searchParams.delete('notice');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    setShowNotice(true);
+  }, []);
+
+  const closeNotice = () => {
+    setShowNotice(false);
+    window.setTimeout(() => collectionButtonRef.current?.focus(), 0);
+  };
 
   const beginOrder = (orderType: OrderType) => {
     setOrderType(orderType);
@@ -85,6 +102,7 @@ export default function OrderEntryPage() {
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
+                ref={collectionButtonRef}
                 type="button"
                 onClick={() => beginOrder('pickup')}
                 aria-pressed={selectedOrderType === 'pickup'}
@@ -123,6 +141,12 @@ export default function OrderEntryPage() {
         initialOrderType={pendingOrderType}
         redirectPath="/order/menu"
         onClose={() => setShowSelectionModal(false)}
+      />
+      <OrderEntryNoticeModal
+        isOpen={showNotice}
+        isContinuing={false}
+        onClose={closeNotice}
+        onContinue={closeNotice}
       />
     </main>
   );

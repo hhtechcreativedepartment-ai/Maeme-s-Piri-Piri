@@ -16,6 +16,7 @@ import {
   getGoLargeOption,
   getMealCharge,
   getProductConfigurationSteps,
+  getRegularPaidOptionGroup,
 } from '@/lib/productOptionConfig';
 
 interface Props {
@@ -149,7 +150,8 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     setQuantity(editingItem?.quantity || 1);
     setSpecialInstructions(editingItem?.customization?.specialInstructions || editingItem?.specialInstructions || '');
     const restoredOptions: Record<string, MealOptionChoice | MealOptionChoice[]> = {};
-    MEAL_OPTION_GROUPS.forEach((group) => {
+    MEAL_OPTION_GROUPS.forEach((mealGroup) => {
+      const group = restoredMealType === 'Regular' ? getRegularPaidOptionGroup(mealGroup.id) || mealGroup : mealGroup;
       const found = group.options.flatMap((option) => {
         const saved = addOns.find((item) => (option.id && item.id === option.id) || item.name === option.name);
         return saved ? [{ ...option, selectedModifiers: saved.modifiers }] : [];
@@ -474,7 +476,7 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
   const renderMealGroup = (group: MealOptionGroup) => {
     const value = selectedMealOptions[group.id];
     const values = Array.isArray(value) ? value : value ? [value] : [];
-    return <div className="space-y-2" role={group.multiple ? 'group' : 'radiogroup'}>{!group.required && <OptionRow label="Not Now" selected={skippedSteps.includes(group.id)} onClick={() => { setSelectedMealOptions((current) => { const next = { ...current }; delete next[group.id]; return next; }); setSkipped(group.id, true); setError(''); }} radio={!group.multiple} />}{group.options.map((option) => { const selected = values.some((item) => (item.id || item.name) === (option.id || option.name)); const selectedValue = values.find((item) => (item.id || item.name) === (option.id || option.name)); return <div key={option.id || option.name}><OptionRow label={option.name} selected={selected} onClick={() => toggleMealOption(group, option)} price={option.price} radio={!group.multiple} />{selected && option.modifiers?.map((modifier) => <div className="ml-9 mt-2" key={modifier.id}><OptionRow label={modifier.name} selected={Boolean(selectedValue?.selectedModifiers?.some((item) => item.id === modifier.id))} onClick={() => toggleModifier(group.id, option, modifier)} price={modifier.price} /></div>)}</div>; })}</div>;
+    return <div className="space-y-2" role={group.multiple ? 'group' : 'radiogroup'}>{!group.required && <OptionRow label="Not Now" selected={skippedSteps.includes(group.id)} onClick={() => { setSelectedMealOptions((current) => { const next = { ...current }; delete next[group.id]; return next; }); setSkipped(group.id, true); setError(''); }} radio={!group.multiple} />}{group.options.map((option) => { const selected = values.some((item) => (item.id || item.name) === (option.id || option.name)); const selectedValue = values.find((item) => (item.id || item.name) === (option.id || option.name)); return <div key={option.id || option.name}><OptionRow label={option.name} detail={!mealSelected ? (option.kcal != null ? `${option.kcal} kcal` : 'kcal unavailable') : undefined} selected={selected} onClick={() => toggleMealOption(group, option)} price={option.price} radio={!group.multiple} />{selected && option.modifiers?.map((modifier) => <div className="ml-9 mt-2" key={modifier.id}><OptionRow label={modifier.name} selected={Boolean(selectedValue?.selectedModifiers?.some((item) => item.id === modifier.id))} onClick={() => toggleModifier(group.id, option, modifier)} price={modifier.price} /></div>)}</div>; })}</div>;
   };
 
   const renderStep = () => {
@@ -482,7 +484,7 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     if (id === 'flavour') return <div className="space-y-2" role="radiogroup">{(baseCategory === 'fried-wings' ? ['Normal', 'Spicy'] : FLAVOUR_OPTIONS).map((item) => <OptionRow key={item} label={item} selected={selectedFlavour === item} onClick={() => { setSelectedFlavour(item); setError(''); }} radio />)}</div>;
     if (id === 'meal-type') return <div className="space-y-2" role="radiogroup"><OptionRow label="Regular" detail={`£${product.price.toFixed(2)}`} selected={mealType === 'Regular'} onClick={() => { setMealType('Regular'); setGoLarge(null); setSelectedMealOptions({}); setSelectedFriedDrinkId(null); setSelectedFriedDipId(null); setSelectedFriedFriesModifierId(null); setError(''); }} radio /><OptionRow label="Meal" detail={`£${(product.price + getMealCharge(product)).toFixed(2)}`} selected={mealType === 'Meal'} onClick={() => { setMealType('Meal'); setError(''); }} radio /></div>;
     if (id === 'go-large') return <div className="space-y-2" role="radiogroup"><OptionRow label="Regular Meal" selected={goLarge === false} onClick={() => { setGoLarge(false); setError(''); }} price={0} radio /><OptionRow label={goLargeOption.name} selected={goLarge === true} onClick={() => { setGoLarge(true); setError(''); }} price={goLargeOption.price} radio /></div>;
-    if (id.startsWith('meal-')) { const group = MEAL_OPTION_GROUPS.find((item) => item.id === id.replace('meal-', '')); return group ? renderMealGroup(group) : null; }
+    if (id.startsWith('meal-')) { const groupId = id.replace('meal-', ''); const group = mealSelected ? MEAL_OPTION_GROUPS.find((item) => item.id === groupId) : getRegularPaidOptionGroup(groupId); return group ? renderMealGroup(group) : null; }
     if (id === 'kids-drink') return <div className="space-y-2" role="radiogroup">{fruitShootOptions.map((item) => <OptionRow key={item.id || item.name} label={item.name} selected={selectedFruitShootId === item.id} onClick={() => { setSelectedFruitShootId(item.id || item.name); setError(''); }} price={0} radio />)}</div>;
     if (id === 'box-drink' || id === 'fried-drink') { const selected = id === 'box-drink' ? selectedBoxMealDrinkId : selectedFriedDrinkId; return <div className="space-y-2" role="radiogroup">{regularDrinks.map((item) => <OptionRow key={item.id} label={item.name} selected={selected === String(item.id)} onClick={() => { if (id === 'box-drink') setSelectedBoxMealDrinkId(String(item.id)); else setSelectedFriedDrinkId(String(item.id)); setError(''); }} price={0} radio />)}</div>; }
     if (id === 'fried-fries') return <div className="space-y-2"><OptionRow label={regularFries?.name || 'Regular Fries'} selected onClick={() => undefined} price={0} radio />{friesModifier && <OptionRow label={friesModifier.name} selected={selectedFriedFriesModifierId === friesModifier.id} onClick={() => setSelectedFriedFriesModifierId((current) => current === friesModifier.id ? null : friesModifier.id)} price={friesModifier.price} />}</div>;

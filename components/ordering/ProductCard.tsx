@@ -109,36 +109,36 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
       data-unavailable={isUnavailable}
       onClick={orderProduct}
       onKeyDown={handleCardKeyDown}
-      className="menu-product-card group relative flex h-full min-h-[470px] cursor-pointer flex-col overflow-hidden rounded-lg border-2 border-transparent bg-white shadow-[0_6px_20px_rgba(50,24,16,0.05)]"
+      className="menu-product-card group relative flex h-full min-h-[160px] cursor-pointer flex-row items-stretch gap-4 overflow-hidden rounded-[18px] border-2 border-transparent bg-white p-4 shadow-[0_6px_20px_rgba(50,24,16,0.05)] sm:min-h-[470px] sm:flex-col sm:gap-0 sm:rounded-lg sm:p-0"
     >
-      <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-white">
+      <div className="relative h-[120px] w-[120px] shrink-0 self-center overflow-hidden rounded-[14px] bg-white sm:aspect-square sm:h-auto sm:w-full sm:self-auto sm:rounded-none">
         <Image
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1279px) 50vw, 310px"
-          className="menu-product-card-image object-contain p-6"
+          sizes="(max-width: 639px) 120px, (max-width: 1279px) 50vw, 310px"
+          className="menu-product-card-image object-contain p-2 sm:p-6"
         />
         {product.popular && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#ffc257] px-3 py-1.5 text-[10px] font-black leading-none text-[#99041e] shadow-sm">
+          <span className="absolute right-3 top-3 rounded-full bg-[#ffc257] px-3 py-1.5 text-[10px] font-black leading-none text-[#99041e] shadow-sm">
             Popular
           </span>
         )}
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col px-5 pb-5 pt-3">
+      <div className="flex min-h-[120px] min-w-0 flex-1 flex-col py-0 sm:min-h-0 sm:px-5 sm:pb-5 sm:pt-3">
         <button
           type="button"
           onClick={handleFavouriteClick}
-          className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#f0d59d] bg-white text-[#99041e] shadow-sm transition hover:bg-[#fff8ed] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
+          className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#f0d59d] bg-white text-[#99041e] shadow-sm transition hover:bg-[#fff8ed] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:left-4 sm:top-4 sm:h-9 sm:w-9"
           aria-label={isSaved ? `Remove ${product.name} from favourites` : `Save ${product.name}`}
           aria-pressed={isSaved}
         >
           <Heart size={17} className={isSaved ? 'fill-[#99041e] text-[#99041e]' : 'fill-transparent text-[#99041e]'} />
         </button>
 
-        <div className="min-w-0 pr-11">
-          <h3 className="line-clamp-2 text-lg font-black leading-tight text-[#99041e]">{product.name}</h3>
+        <div className="min-w-0">
+          <h3 className="line-clamp-2 pr-1 text-[15px] font-black leading-[1.18] text-[#99041e] sm:text-lg sm:leading-tight">{product.name}</h3>
           {product.servingInfo && (
             <p className="mt-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#99041e]">{product.servingInfo}</p>
           )}
@@ -148,7 +148,7 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
         </div>
 
         {showDescription && product.description && (
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#6b5b55]">{product.description}</p>
+          <p className="mt-1.5 line-clamp-2 text-xs leading-[1.45] text-[#6b5b55] sm:mt-3 sm:line-clamp-3 sm:text-sm sm:leading-6">{product.description}</p>
         )}
 
         {product.quickAddOptions?.map((option) => {
@@ -164,7 +164,7 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
                 ));
               }}
               aria-pressed={selected}
-              className={`mt-3 w-fit rounded-full border px-3 py-1.5 text-[11px] font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 ${
+              className={`mt-2 w-fit rounded-full border px-2.5 py-1 text-[10px] font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:mt-3 sm:px-3 sm:py-1.5 sm:text-[11px] ${
                 selected
                   ? 'border-[#99041e] bg-[#99041e] text-white'
                   : 'border-[#ead8c6] bg-[#fff8ed] text-[#99041e] hover:border-[#99041e]'
@@ -175,10 +175,10 @@ export default function ProductCard({ product, onAdd, onFavourite, isSelected = 
           );
         })}
 
-        <div className="mt-auto border-t border-[#f0d59d]/70 pt-4">
+        <div className="mt-auto border-t border-[#f0d59d]/70 pt-2 sm:pt-4">
           <div className="flex min-w-0 items-end justify-between gap-3">
-            <p className="text-xl font-black leading-none text-[#99041e]">£{displayedPrice.toFixed(2)}</p>
-            <p className="text-right text-xs font-semibold text-[#6b5b55]">
+            <p className="text-[15px] font-black leading-none text-[#99041e] sm:text-xl">£{displayedPrice.toFixed(2)}</p>
+            <p className="text-right text-[10px] font-semibold text-[#6b5b55] sm:text-xs">
               {product.kcal != null ? `${product.kcal} kcal` : 'kcal unavailable'}
             </p>
           </div>

@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { isOrderFlowRoute } from '@/lib/orderFlowRoutes';
-import OrderEntryNoticeModal from '@/components/ordering/OrderEntryNoticeModal';
 import LeftDrawer from './LeftDrawer';
 import { socialIcons } from './SocialIcons';
 
@@ -14,11 +13,7 @@ export default function Header() {
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const drawerButtonRef = useRef<HTMLButtonElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isNoticeOpen, setIsNoticeOpen] = useState(false);
-  const [isContinuing, setIsContinuing] = useState(false);
-  const [noticeError, setNoticeError] = useState('');
 
   const navLinks = [
     { label: 'Menu', href: '/order' },
@@ -28,36 +23,9 @@ export default function Header() {
     { label: 'Franchising', href: '/franchising' },
   ];
 
-  const openOrderNotice = (trigger: HTMLElement, fromDrawer = false) => {
-    returnFocusRef.current = fromDrawer ? drawerButtonRef.current : trigger;
+  const openOrderNotice = () => {
     setIsDrawerOpen(false);
-    setNoticeError('');
-    if (sessionStorage.getItem('orderNoticeConfirmed') === 'true') {
-      router.push('/order');
-      return;
-    }
-    setIsNoticeOpen(true);
-  };
-
-  const closeOrderNotice = () => {
-    setIsNoticeOpen(false);
-    setIsContinuing(false);
-    window.setTimeout(() => returnFocusRef.current?.focus(), 0);
-  };
-
-  const continueToOnlineOrdering = () => {
-    if (isContinuing) return;
-    setIsContinuing(true);
-    setNoticeError('');
-    try {
-      sessionStorage.setItem('orderNoticeConfirmed', 'true');
-      setIsNoticeOpen(false);
-      router.push('/order');
-    } catch {
-      setIsNoticeOpen(true);
-      setIsContinuing(false);
-      setNoticeError('We could not open online ordering. Please try again.');
-    }
+    router.push('/order?notice=1');
   };
 
   useEffect(() => {
@@ -114,7 +82,7 @@ export default function Header() {
               onClick={(event) => {
                 if (link.label !== 'Menu') return;
                 event.preventDefault();
-                openOrderNotice(event.currentTarget);
+                openOrderNotice();
               }}
               className={`relative whitespace-nowrap py-2 text-sm font-black leading-none text-[#1f1210] transition-colors hover:text-[var(--maeme-red)] ${
                 pathname === link.href ? 'text-[var(--maeme-red)] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-[var(--maeme-red)]' : ''
@@ -138,7 +106,7 @@ export default function Header() {
           </div>
 
           <button
-            onClick={(event) => openOrderNotice(event.currentTarget)}
+            onClick={openOrderNotice}
             className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[var(--maeme-red)] px-3 text-xs font-black leading-none text-white shadow-[0_12px_28px_rgba(var(--maeme-red-rgb),0.20)] transition hover:bg-[var(--maeme-red-dark)] sm:h-11 sm:px-5 sm:text-sm lg:px-6"
           >
             <span className="hidden sm:inline">Order Now</span>
@@ -148,8 +116,7 @@ export default function Header() {
         </div>
       </div>
 
-      <LeftDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} onOrderEntry={(trigger) => openOrderNotice(trigger, true)} />
-      <OrderEntryNoticeModal isOpen={isNoticeOpen} isContinuing={isContinuing} error={noticeError} onClose={closeOrderNotice} onContinue={continueToOnlineOrdering} />
+      <LeftDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} onOrderEntry={openOrderNotice} />
     </header>
   );
 }

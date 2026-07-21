@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import OrderingHeader from '@/components/ordering/OrderingHeader';
 
 type LoginStep = 'phone' | 'otp' | 'signup';
 
@@ -16,6 +17,7 @@ function LoginPageContent() {
 
   const redirectTarget = searchParams.get('redirect') || '/';
   const guestTarget = redirectTarget === '/' ? '/menu' : redirectTarget;
+  const isCheckoutLogin = redirectTarget === '/checkout';
 
   const [step, setStep] = useState<LoginStep>('phone');
   const [phone, setPhone] = useState('');
@@ -131,7 +133,9 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="-mt-20 h-dvh min-h-0 overflow-hidden bg-[#fff8ed]">
+    <>
+    {isCheckoutLogin && <OrderingHeader />}
+    <div className={`${isCheckoutLogin ? 'h-[calc(100dvh-var(--ordering-header-height,0px))]' : '-mt-20 h-dvh'} min-h-0 overflow-hidden bg-[#fff8ed]`}>
       <div className="grid h-full min-h-0 min-w-0 grid-cols-1 overflow-hidden lg:grid-cols-[1.08fr_0.92fr]">
         <div className="relative hidden overflow-hidden lg:flex">
           <div className="absolute inset-0 bg-[url('/images/grilled-composition.png')] bg-cover bg-center" />
@@ -403,6 +407,7 @@ function LoginPageContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

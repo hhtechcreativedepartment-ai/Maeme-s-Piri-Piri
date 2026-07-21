@@ -22,6 +22,7 @@ export interface MealOptionChoice {
   id?: string;
   name: string;
   price: number;
+  kcal?: number;
   modifiers?: MealOptionModifier[];
   selectedModifiers?: MealOptionModifier[];
 }
@@ -119,6 +120,31 @@ export const MEAL_OPTION_GROUPS: MealOptionGroup[] = [
     ],
   },
 ];
+
+const REGULAR_ADD_ON_CATEGORIES: Record<string, string> = {
+  sides: 'sides-and-extras',
+  dip: 'dips',
+  'cake-slice': 'dessert-collection',
+};
+
+export function getRegularPaidOptionGroup(groupId: string): MealOptionGroup | undefined {
+  const group = MEAL_OPTION_GROUPS.find((candidate) => candidate.id === groupId);
+  const category = REGULAR_ADD_ON_CATEGORIES[groupId];
+  if (!group || !category) return group;
+
+  return {
+    ...group,
+    options: MENU_DATA
+      .filter((item) => categorySlug(item.category) === category)
+      .map((item) => ({
+        id: String(item.id),
+        name: item.name,
+        price: item.price,
+        kcal: item.kcal,
+        modifiers: item.quickAddOptions,
+      })),
+  };
+}
 
 export const FLAVOUR_OPTIONS = [
   'Lemon & Herb',

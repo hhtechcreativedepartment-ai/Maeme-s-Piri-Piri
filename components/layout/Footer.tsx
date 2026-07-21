@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CreditCard, Mail, MapPin, Phone, Smartphone } from 'lucide-react';
 import { socialIcons } from './SocialIcons';
+import { isOrderFlowRoute } from '@/lib/orderFlowRoutes';
 
 const quickLinks = [
   { label: 'Menu', href: '/menu' },
@@ -27,7 +28,7 @@ const legalLinks = [
 export default function Footer() {
   const pathname = usePathname();
 
-  if (pathname === '/login') {
+  if (pathname === '/login' || isOrderFlowRoute(pathname)) {
     return null;
   }
 

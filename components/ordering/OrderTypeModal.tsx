@@ -12,13 +12,22 @@ interface OrderTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
   redirectToMenu?: boolean;
+  redirectPath?: string;
+  initialOrderType?: OrderType;
   onSelected?: () => void;
 }
 
-export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true, onSelected }: OrderTypeModalProps) {
+export default function OrderTypeModal({
+  isOpen,
+  onClose,
+  redirectToMenu = true,
+  redirectPath = '/menu',
+  initialOrderType = 'delivery',
+  onSelected,
+}: OrderTypeModalProps) {
   const router = useRouter();
   const { selectBranch } = useCart();
-  const [orderType, setOrderType] = useState<OrderType>('delivery');
+  const [orderType, setOrderType] = useState<OrderType>(initialOrderType);
   const [query, setQuery] = useState('');
   const [searched, setSearched] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -45,13 +54,17 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
   useEffect(() => {
     if (!isOpen) return;
 
+    setOrderType(initialOrderType);
+    setSearched(false);
+    setQuery('');
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen]);
+  }, [initialOrderType, isOpen]);
 
   if (!isOpen || !mounted) return null;
 
@@ -59,7 +72,7 @@ export default function OrderTypeModal({ isOpen, onClose, redirectToMenu = true,
     selectBranch(branchId, orderType);
     onSelected?.();
     onClose();
-    if (redirectToMenu) router.push('/menu');
+    if (redirectToMenu) router.push(redirectPath);
   };
 
   const handleSearch = () => {

@@ -47,6 +47,7 @@
 
 :root {
   color-scheme: light;
+  --site-header-height: 5rem;
   /* Maeme's premium ordering brand system */
   --color-brand-red: #99041e;
   --color-brand-red-dark: #7f0318;
@@ -316,6 +317,161 @@
   .food-scroll-section .food-scroll-text {
     transition: none !important;
     will-change: auto;
+  }
+}
+
+.menu-product-card {
+  transition:
+    border-color 200ms ease-out,
+    box-shadow 200ms ease-out,
+    transform 200ms ease-out,
+    background-color 200ms ease-out;
+}
+
+.menu-product-card-image {
+  transition: transform 200ms ease-out;
+}
+
+.menu-product-card:focus-visible,
+.menu-product-card[data-selected='true'] {
+  border-color: #99041e;
+  box-shadow: 0 16px 36px rgba(50, 24, 16, 0.12);
+  outline: 3px solid rgba(255, 194, 87, 0.72);
+  outline-offset: 2px;
+}
+
+.menu-product-card[data-unavailable='true'] {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.menu-product-card:not([data-unavailable='true']):active {
+  transform: scale(0.995);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .menu-product-card:not([data-unavailable='true']):hover {
+    border-color: #99041e;
+    box-shadow: 0 16px 36px rgba(50, 24, 16, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .menu-product-card:not([data-unavailable='true']):hover .menu-product-card-image {
+    transform: scale(1.025);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-product-card,
+  .menu-product-card-image {
+    transition: none;
+  }
+}
+
+.product-config-modal {
+  animation: product-config-enter 210ms ease-out;
+}
+
+.product-config-options > section {
+  border: 1px solid #ead8c6;
+  border-radius: 16px;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(50, 24, 16, 0.055);
+}
+
+.product-config-options > section[data-invalid='true'] {
+  border-color: #99041e;
+  box-shadow: 0 0 0 2px rgba(153, 4, 30, 0.08);
+}
+
+.product-config-options > section[data-invalid='true']:focus {
+  outline: 3px solid rgba(255, 194, 87, 0.72);
+  outline-offset: 2px;
+}
+
+.product-config-options section button[aria-pressed] {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  border-width: 2px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease-out,
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.product-config-options section button[aria-pressed]::before {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #99041e;
+  border-radius: 3px;
+  color: white;
+  content: '';
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.product-config-options section button[aria-pressed='false']:hover {
+  border-color: #99041e;
+  background: #fff8ed;
+}
+
+.product-config-options section button[aria-pressed='true'] {
+  border-color: #99041e;
+  background: #fff1d7;
+  color: #99041e;
+  box-shadow: none;
+}
+
+.product-config-options section button[aria-pressed='true']::before {
+  background: #99041e;
+  content: '✓';
+}
+
+.product-config-options section > .flex.flex-wrap,
+.product-config-options section > .grid,
+.product-config-options section > div > .flex.flex-wrap,
+.product-config-options section > div > .grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.product-config-options section > .flex.flex-wrap,
+.product-config-options section > div > .flex.flex-wrap {
+  display: grid;
+}
+
+.product-config-options section button:focus-visible,
+.product-config-options textarea:focus-visible {
+  outline: 3px solid rgba(255, 194, 87, 0.7);
+  outline-offset: 2px;
+}
+
+@keyframes product-config-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-config-modal {
+    animation: none;
   }
 }
 @keyframes maeme-hero-slide-cycle {

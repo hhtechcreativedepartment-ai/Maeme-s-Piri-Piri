@@ -24,16 +24,10 @@ import {
 } from 'lucide-react';
 import type { Branch } from '@/lib/branchData';
 import { createOrder, saveOrder } from '@/lib/orderUtils';
-import type { CartItem, CartItemAddOn } from '@/lib/cartContext';
+import type { CartItem } from '@/lib/cartContext';
 import type { MenuItem } from '@/lib/menuData';
+import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
-import {
-  FLAVOUR_OPTIONS,
-  MEAL_OPTION_GROUPS,
-  getGoLargeOption,
-  getMealSizeOptions,
-  getProductOptionVisibility,
-} from '@/lib/productOptionConfig';
 import { parseIntent } from './intentParser';
 import {
   assistantReducer,
@@ -118,6 +112,7 @@ export default function OrderingAssistant() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const responseTimer = useRef<number | null>(null);
   const submittedIds = useRef(new Set<string>());
+  const productAddedFromAssistantRef = useRef(false);
 
   const addAssistantMessage = useCallback((text: string, card?: AssistantCard) => {
     dispatch({ type: 'message', message: message('assistant', text, card) });
@@ -166,12 +161,12 @@ export default function OrderingAssistant() {
   useEffect(() => {
     if (!isOpen) return;
     const listener = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsOpen(false);
+      if (event.key === 'Escape' && state.step !== 'productCustomisation') setIsOpen(false);
     };
     window.addEventListener('keydown', listener);
     window.setTimeout(() => inputRef.current?.focus(), 100);
     return () => window.removeEventListener('keydown', listener);
-  }, [isOpen]);
+  }, [isOpen, state.step]);
 
   useEffect(() => () => {
     recognitionRef.current?.stop();
@@ -694,20 +689,24 @@ export default function OrderingAssistant() {
                 ))}
 
                 {state.step === 'productCustomisation' && state.selectedProduct && (
-                  <InlineProductCustomiser
-                    key={`${state.selectedProduct.id}-${editingItem?.productId || 'new'}`}
+                  <PremiumProductCustomizationModal
+                    isOpen
+                    embedded
                     product={state.selectedProduct}
                     editingItem={editingItem}
-                    onCancel={() => {
+                    onAdded={(product) => {
+                      productAddedFromAssistantRef.current = true;
                       setEditingItem(null);
-                      dispatch({ type: 'navigate', step: services.cart.items.length ? 'cartReview' : 'productSelection' });
-                    }}
-                    onAdd={(item) => {
-                      if (editingItem) services.cart.remove(editingItem);
-                      services.cart.add(item);
-                      setEditingItem(null);
-                      addAssistantMessage(`${item.name} has been configured and added inside the assistant.`, { type: 'cart' });
+                      addAssistantMessage(`${product.name} has been fully configured and added to your basket.`, { type: 'cart' });
                       dispatch({ type: 'navigate', step: 'cartReview' });
+                    }}
+                    onClose={() => {
+                      setEditingItem(null);
+                      if (productAddedFromAssistantRef.current) {
+                        productAddedFromAssistantRef.current = false;
+                        return;
+                      }
+                      dispatch({ type: 'navigate', step: services.cart.items.length ? 'cartReview' : 'productSelection' });
                     }}
                   />
                 )}
@@ -851,270 +850,6 @@ export default function OrderingAssistant() {
       )}
 
     </>
-  );
-}
-
-function InlineProductCustomiser({
-  product,
-  editingItem,
-  onAdd,
-  onCancel,
-}: {
-  product: MenuItem;
-  editingItem: CartItem | null;
-  onAdd: (item: CartItem) => void;
-  onCancel: () => void;
-}) {
-  const visibility = getProductOptionVisibility(product.category);
-  const sizeOptions = getMealSizeOptions(product.category, product.mealPrice);
-  const goLargeOption = getGoLargeOption(product.category, product.goLargePrice);
-  const restoredSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
-  const [size, setSize] = useState(restoredSize.startsWith('Meal') ? 'Meal' : 'Regular');
-  const [goLarge, setGoLarge] = useState(restoredSize.includes('Go Large'));
-  const [flavour, setFlavour] = useState(
-    editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour || 'Medium'
-  );
-  const [quantity, setQuantity] = useState(editingItem?.quantity || 1);
-  const [instructions, setInstructions] = useState(
-    editingItem?.customization?.specialInstructions || editingItem?.specialInstructions || ''
-  );
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>(() => {
-    const restored = editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [];
-    return MEAL_OPTION_GROUPS.reduce<Record<string, string[]>>((result, group) => {
-      result[group.id] = group.options
-        .filter((option) => restored.some((addOn) => addOn.name === option.name || addOn.id === option.id))
-        .map((option) => option.id || option.name);
-      return result;
-    }, {});
-  });
-  const [piriPiriFries, setPiriPiriFries] = useState(
-    Boolean((editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [])
-      .some((addOn) => addOn.modifiers?.some((modifier) => modifier.id === 'piri-piri-seasoning')))
-  );
-  const [selectedModifiers, setSelectedModifiers] = useState<string[]>(() => {
-    const restored = editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [];
-    return (product.popupModifiers || [])
-      .filter((modifier) => restored.some((addOn) => addOn.id === modifier.id || addOn.name === modifier.name))
-      .map((modifier) => modifier.id);
-  });
-  const [selectedToppings, setSelectedToppings] = useState<string[]>(
-    editingItem?.customization?.selectedFreeToppings?.map((topping) => topping.id) || []
-  );
-
-  const mealSelected = size === 'Meal';
-  const sizePrice = visibility.showSize
-    ? sizeOptions.find((option) => option.name === size)?.price || 0
-    : 0;
-  const largePrice = mealSelected && goLarge ? goLargeOption.price : 0;
-  const mealAddOns = mealSelected
-    ? MEAL_OPTION_GROUPS.flatMap((group) => group.options
-      .filter((option) => selectedOptions[group.id]?.includes(option.id || option.name))
-      .map((option) => ({
-        id: option.id,
-        name: option.name,
-        price: option.price,
-        modifiers: group.id === 'fries' && piriPiriFries
-          ? [{ id: 'piri-piri-seasoning', name: 'Piri Piri seasoning', price: 0.30 }]
-          : undefined,
-      })))
-    : [];
-  const modifierAddOns = (product.popupModifiers || [])
-    .filter((modifier) => selectedModifiers.includes(modifier.id))
-    .map((modifier) => ({ id: modifier.id, name: modifier.name, price: modifier.price }));
-  const toppingAddOns = selectedToppings.length
-    ? [{
-        id: 'free-toppings',
-        name: `Toppings: ${(product.freeToppings || []).filter((topping) => selectedToppings.includes(topping.id)).map((topping) => topping.name).join(', ')}`,
-        price: 0,
-      }]
-    : [];
-  const addOns: CartItemAddOn[] = [...mealAddOns, ...modifierAddOns, ...toppingAddOns];
-  const addOnTotal = addOns.reduce((sum, addOn) => (
-    sum + addOn.price + (addOn.modifiers?.reduce((modifierSum, modifier) => modifierSum + modifier.price, 0) || 0)
-  ), 0);
-  const unitPrice = product.price + sizePrice + largePrice + addOnTotal;
-  const selectedSize = visibility.showSize
-    ? `${size}${sizePrice ? ` +£${sizePrice.toFixed(2)}` : ''}${largePrice ? `, Go Large +£${largePrice.toFixed(2)}` : ''}`
-    : undefined;
-
-  const toggleOption = (groupId: string, optionId: string, multiple: boolean) => {
-    setSelectedOptions((current) => {
-      const existing = current[groupId] || [];
-      const next = existing.includes(optionId)
-        ? existing.filter((id) => id !== optionId)
-        : multiple ? [...existing, optionId] : [optionId];
-      return { ...current, [groupId]: next };
-    });
-  };
-
-  const submit = () => {
-    const selectedFreeToppings = (product.freeToppings || [])
-      .filter((topping) => selectedToppings.includes(topping.id))
-      .map(({ id, name }) => ({ id, name }));
-    onAdd({
-      productId: product.id,
-      quantity,
-      name: product.name,
-      price: unitPrice,
-      basePrice: product.price,
-      image: product.image,
-      selectedSize,
-      selectedFlavour: visibility.showFlavour ? flavour : undefined,
-      selectedSpiceLevel: visibility.showFlavour ? flavour : undefined,
-      selectedAddOns: addOns,
-      specialInstructions: instructions || undefined,
-      unitPrice,
-      totalPrice: unitPrice * quantity,
-      customization: {
-        selectedSize,
-        selectedFlavour: visibility.showFlavour ? flavour : undefined,
-        selectedSpiceLevel: visibility.showFlavour ? flavour : undefined,
-        selectedAddOns: addOns,
-        selectedFreeToppings,
-        specialInstructions: instructions || undefined,
-      },
-    });
-  };
-
-  return (
-    <section className="rounded-2xl border border-[#ffc257] bg-white p-3 shadow-sm" aria-label={`Customise ${product.name}`}>
-      <div className="flex gap-3">
-        <img src={product.image} alt={product.name} className="h-20 w-20 shrink-0 rounded-xl bg-[#fff8ed] object-cover" />
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-black leading-5 text-[#1a120f]">{product.name}</h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-4 text-[#6b5b55]">{product.description}</p>
-          <p className="mt-2 text-base font-black text-[#99041e]">£{product.price.toFixed(2)}</p>
-        </div>
-      </div>
-
-      {visibility.showSize && (
-        <OptionSection title="Choose size">
-          {sizeOptions.map((option) => (
-            <OptionButton key={option.name} selected={size === option.name} onClick={() => {
-              setSize(option.name);
-              if (option.name !== 'Meal') {
-                setGoLarge(false);
-                setSelectedOptions({});
-              }
-            }}>
-              {option.name}{option.price ? ` +£${option.price.toFixed(2)}` : ' · Included'}
-            </OptionButton>
-          ))}
-        </OptionSection>
-      )}
-
-      {visibility.showGoLarge && mealSelected && (
-        <OptionSection title="Meal size">
-          <OptionButton selected={goLarge} onClick={() => setGoLarge((current) => !current)}>
-            Go Large +£{goLargeOption.price.toFixed(2)}
-          </OptionButton>
-        </OptionSection>
-      )}
-
-      {visibility.showFlavour && (
-        <OptionSection title="Flavour / heat / spice level">
-          {FLAVOUR_OPTIONS.map((option) => (
-            <OptionButton key={option} selected={flavour === option} onClick={() => setFlavour(option)}>{option}</OptionButton>
-          ))}
-        </OptionSection>
-      )}
-
-      {mealSelected && MEAL_OPTION_GROUPS.map((group) => (
-        <OptionSection key={group.id} title={group.title}>
-          {group.options.map((option) => {
-            const optionId = option.id || option.name;
-            const selected = selectedOptions[group.id]?.includes(optionId) || false;
-            return (
-              <div key={optionId} className="contents">
-                <OptionButton selected={selected} onClick={() => toggleOption(group.id, optionId, Boolean(group.multiple))}>
-                  {option.name}{option.price ? ` +£${option.price.toFixed(2)}` : ' · Included'}
-                </OptionButton>
-                {group.id === 'fries' && selected && option.modifiers?.some((modifier) => modifier.id === 'piri-piri-seasoning') && (
-                  <OptionButton selected={piriPiriFries} onClick={() => setPiriPiriFries((current) => !current)}>
-                    Piri Piri seasoning +£0.30
-                  </OptionButton>
-                )}
-              </div>
-            );
-          })}
-        </OptionSection>
-      ))}
-
-      {product.popupModifiers && product.popupModifiers.length > 0 && (
-        <OptionSection title="Optional extras">
-          {product.popupModifiers.map((modifier) => (
-            <OptionButton
-              key={modifier.id}
-              selected={selectedModifiers.includes(modifier.id)}
-              onClick={() => setSelectedModifiers((current) => current.includes(modifier.id) ? current.filter((id) => id !== modifier.id) : [...current, modifier.id])}
-            >
-              {modifier.name} +£{modifier.price.toFixed(2)}
-            </OptionButton>
-          ))}
-        </OptionSection>
-      )}
-
-      {product.freeToppings && product.freeToppings.length > 0 && (
-        <OptionSection title="Free toppings">
-          {product.freeToppings.map((topping) => (
-            <OptionButton
-              key={topping.id}
-              selected={selectedToppings.includes(topping.id)}
-              onClick={() => setSelectedToppings((current) => current.includes(topping.id) ? current.filter((id) => id !== topping.id) : [...current, topping.id])}
-            >
-              {topping.name}
-            </OptionButton>
-          ))}
-        </OptionSection>
-      )}
-
-      <label className="mt-4 block text-xs font-black uppercase tracking-[0.1em] text-[#1a120f]">
-        Special instructions
-        <textarea
-          value={instructions}
-          onChange={(event) => setInstructions(event.target.value)}
-          rows={2}
-          placeholder="Allergies or preparation notes?"
-          className="mt-2 w-full resize-none rounded-xl border border-[#ead8c6] bg-[#fffaf2] p-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/30"
-        />
-      </label>
-
-      <div className="mt-4 flex items-center gap-2">
-        <div className="flex h-12 items-center rounded-xl border border-[#ead8c6] bg-[#fffaf2]">
-          <button onClick={() => setQuantity((current) => Math.max(1, current - 1))} className="flex h-11 w-10 items-center justify-center text-[#99041e]" aria-label="Decrease quantity"><Minus size={16} /></button>
-          <span className="min-w-7 text-center text-sm font-black">{quantity}</span>
-          <button onClick={() => setQuantity((current) => current + 1)} className="flex h-11 w-10 items-center justify-center text-[#99041e]" aria-label="Increase quantity"><Plus size={16} /></button>
-        </div>
-        <button onClick={submit} className="min-h-12 flex-1 rounded-xl bg-[#ffc257] px-3 text-sm font-black text-[#1a120f]">
-          {editingItem ? 'Update basket' : 'Add to basket'} · £{(unitPrice * quantity).toFixed(2)}
-        </button>
-      </div>
-      <button onClick={onCancel} className="mt-2 min-h-10 w-full rounded-xl text-xs font-black text-[#99041e]">Cancel customisation</button>
-    </section>
-  );
-}
-
-function OptionSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <fieldset className="mt-4">
-      <legend className="mb-2 text-xs font-black uppercase tracking-[0.1em] text-[#1a120f]">{title}</legend>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </fieldset>
-  );
-}
-
-function OptionButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={`min-h-10 rounded-full border px-3 py-2 text-left text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/40 ${
-        selected ? 'border-[#99041e] bg-[#99041e] text-white' : 'border-[#ead8c6] bg-[#fffaf2] text-[#1a120f] hover:border-[#99041e]'
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 

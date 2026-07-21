@@ -1,35 +1,84 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Minus, Plus, X } from 'lucide-react';
-import { CartItem, useCart } from '@/lib/cartContext';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Check, Minus, Plus, X } from 'lucide-react';
+import { CartItem, CartItemAddOn, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
-import { FLAVOUR_OPTIONS, MEAL_OPTION_GROUPS, MealOptionChoice, MealOptionGroup, MealOptionModifier, categorySlug, getGoLargeOption, getMealSizeOptions, getProductOptionVisibility } from '@/lib/productOptionConfig';
+import {
+  FLAVOUR_OPTIONS,
+  MEAL_OPTION_GROUPS,
+  MealOptionChoice,
+  MealOptionGroup,
+  MealOptionModifier,
+  ProductConfigurationStepId,
+  categorySlug,
+  getBaseCategorySlug,
+  getGoLargeOption,
+  getMealCharge,
+  getProductConfigurationSteps,
+} from '@/lib/productOptionConfig';
 
-interface PremiumProductCustomizationModalProps {
+interface Props {
   isOpen: boolean;
   product: MenuItem | null;
   onClose: () => void;
   onAdded?: (product: MenuItem) => void;
   editingItem?: CartItem | null;
+  embedded?: boolean;
 }
 
-export default function PremiumProductCustomizationModal({
-  isOpen,
-  product,
-  onClose,
-  onAdded,
-  editingItem,
-}: PremiumProductCustomizationModalProps) {
+interface OptionRowProps {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+  price?: number;
+  detail?: string;
+  radio?: boolean;
+  disabled?: boolean;
+}
+
+function OptionRow({ label, selected, onClick, price, detail, radio, disabled }: OptionRowProps) {
+  return (
+    <button
+      type="button"
+      role={radio ? 'radio' : 'checkbox'}
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/45 disabled:cursor-not-allowed disabled:opacity-45 ${selected ? 'border-[#99041e] bg-[#fff3df] shadow-sm' : 'border-[#ead8c6] bg-white hover:border-[#99041e]'}`}
+    >
+      <span className={`flex h-6 w-6 shrink-0 items-center justify-center border-2 border-[#99041e] ${radio ? 'rounded-full' : 'rounded-md'} ${selected ? 'bg-[#99041e] text-white' : 'bg-white'}`}>
+        {selected && <Check size={15} strokeWidth={3} />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-black text-[#2e1c18]">{label}</span>
+        {detail && <span className="mt-0.5 block text-xs font-semibold text-[#7b6861]">{detail}</span>}
+      </span>
+      {price !== undefined && <span className="shrink-0 text-sm font-black text-[#99041e]">{price > 0 ? `+£${price.toFixed(2)}` : 'Included'}</span>}
+    </button>
+  );
+}
+
+export default function PremiumProductCustomizationModal({ isOpen, product, onClose, onAdded, editingItem, embedded = false }: Props) {
   const { addToCart, removeFromCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState('Regular');
-  const [goLarge, setGoLarge] = useState(false);
-  const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
-  const [mealOptionErrors, setMealOptionErrors] = useState<string[]>([]);
-  const [selectedFlavour, setSelectedFlavour] = useState('Medium');
+  const modalRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const imageTransitionRef = useRef(false);
+  const lastProductScrollTopRef = useRef(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCollapsed, setCollapsedState] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [error, setError] = useState('');
+  const [mealType, setMealType] = useState<'Regular' | 'Meal' | ''>('');
+  const [goLarge, setGoLarge] = useState<boolean | null>(null);
+  const [selectedFlavour, setSelectedFlavour] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [selectedMealOptions, setSelectedMealOptions] = useState<Record<string, MealOptionChoice | MealOptionChoice[]>>({});
+  const [skippedSteps, setSkippedSteps] = useState<string[]>([]);
   const [selectedProductModifierIds, setSelectedProductModifierIds] = useState<string[]>([]);
+  const [selectedFreeToppingIds, setSelectedFreeToppingIds] = useState<string[]>([]);
   const [platterSidesEnabled, setPlatterSidesEnabled] = useState(false);
   const [selectedPlatterSideIds, setSelectedPlatterSideIds] = useState<string[]>([]);
   const [piriPiriSideIds, setPiriPiriSideIds] = useState<string[]>([]);
@@ -38,1072 +87,325 @@ export default function PremiumProductCustomizationModal({
   const [selectedFruitShootId, setSelectedFruitShootId] = useState<string | null>(null);
   const [selectedBoxMealDrinkId, setSelectedBoxMealDrinkId] = useState<string | null>(null);
   const [selectedSharingDipIds, setSelectedSharingDipIds] = useState<string[]>([]);
-  const [selectedFriedWingsFlavour, setSelectedFriedWingsFlavour] = useState<'Normal' | 'Spicy' | null>(null);
-  const [selectedFriedWingsDrinkId, setSelectedFriedWingsDrinkId] = useState<string | null>(null);
-  const [selectedFriedWingsDipId, setSelectedFriedWingsDipId] = useState<string | null>(null);
-  const [selectedFriedWingsFriesModifierId, setSelectedFriedWingsFriesModifierId] = useState<string | null>(null);
-  const [selectedFreeToppingIds, setSelectedFreeToppingIds] = useState<string[]>([]);
+  const [selectedFriedDrinkId, setSelectedFriedDrinkId] = useState<string | null>(null);
+  const [selectedFriedDipId, setSelectedFriedDipId] = useState<string | null>(null);
+  const [selectedFriedFriesModifierId, setSelectedFriedFriesModifierId] = useState<string | null>(null);
 
-  const isPlatter = categorySlug(product?.category || '') === 'maemes-platter';
-  const isKidsMeal = categorySlug(product?.category || '') === 'kids-meal';
-  const isBoxMeal = categorySlug(product?.category || '') === 'box-meals';
-  const isSharingMeal = categorySlug(product?.category || '') === 'sharing-meal';
-  const isFriedWings = categorySlug(product?.category || '') === 'fried-wings';
-  const isFriedChicken = categorySlug(product?.category || '') === 'fried-chicken';
-  const isFriedBoneless = categorySlug(product?.category || '') === 'fried-boneless';
-  const isFriedMealProduct = isFriedWings || isFriedChicken || isFriedBoneless;
-  const mealSizeOptions = getMealSizeOptions(product?.category || '', product?.mealPrice);
+  const baseCategory = getBaseCategorySlug(product?.category || '');
+  const isFried = ['fried-wings', 'fried-chicken', 'fried-boneless'].includes(baseCategory);
+  const isPlatter = baseCategory === 'maemes-platter';
+  const isKidsMeal = baseCategory === 'kids-meal';
+  const isBoxMeal = baseCategory === 'box-meals';
+  const isSharingMeal = baseCategory === 'sharing-meal';
+  const resolvedMealType = mealType || 'Regular';
+  const steps = useMemo(() => product ? getProductConfigurationSteps(product, resolvedMealType) : [], [product, resolvedMealType]);
+  const activeStep = steps[Math.min(stepIndex, Math.max(0, steps.length - 1))];
+  const mealSelected = mealType === 'Meal';
+  const mealCharge = product && mealSelected ? getMealCharge(product) : 0;
   const goLargeOption = getGoLargeOption(product?.category || '', product?.goLargePrice);
-  const eligiblePlatterSides = useMemo(() => MENU_DATA.filter((item) => (
-    categorySlug(item.category) === 'sides-and-extras'
-    && !/(?:tender strips|wings)/i.test(item.name)
-  )), []);
-  const platterDrinks = useMemo(() => MENU_DATA.filter((item) => (
-    categorySlug(item.category) === 'drinks' && /1\.75l bottle$/i.test(item.name)
-  )), []);
-  const platterCakes = useMemo(() => MENU_DATA
-    .filter((item) => categorySlug(item.category) === 'dessert-collection')
-    .map((item) => ({ id: String(item.id), name: item.name, image: item.image })), []);
-  const fruitShootOptions = useMemo(() => (
-    MEAL_OPTION_GROUPS.find((group) => group.id === 'drink')?.options.filter((option) => /fruit ?shoot/i.test(option.name)) || []
-  ), []);
-  const boxMealDrinkOptions = useMemo(() => MENU_DATA.filter((item) => (
-    categorySlug(item.category) === 'drinks' && !/1\.75l bottle$/i.test(item.name)
-  )), []);
-  const sharingDipOptions = useMemo(() => (
-    MEAL_OPTION_GROUPS.find((group) => group.id === 'dip')?.options.filter((option) => option.id) || []
-  ), []);
-  const friedWingsDrinkOptions = boxMealDrinkOptions;
-  const friedWingsDipOptions = sharingDipOptions;
-  const friedWingsRegularFries = useMemo(() => MENU_DATA.find((item) => item.slug === 'regular-fries'), []);
-  const friedWingsFriesModifier = friedWingsRegularFries?.quickAddOptions?.find((option) => option.id === 'piri-piri-seasoning');
+
+  const eligiblePlatterSides = useMemo(() => MENU_DATA.filter((item) => categorySlug(item.category) === 'sides-and-extras' && !/(?:tender strips|wings)/i.test(item.name)), []);
+  const platterDrinks = useMemo(() => MENU_DATA.filter((item) => categorySlug(item.category) === 'drinks' && /1\.75l bottle$/i.test(item.name)), []);
+  const platterCakes = useMemo(() => MENU_DATA.filter((item) => categorySlug(item.category) === 'dessert-collection'), []);
+  const regularDrinks = useMemo(() => MENU_DATA.filter((item) => categorySlug(item.category) === 'drinks' && !/1\.75l bottle$/i.test(item.name)), []);
+  const dipOptions = useMemo(() => MEAL_OPTION_GROUPS.find((group) => group.id === 'dip')?.options || [], []);
+  const fruitShootOptions = useMemo(() => MEAL_OPTION_GROUPS.find((group) => group.id === 'drink')?.options.filter((item) => /fruit ?shoot/i.test(item.name)) || [], []);
+  const regularFries = useMemo(() => MENU_DATA.find((item) => item.slug === 'regular-fries'), []);
+  const friesModifier = regularFries?.quickAddOptions?.find((item) => item.id === 'piri-piri-seasoning');
+
+  useEffect(() => {
+    if (!isOpen || !product) return;
+    const addOns = editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [];
+    const friedConfiguration = editingItem?.customization?.friedMealConfiguration || editingItem?.customization?.friedWingsConfiguration;
+    const savedSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
+    const restoredMealType = friedConfiguration?.option === 'Meal' || /meal/i.test(savedSize) || addOns.some((item) => item.id === 'meal-type' && item.name === 'Meal') ? 'Meal' : editingItem ? 'Regular' : '';
+    setMealType(restoredMealType);
+    setGoLarge(/go large/i.test(savedSize) ? true : editingItem ? false : null);
+    setSelectedFlavour(editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour || '');
+    setQuantity(editingItem?.quantity || 1);
+    setSpecialInstructions(editingItem?.customization?.specialInstructions || editingItem?.specialInstructions || '');
+    const restoredOptions: Record<string, MealOptionChoice | MealOptionChoice[]> = {};
+    MEAL_OPTION_GROUPS.forEach((group) => {
+      const found = group.options.flatMap((option) => {
+        const saved = addOns.find((item) => (option.id && item.id === option.id) || item.name === option.name);
+        return saved ? [{ ...option, selectedModifiers: saved.modifiers }] : [];
+      });
+      if (found.length) restoredOptions[group.id] = group.multiple ? found : found[0];
+    });
+    setSelectedMealOptions(restoredOptions);
+    setSelectedProductModifierIds((product.popupModifiers || []).filter((option) => addOns.some((item) => item.id === option.id)).map((option) => option.id));
+    setSelectedFreeToppingIds((editingItem?.customization?.selectedFreeToppings || []).map((item) => item.id));
+    setSelectedFruitShootId(editingItem?.customization?.kidsMealIncluded?.fruitShoot?.id || null);
+    setSelectedBoxMealDrinkId(editingItem?.customization?.boxMealIncluded?.drink?.id || null);
+    setSelectedSharingDipIds((editingItem?.customization?.sharingMealIncluded?.dips || []).flatMap((dip) => Array.from({ length: dip.quantity }, () => dip.id)));
+    setSelectedPlatterSideIds((editingItem?.customization?.platterSides || []).map((item) => item.id));
+    setPiriPiriSideIds((editingItem?.customization?.platterSides || []).filter((item) => item.modifier).map((item) => item.id));
+    setPlatterSidesEnabled(Boolean(editingItem?.customization?.sidesBundlePrice));
+    setSelectedPlatterDrinkId(editingItem?.customization?.platterDrink?.id || null);
+    setSelectedPlatterCakeId(editingItem?.customization?.platterCake?.id || null);
+    setSelectedFriedDrinkId(friedConfiguration?.drink?.id || null);
+    setSelectedFriedDipId(friedConfiguration?.dip?.id || null);
+    setSelectedFriedFriesModifierId(friedConfiguration?.fries?.modifier?.id || null);
+    setSkippedSteps([]);
+    setStepIndex(0);
+    setError('');
+    setCollapsedState(false);
+    lastProductScrollTopRef.current = 0;
+    setIsSubmitting(false);
+  }, [editingItem, isOpen, product]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const savedSize = editingItem?.customization?.selectedSize || editingItem?.selectedSize || '';
-    const savedFriedMealConfiguration = editingItem?.customization?.friedMealConfiguration || editingItem?.customization?.friedWingsConfiguration;
-    const savedFriedWingsOption = savedFriedMealConfiguration?.option;
-    setSelectedSize(isFriedMealProduct ? savedFriedWingsOption || 'Single' : savedSize.startsWith('Meal') ? 'Meal' : 'Regular');
-    setGoLarge(savedSize.includes(goLargeOption.name));
-    const savedAddOns = editingItem?.customization?.selectedAddOns || editingItem?.selectedAddOns || [];
-    const restoredMealOptions: Record<string, MealOptionChoice | MealOptionChoice[]> = {};
-    MEAL_OPTION_GROUPS.forEach((group) => {
-      const groupSelections = group.options.flatMap((option) => {
-        const savedOption = savedAddOns.find((addOn) => (
-          (option.id && addOn.id === option.id) || addOn.name === option.name
-        ));
-        return savedOption ? [{ ...option, selectedModifiers: savedOption.modifiers || [] }] : [];
-      });
-      if (groupSelections.length) restoredMealOptions[group.id] = group.multiple ? groupSelections : groupSelections[0];
-    });
-    setSelectedMealOptions(restoredMealOptions);
-    setSelectedProductModifierIds((product?.popupModifiers || [])
-      .filter((modifier) => savedAddOns.some((addOn) => addOn.id === modifier.id))
-      .map((modifier) => modifier.id));
-    setMealOptionErrors([]);
-    setSelectedFlavour(categorySlug(product?.category || '') === 'maemes-burgers'
-      ? ''
-      : editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour || 'Medium');
-    setQuantity(editingItem?.quantity || 1);
-    setSpecialInstructions(editingItem?.customization?.specialInstructions || '');
-    const platterSides = editingItem?.customization?.platterSides || [];
-    setPlatterSidesEnabled(Boolean(editingItem?.customization?.sidesBundlePrice));
-    setSelectedPlatterSideIds(platterSides.map((side) => side.id));
-    setPiriPiriSideIds(platterSides.filter((side) => side.modifier?.id === 'piri-piri-seasoning').map((side) => side.id));
-    setSelectedPlatterDrinkId(editingItem?.customization?.platterDrink?.id || null);
-    setSelectedPlatterCakeId(editingItem?.customization?.platterCake?.id || null);
-    setSelectedFruitShootId(editingItem?.customization?.kidsMealIncluded?.fruitShoot?.id || null);
-    setSelectedBoxMealDrinkId(editingItem?.customization?.boxMealIncluded?.drink?.id || null);
-    setSelectedSharingDipIds((editingItem?.customization?.sharingMealIncluded?.dips || []).flatMap((dip) => (
-      Array.from({ length: dip.quantity }, () => dip.id)
-    )));
-    const savedFriedWingsFlavour = editingItem?.customization?.selectedFlavour || editingItem?.selectedFlavour;
-    setSelectedFriedWingsFlavour(savedFriedWingsFlavour === 'Normal' || savedFriedWingsFlavour === 'Spicy' ? savedFriedWingsFlavour : null);
-    setSelectedFriedWingsDrinkId(savedFriedMealConfiguration?.drink?.id || null);
-    setSelectedFriedWingsDipId(savedFriedMealConfiguration?.dip?.id || null);
-    setSelectedFriedWingsFriesModifierId(savedFriedMealConfiguration?.fries?.modifier?.id || null);
-    setSelectedFreeToppingIds((editingItem?.customization?.selectedFreeToppings || []).map((topping) => topping.id));
-  }, [editingItem, goLargeOption.name, isFriedMealProduct, isOpen, product?.id]);
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    if (!embedded) document.body.style.overflow = 'hidden';
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') return onClose();
+      if (event.key !== 'Tab' || !modalRef.current) return;
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'));
+      if (!focusable.length) return;
+      if (event.shiftKey && document.activeElement === focusable[0]) { event.preventDefault(); focusable.at(-1)?.focus(); }
+      if (!event.shiftKey && document.activeElement === focusable.at(-1)) { event.preventDefault(); focusable[0].focus(); }
+    };
+    document.addEventListener('keydown', keydown);
+    requestAnimationFrame(() => modalRef.current?.querySelector<HTMLElement>('[data-close]')?.focus());
+    return () => { if (!embedded) document.body.style.overflow = overflow; document.removeEventListener('keydown', keydown); restoreFocusRef.current?.focus(); };
+  }, [embedded, isOpen, onClose]);
 
-  const optionVisibility = useMemo(
-    () => getProductOptionVisibility(product?.category || ''),
-    [product?.category],
-  );
-  const selectedSizeOption = optionVisibility.showSize
-    ? mealSizeOptions.find((option) => option.name === selectedSize) || mealSizeOptions[0]
-    : { name: '', price: 0 };
-  const mealSelected = selectedSize === 'Meal';
-  const goLargePrice = optionVisibility.showGoLarge && mealSelected && goLarge ? goLargeOption.price : 0;
-  const mealOptionsList = useMemo(() => Object.values(selectedMealOptions).flat(), [selectedMealOptions]);
-  const mealOptionsTotal = mealSelected
-    ? mealOptionsList.reduce((sum, option) => (
-      sum + option.price + (option.selectedModifiers || []).reduce((modifierTotal, modifier) => modifierTotal + modifier.price, 0)
-    ), 0)
-    : 0;
-  const selectedPlatterSides = eligiblePlatterSides.filter((side) => selectedPlatterSideIds.includes(String(side.id)));
-  const piriPiriTotal = platterSidesEnabled
-    ? selectedPlatterSides.filter((side) => piriPiriSideIds.includes(String(side.id))).length * 0.30
-    : 0;
-  const platterAddOnsTotal = isPlatter
-    ? (platterSidesEnabled ? 6 + piriPiriTotal : 0)
-      + (selectedPlatterDrinkId ? 1.99 : 0)
-      + (selectedPlatterCakeId ? 2.99 : 0)
-    : 0;
-  const platterSidesComplete = !platterSidesEnabled || selectedPlatterSideIds.length === 3;
-  const kidsDrinkComplete = !isKidsMeal || fruitShootOptions.length === 0 || selectedFruitShootId !== null;
-  const boxMealDrinkComplete = !isBoxMeal || boxMealDrinkOptions.length === 0 || selectedBoxMealDrinkId !== null;
-  const requiredSharingDipCount = product?.requiredDipCount || 0;
-  const sharingDipsComplete = !isSharingMeal || selectedSharingDipIds.length === requiredSharingDipCount;
-  const friedWingsMealSelected = isFriedMealProduct && selectedSize === 'Meal';
-  const friedWingsConfigurationComplete = !isFriedMealProduct || (
-    (!isFriedWings || selectedFriedWingsFlavour !== null)
-    && (!friedWingsMealSelected || (selectedFriedWingsDrinkId !== null && selectedFriedWingsDipId !== null))
-  );
-  const selectedProductModifiers = (product?.popupModifiers || []).filter((modifier) => selectedProductModifierIds.includes(modifier.id));
-  const selectedFreeToppings = (product?.freeToppings || []).filter((topping) => selectedFreeToppingIds.includes(topping.id));
-  const productModifiersTotal = selectedProductModifiers.reduce((total, modifier) => total + modifier.price, 0);
-  const friedWingsMealCharge = friedWingsMealSelected ? product?.mealPrice || 0 : 0;
-  const friedWingsFriesModifierPrice = friedWingsMealSelected && selectedFriedWingsFriesModifierId === friedWingsFriesModifier?.id
-    ? friedWingsFriesModifier.price
-    : 0;
-  const unitPrice = product ? product.price + selectedSizeOption.price + goLargePrice + mealOptionsTotal + platterAddOnsTotal + productModifiersTotal + friedWingsMealCharge + friedWingsFriesModifierPrice : 0;
-  const calculatedTotal = unitPrice * quantity;
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollElement = scrollRef.current;
+    const hero = scrollElement?.querySelector<HTMLElement>('header');
+    if (!scrollElement || !hero) return;
 
-  if (!isOpen || !product) return null;
-
-  const toggleMealOption = (group: MealOptionGroup, option: MealOptionChoice) => {
-    const groupId = group.id;
-    setMealOptionErrors((current) => current.filter((id) => id !== groupId));
-    setSelectedMealOptions((current) => {
-      const next = { ...current };
-      if (group.multiple) {
-        const selectedOptions = Array.isArray(current[groupId]) ? current[groupId] : [];
-        const selected = selectedOptions.some((item) => item.name === option.name);
-        const updatedOptions = selected
-          ? selectedOptions.filter((item) => item.name !== option.name)
-          : [...selectedOptions, option];
-
-        if (updatedOptions.length) next[groupId] = updatedOptions;
-        else delete next[groupId];
-      } else {
-        const selectedOption = !Array.isArray(current[groupId]) ? current[groupId] : undefined;
-        if (selectedOption?.name === option.name) delete next[groupId];
-        else next[groupId] = option;
+    const resizeHero = () => {
+      const heroImage = hero.querySelector<HTMLElement>('img');
+      if (isCollapsed) {
+        hero.style.height = embedded || window.innerWidth < 640 ? '142px' : '164px';
+        if (heroImage) {
+          heroImage.style.height = embedded || window.innerWidth < 640 ? '88px' : '108px';
+          heroImage.style.width = embedded || window.innerWidth < 640 ? '88px' : '108px';
+        }
+        return;
       }
-      return next;
-    });
-  };
-
-  const toggleMealOptionModifier = (groupId: string, option: MealOptionChoice, modifier: MealOptionModifier) => {
-    setSelectedMealOptions((current) => {
-      const groupSelection = current[groupId];
-      const toggleModifier = (selectedOption: MealOptionChoice) => {
-        const selectedModifiers = selectedOption.selectedModifiers || [];
-        const modifierSelected = selectedModifiers.some((item) => item.id === modifier.id);
-        return {
-          ...selectedOption,
-          selectedModifiers: modifierSelected
-            ? selectedModifiers.filter((item) => item.id !== modifier.id)
-            : [...selectedModifiers, modifier],
-        };
-      };
-
-      if (Array.isArray(groupSelection)) {
-        return {
-          ...current,
-          [groupId]: groupSelection.map((selectedOption) => (
-            (selectedOption.id || selectedOption.name) === (option.id || option.name)
-              ? toggleModifier(selectedOption)
-              : selectedOption
-          )),
-        };
+      if (heroImage) {
+        heroImage.style.removeProperty('height');
+        heroImage.style.removeProperty('width');
       }
-
-      if (groupSelection && (groupSelection.id || groupSelection.name) === (option.id || option.name)) {
-        return { ...current, [groupId]: toggleModifier(groupSelection) };
-      }
-
-      return current;
-    });
-  };
-
-  const toggleProductModifier = (modifierId: string) => {
-    setSelectedProductModifierIds((current) => (
-      current.includes(modifierId) ? current.filter((id) => id !== modifierId) : [modifierId]
-    ));
-  };
-
-  const toggleFreeTopping = (toppingId: string) => {
-    setSelectedFreeToppingIds((current) => (
-      current.includes(toppingId) ? current.filter((id) => id !== toppingId) : [...current, toppingId]
-    ));
-  };
-
-  const addSharingDip = (dipId: string) => {
-    setSelectedSharingDipIds((current) => (
-      current.length < requiredSharingDipCount ? [...current, dipId] : current
-    ));
-  };
-
-  const removeSharingDip = (dipId: string) => {
-    setSelectedSharingDipIds((current) => {
-      const index = current.lastIndexOf(dipId);
-      return index === -1 ? current : current.filter((_, itemIndex) => itemIndex !== index);
-    });
-  };
-
-  const togglePlatterSide = (sideId: string) => {
-    setSelectedPlatterSideIds((current) => {
-      if (current.includes(sideId)) {
-        setPiriPiriSideIds((selected) => selected.filter((id) => id !== sideId));
-        return current.filter((id) => id !== sideId);
-      }
-      return current.length < 3 ? [...current, sideId] : current;
-    });
-  };
-
-  const togglePiriPiriSide = (sideId: string) => {
-    setPiriPiriSideIds((current) => (
-      current.includes(sideId) ? current.filter((id) => id !== sideId) : [...current, sideId]
-    ));
-  };
-
-  const handleAddToCart = () => {
-    if (!platterSidesComplete || !kidsDrinkComplete || !boxMealDrinkComplete || !sharingDipsComplete || !friedWingsConfigurationComplete) return;
-
-    const missingRequiredMealOptions = mealSelected
-      ? MEAL_OPTION_GROUPS.filter((group) => group.required && !selectedMealOptions[group.id]).map((group) => group.id)
-      : [];
-
-    if (missingRequiredMealOptions.length > 0) {
-      setMealOptionErrors(missingRequiredMealOptions);
-      return;
-    }
-
-    const selectedSizeLabel = optionVisibility.showSize
-      ? product.mealPrice !== undefined || ['vegetarian-collection', 'fried-collection'].includes(categorySlug(product.category))
-        ? `${selectedSize}${selectedSizeOption.price > 0 ? ` +£${selectedSizeOption.price.toFixed(2)}` : ''}${goLargePrice > 0 ? `, ${goLargeOption.name} +£${goLargePrice.toFixed(2)}` : ''}`
-        : `${selectedSize}${goLargePrice > 0 ? `, ${goLargeOption.name}` : ''}`
-      : undefined;
-
-    const selectedDrink = platterDrinks.find((drink) => String(drink.id) === selectedPlatterDrinkId);
-    const selectedCake = platterCakes.find((cake) => cake.id === selectedPlatterCakeId);
-    const selectedFruitShoot = fruitShootOptions.find((option) => option.id === selectedFruitShootId);
-    const selectedBoxMealDrink = boxMealDrinkOptions.find((drink) => String(drink.id) === selectedBoxMealDrinkId);
-    const selectedFriedWingsDrink = friedWingsDrinkOptions.find((drink) => String(drink.id) === selectedFriedWingsDrinkId);
-    const selectedFriedWingsDip = friedWingsDipOptions.find((dip) => dip.id === selectedFriedWingsDipId);
-    const platterSides = selectedPlatterSides.map((side) => ({
-      id: String(side.id),
-      name: side.name,
-      modifier: piriPiriSideIds.includes(String(side.id))
-        ? { id: 'piri-piri-seasoning', name: 'Piri Piri seasoning', price: 0.30 }
-        : undefined,
-    }));
-    const platterAddOns = isPlatter ? [
-      ...(platterSidesEnabled ? [{
-        name: `3 Sides: ${platterSides.map((side) => `${side.name}${side.modifier ? ` (${side.modifier.name} +£${side.modifier.price.toFixed(2)})` : ''}`).join(', ')}`,
-        price: 6 + piriPiriTotal,
-      }] : []),
-      ...(selectedDrink ? [{ name: `Drink: ${selectedDrink.name}`, price: 1.99 }] : []),
-      ...(selectedCake ? [{ name: `Cake Slice: ${selectedCake.name}`, price: 2.99 }] : []),
-    ] : [];
-    const mealCartAddOns = mealOptionsList.map(({ id, name, price, selectedModifiers }) => ({
-      id,
-      name,
-      price,
-      modifiers: selectedModifiers,
-    }));
-    const productModifierAddOns = selectedProductModifiers.map(({ id, name, price }) => ({ id, name, price }));
-    const freeToppingsAddOns = selectedFreeToppings.length > 0 ? [{
-      id: 'free-toppings',
-      name: `Toppings: ${selectedFreeToppings.map((topping) => topping.name).join(', ')}`,
-      price: 0,
-    }] : [];
-    const includedMainItem = product.includedItems?.[0] || product.description;
-    const kidsMealIncluded = isKidsMeal ? {
-      mainItem: includedMainItem,
-      fries: product.includedItems?.[1] || 'Fries',
-      fruitShoot: selectedFruitShoot?.id
-        ? { id: selectedFruitShoot.id, name: selectedFruitShoot.name }
-        : undefined,
-    } : undefined;
-    const kidsMealAddOns = kidsMealIncluded ? [{
-      id: 'kids-meal-includes',
-      name: `Includes: ${kidsMealIncluded.mainItem}, ${kidsMealIncluded.fries}, ${kidsMealIncluded.fruitShoot?.name || 'Fruit Shoot Drink Included'}`,
-      price: 0,
-    }] : [];
-    const boxMealIncluded = isBoxMeal ? {
-      items: product.includedItems || [],
-      drink: selectedBoxMealDrink
-        ? { id: String(selectedBoxMealDrink.id), name: selectedBoxMealDrink.name }
-        : undefined,
-    } : undefined;
-    const boxMealAddOns = boxMealIncluded ? [{
-      id: 'box-meal-includes',
-      name: `Includes: ${boxMealIncluded.items.join(', ')}${boxMealIncluded.drink ? `, Drink: ${boxMealIncluded.drink.name}` : ', Drink Included'}`,
-      price: 0,
-    }] : [];
-    const sharingMealDips = sharingDipOptions.flatMap((dip) => {
-      const quantity = selectedSharingDipIds.filter((dipId) => dipId === dip.id).length;
-      return quantity > 0 && dip.id ? [{ id: dip.id, name: dip.name, quantity }] : [];
-    });
-    const sharingMealIncluded = isSharingMeal ? {
-      items: product.includedItems || [],
-      dips: sharingMealDips,
-    } : undefined;
-    const sharingMealAddOns = sharingMealIncluded ? [{
-      id: 'sharing-meal-includes',
-      name: `Includes: ${sharingMealIncluded.items.join(', ')}; Dips: ${sharingMealIncluded.dips.map((dip) => `${dip.name} ×${dip.quantity}`).join(', ')}`,
-      price: 0,
-    }] : [];
-    const friedWingsConfiguration = isFriedMealProduct ? {
-      option: (friedWingsMealSelected ? 'Meal' : 'Single') as 'Single' | 'Meal',
-      mealCharge: friedWingsMealCharge,
-      fries: friedWingsMealSelected && friedWingsRegularFries ? {
-        id: String(friedWingsRegularFries.id),
-        name: friedWingsRegularFries.name,
-        price: 0,
-        modifier: selectedFriedWingsFriesModifierId === friedWingsFriesModifier?.id
-          ? friedWingsFriesModifier
-          : undefined,
-      } : undefined,
-      drink: friedWingsMealSelected && selectedFriedWingsDrink
-        ? { id: String(selectedFriedWingsDrink.id), name: selectedFriedWingsDrink.name }
-        : undefined,
-      dip: friedWingsMealSelected && selectedFriedWingsDip?.id
-        ? { id: selectedFriedWingsDip.id, name: selectedFriedWingsDip.name }
-        : undefined,
-    } : undefined;
-    const friedWingsAddOns = friedWingsConfiguration ? [
-      { id: 'fried-meal-option', name: friedWingsConfiguration.option, price: friedWingsConfiguration.mealCharge },
-      ...(friedWingsConfiguration.fries ? [{
-        id: friedWingsConfiguration.fries.id,
-        name: friedWingsConfiguration.fries.name,
-        price: friedWingsConfiguration.fries.price,
-        modifiers: friedWingsConfiguration.fries.modifier ? [friedWingsConfiguration.fries.modifier] : undefined,
-      }] : []),
-      ...(friedWingsConfiguration.drink ? [{ id: friedWingsConfiguration.drink.id, name: `Drink: ${friedWingsConfiguration.drink.name}`, price: 0 }] : []),
-      ...(friedWingsConfiguration.dip ? [{ id: friedWingsConfiguration.dip.id, name: `Dip: ${friedWingsConfiguration.dip.name}`, price: 0 }] : []),
-    ] : [];
-    const configuredAddOns = isPlatter
-      ? platterAddOns
-      : isKidsMeal
-        ? kidsMealAddOns
-        : isBoxMeal
-          ? boxMealAddOns
-          : isSharingMeal
-            ? sharingMealAddOns
-            : isFriedMealProduct
-              ? friedWingsAddOns
-              : [...(mealSelected ? mealCartAddOns : []), ...productModifierAddOns, ...freeToppingsAddOns];
-
-    const cartItem = {
-      productId: product.id,
-      name: product.name,
-      image: product.image,
-      basePrice: product.price,
-      selectedSize: selectedSizeLabel,
-      selectedFlavour: isFriedWings ? selectedFriedWingsFlavour || undefined : optionVisibility.showFlavour ? selectedFlavour : undefined,
-      selectedSpiceLevel: isFriedWings ? undefined : optionVisibility.showFlavour ? selectedFlavour : undefined,
-      selectedAddOns: configuredAddOns,
-      specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
-      quantity,
-      unitPrice,
-      totalPrice: calculatedTotal,
-      price: unitPrice,
-      customization: {
-        selectedSize: selectedSizeLabel,
-        selectedFlavour: isFriedWings ? selectedFriedWingsFlavour || undefined : optionVisibility.showFlavour ? selectedFlavour : undefined,
-        selectedSpiceLevel: isFriedWings ? undefined : optionVisibility.showFlavour ? selectedFlavour : undefined,
-        selectedAddOns: configuredAddOns,
-        specialInstructions: optionVisibility.showSpecialInstructions ? specialInstructions : undefined,
-        platterSides: platterSidesEnabled ? platterSides : undefined,
-        sidesBundlePrice: platterSidesEnabled ? 6 : undefined,
-        platterDrink: selectedDrink ? { id: String(selectedDrink.id), name: selectedDrink.name } : undefined,
-        drinkAddOnPrice: selectedDrink ? 1.99 : undefined,
-        platterCake: selectedCake ? { id: selectedCake.id, name: selectedCake.name } : undefined,
-        cakeAddOnPrice: selectedCake ? 2.99 : undefined,
-        kidsMealIncluded,
-        boxMealIncluded,
-        sharingMealIncluded,
-        friedMealConfiguration: friedWingsConfiguration,
-        friedWingsConfiguration: isFriedWings ? friedWingsConfiguration : undefined,
-        selectedFreeToppings: selectedFreeToppings.map(({ id, name }) => ({ id, name })),
-      },
+      const minimum = embedded || window.innerWidth < 640 ? 380 : 430;
+      const maximum = embedded || window.innerWidth < 640 ? 390 : 445;
+      const responsiveHeight = Math.round(scrollElement.clientHeight * 0.46);
+      hero.style.height = `${Math.min(maximum, Math.max(minimum, responsiveHeight))}px`;
     };
 
-    if (editingItem) removeFromCart(editingItem.productId, editingItem.customization);
-    addToCart(cartItem);
-    onAdded?.(product);
-    onClose();
+    resizeHero();
+    const observer = new ResizeObserver(resizeHero);
+    observer.observe(scrollElement);
+    return () => observer.disconnect();
+  }, [isCollapsed, isOpen]);
+
+  useEffect(() => {
+    setStepIndex((current) => Math.min(current, Math.max(0, steps.length - 1)));
+  }, [steps.length]);
+
+  const mealOptionsList = Object.values(selectedMealOptions).flat();
+  const mealOptionsTotal = mealSelected ? mealOptionsList.reduce((sum, item) => sum + item.price + (item.selectedModifiers || []).reduce((total, modifier) => total + modifier.price, 0), 0) : 0;
+  const selectedModifiers = (product?.popupModifiers || []).filter((item) => selectedProductModifierIds.includes(item.id));
+  const selectedFreeToppings = (product?.freeToppings || []).filter((item) => selectedFreeToppingIds.includes(item.id));
+  const selectedPlatterSides = eligiblePlatterSides.filter((item) => selectedPlatterSideIds.includes(String(item.id)));
+  const platterPrice = isPlatter ? (platterSidesEnabled ? 6 + piriPiriSideIds.length * 0.3 : 0) + (selectedPlatterDrinkId ? 1.99 : 0) + (selectedPlatterCakeId ? 2.99 : 0) : 0;
+  const friedModifierPrice = mealSelected && selectedFriedFriesModifierId === friesModifier?.id ? friesModifier.price : 0;
+  const unitPrice = (product?.price || 0) + mealCharge + (mealSelected && goLarge ? goLargeOption.price : 0) + mealOptionsTotal + selectedModifiers.reduce((sum, item) => sum + item.price, 0) + platterPrice + friedModifierPrice;
+  const total = unitPrice * quantity;
+
+  if (!isOpen || !product || !activeStep) return null;
+
+  const setSkipped = (stepId: string, skipped: boolean) => setSkippedSteps((current) => skipped ? [...new Set([...current, stepId])] : current.filter((id) => id !== stepId));
+  const toggleMealOption = (group: MealOptionGroup, option: MealOptionChoice) => {
+    setSkipped(group.id, false); setError('');
+    setSelectedMealOptions((current) => {
+      const selected = current[group.id];
+      if (group.multiple) {
+        const values = Array.isArray(selected) ? selected : [];
+        const exists = values.some((item) => (item.id || item.name) === (option.id || option.name));
+        const next = exists ? values.filter((item) => (item.id || item.name) !== (option.id || option.name)) : [...values, option];
+        if (!next.length) { const copy = { ...current }; delete copy[group.id]; return copy; }
+        return { ...current, [group.id]: next };
+      }
+      return { ...current, [group.id]: option };
+    });
+  };
+  const toggleModifier = (groupId: string, option: MealOptionChoice, modifier: MealOptionModifier) => setSelectedMealOptions((current) => {
+    const selection = current[groupId];
+    const change = (item: MealOptionChoice) => ({ ...item, selectedModifiers: (item.selectedModifiers || []).some((value) => value.id === modifier.id) ? (item.selectedModifiers || []).filter((value) => value.id !== modifier.id) : [...(item.selectedModifiers || []), modifier] });
+    return { ...current, [groupId]: Array.isArray(selection) ? selection.map((item) => (item.id || item.name) === (option.id || option.name) ? change(item) : item) : selection ? change(selection) : selection };
+  });
+
+  const validateStep = (id: ProductConfigurationStepId) => {
+    if (id === 'flavour' && !selectedFlavour) return 'Please choose one flavour.';
+    if (id === 'meal-type' && !mealType) return 'Please choose Regular or Meal.';
+    if (id === 'go-large' && goLarge === null) return 'Please choose Regular Meal or Go Large.';
+    if (id.startsWith('meal-')) {
+      const groupId = id.replace('meal-', '');
+      const group = MEAL_OPTION_GROUPS.find((item) => item.id === groupId);
+      if (group && !selectedMealOptions[groupId] && !skippedSteps.includes(groupId)) return group.required ? 'Please select an option.' : 'Choose an option or select Not Now.';
+    }
+    if (id === 'kids-drink' && fruitShootOptions.length && !selectedFruitShootId) return 'Please choose one Fruit Shoot.';
+    if (id === 'box-drink' && regularDrinks.length && !selectedBoxMealDrinkId) return 'Please choose one drink.';
+    if (id === 'sharing-dips' && selectedSharingDipIds.length !== (product.requiredDipCount || 0)) return `Please select exactly ${product.requiredDipCount || 0} dips.`;
+    if (id === 'fried-drink' && !selectedFriedDrinkId) return 'Please choose one drink.';
+    if (id === 'fried-dip' && !selectedFriedDipId) return 'Please choose one dip.';
+    if (id === 'platter-sides' && !skippedSteps.includes(id) && (!platterSidesEnabled || selectedPlatterSideIds.length !== 3)) return 'Select exactly 3 sides or choose Not Now.';
+    if (['platter-drink', 'platter-cake', 'extras', 'free-toppings', 'special-instructions'].includes(id) && !skippedSteps.includes(id)) {
+      const hasValue = id === 'platter-drink' ? selectedPlatterDrinkId : id === 'platter-cake' ? selectedPlatterCakeId : id === 'extras' ? selectedProductModifierIds.length : id === 'free-toppings' ? selectedFreeToppingIds.length : specialInstructions.trim();
+      if (!hasValue) return 'Make a selection or choose Not Now.';
+    }
+    return '';
   };
 
-  return (
-    <>
-      <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden p-4">
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="product-detail-title"
-          className="relative h-[calc(100dvh-2rem)] max-h-[720px] w-full max-w-5xl overflow-hidden rounded-[24px] border border-[#f0d59d] bg-white shadow-[0_30px_90px_rgba(26,18,15,0.32)]"
-        >
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 z-20 rounded-xl border border-[#ead8c6] bg-white/95 p-2 text-[#1a120f] shadow-sm transition hover:bg-[#ffc257]"
-            aria-label="Close product details"
-          >
-            <X size={22} />
-          </button>
+  const goToStep = (index: number) => {
+    setError('');
+    setStepIndex(index);
+    setCollapsedState(false);
+    imageTransitionRef.current = true;
+    requestAnimationFrame(() => {
+      const scrollElement = scrollRef.current;
+      const hero = scrollElement?.querySelector<HTMLElement>('header');
+      const heroImage = hero?.querySelector<HTMLElement>('img');
+      if (hero && scrollElement) {
+        const minimum = embedded || window.innerWidth < 640 ? 380 : 430;
+        const maximum = embedded || window.innerWidth < 640 ? 390 : 445;
+        hero.style.height = `${Math.min(maximum, Math.max(minimum, Math.round(scrollElement.clientHeight * 0.46)))}px`;
+      }
+      heroImage?.style.removeProperty('height');
+      heroImage?.style.removeProperty('width');
+      scrollElement?.scrollTo({ top: 0, behavior: 'smooth' });
+      window.setTimeout(() => {
+        lastProductScrollTopRef.current = 0;
+        imageTransitionRef.current = false;
+        modalRef.current?.querySelector<HTMLElement>('[data-first-option]')?.focus({ preventScroll: true });
+      }, 380);
+    });
+  };
+  const setIsCollapsed = (_requestedCollapsed: boolean) => {
+    if (imageTransitionRef.current) return;
+    const scrollTop = scrollRef.current?.scrollTop || 0;
+    const scrollingUp = scrollTop < lastProductScrollTopRef.current;
+    const scrollingDown = scrollTop > lastProductScrollTopRef.current;
+    const expandedHeaderHeight = Math.min(
+      embedded || window.innerWidth < 640 ? 390 : 445,
+      Math.max(embedded || window.innerWidth < 640 ? 380 : 430, Math.round((scrollRef.current?.clientHeight || 800) * 0.46)),
+    );
+    const compactHeaderHeight = embedded || window.innerWidth < 640 ? 142 : 164;
+    const contentBoundary = expandedHeaderHeight - compactHeaderHeight;
+    lastProductScrollTopRef.current = scrollTop;
+    setCollapsedState((current) => {
+      const nextCollapsed = current
+        ? !(scrollingUp && scrollTop <= contentBoundary)
+        : scrollingDown && scrollTop >= contentBoundary;
+      if (current === nextCollapsed) return current;
+      imageTransitionRef.current = true;
+      window.setTimeout(() => {
+        lastProductScrollTopRef.current = scrollRef.current?.scrollTop || 0;
+        imageTransitionRef.current = false;
+      }, 360);
+      return nextCollapsed;
+    });
+  };
+  const handleContinue = () => {
+    const message = validateStep(activeStep.id);
+    if (message) {
+      setError(message);
+      setCollapsedState(true);
+      imageTransitionRef.current = true;
+      requestAnimationFrame(() => {
+        const hero = scrollRef.current?.querySelector<HTMLElement>('header');
+        const heroImage = hero?.querySelector<HTMLElement>('img');
+        const compactHeight = embedded || window.innerWidth < 640 ? 142 : 164;
+        if (hero) hero.style.height = `${compactHeight}px`;
+        if (heroImage) {
+          heroImage.style.height = embedded || window.innerWidth < 640 ? '88px' : '108px';
+          heroImage.style.width = embedded || window.innerWidth < 640 ? '88px' : '108px';
+        }
+        window.setTimeout(() => {
+          const invalidSection = modalRef.current?.querySelector<HTMLElement>('[data-invalid="true"]');
+          invalidSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          scrollRef.current?.scrollBy({ top: -(compactHeight + 16), behavior: 'smooth' });
+          invalidSection?.querySelector<HTMLElement>('[data-first-option]')?.focus({ preventScroll: true });
+          lastProductScrollTopRef.current = scrollRef.current?.scrollTop || 0;
+          imageTransitionRef.current = false;
+        }, 380);
+      });
+      return;
+    }
+    if (activeStep.id !== 'confirmation') return goToStep(stepIndex + 1);
+    const invalidIndex = steps.findIndex((step) => step.id !== 'confirmation' && validateStep(step.id));
+    if (invalidIndex >= 0) { goToStep(invalidIndex); setError(validateStep(steps[invalidIndex].id)); return; }
+    submit();
+  };
 
-          <div className="grid h-full min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[0.92fr_1.08fr] lg:grid-rows-1">
-            <div className="flex shrink-0 items-center justify-center overflow-hidden bg-[#fff8ed] p-4 sm:p-6 lg:p-7">
-              <div className="aspect-square w-[min(240px,30dvh)] overflow-hidden rounded-[22px] bg-white shadow-[0_18px_55px_rgba(50,24,16,0.12)] sm:w-[min(300px,34dvh)] lg:w-full">
-                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-              </div>
-            </div>
+  const submit = () => {
+    if (isSubmitting) return;
+    const selectedDrink = platterDrinks.find((item) => String(item.id) === selectedPlatterDrinkId);
+    const selectedCake = platterCakes.find((item) => String(item.id) === selectedPlatterCakeId);
+    const selectedFruitShoot = fruitShootOptions.find((item) => item.id === selectedFruitShootId);
+    const selectedBoxDrink = regularDrinks.find((item) => String(item.id) === selectedBoxMealDrinkId);
+    const selectedFriedDrink = regularDrinks.find((item) => String(item.id) === selectedFriedDrinkId);
+    const selectedFriedDip = dipOptions.find((item) => item.id === selectedFriedDipId);
+    const platterSides = selectedPlatterSides.map((item) => ({ id: String(item.id), name: item.name, modifier: piriPiriSideIds.includes(String(item.id)) ? { id: 'piri-piri-seasoning', name: 'Piri Piri seasoning', price: 0.3 } : undefined }));
+    const mealAddOns: CartItemAddOn[] = mealSelected ? mealOptionsList.map((item) => ({ id: item.id, name: item.name, price: item.price, modifiers: item.selectedModifiers })) : [];
+    const friedConfiguration = isFried ? { option: (mealSelected ? 'Meal' : 'Single') as 'Single' | 'Meal', mealCharge, fries: mealSelected && regularFries ? { id: String(regularFries.id), name: regularFries.name, price: 0, modifier: selectedFriedFriesModifierId === friesModifier?.id ? friesModifier : undefined } : undefined, drink: mealSelected && selectedFriedDrink ? { id: String(selectedFriedDrink.id), name: selectedFriedDrink.name } : undefined, dip: mealSelected && selectedFriedDip?.id ? { id: selectedFriedDip.id, name: selectedFriedDip.name } : undefined } : undefined;
+    const sharingDips = dipOptions.flatMap((item) => { const count = selectedSharingDipIds.filter((id) => id === item.id).length; return count && item.id ? [{ id: item.id, name: item.name, quantity: count }] : []; });
+    const configuredAddOns: CartItemAddOn[] = [
+      { id: 'meal-type', name: mealSelected ? 'Meal' : 'Regular', price: mealCharge },
+      ...mealAddOns,
+      ...selectedModifiers.map((item) => ({ id: item.id, name: item.name, price: item.price })),
+      ...(selectedFreeToppings.length ? [{ id: 'free-toppings', name: `Toppings: ${selectedFreeToppings.map((item) => item.name).join(', ')}`, price: 0 }] : []),
+    ];
+    const selectedSize = `${mealSelected ? 'Meal' : 'Regular'}${mealSelected && goLarge ? ` · ${goLargeOption.name} +£${goLargeOption.price.toFixed(2)}` : ''}`;
+    const cartItem: CartItem = {
+      productId: product.id, name: product.name, image: product.image, basePrice: product.price, price: unitPrice, unitPrice, totalPrice: total, quantity, selectedSize,
+      selectedFlavour: selectedFlavour || undefined, selectedSpiceLevel: selectedFlavour || undefined, selectedAddOns: configuredAddOns, specialInstructions: specialInstructions || undefined,
+      customization: {
+        selectedSize, selectedFlavour: selectedFlavour || undefined, selectedSpiceLevel: selectedFlavour || undefined, selectedAddOns: configuredAddOns, specialInstructions: specialInstructions || undefined,
+        platterSides: platterSidesEnabled ? platterSides : undefined, sidesBundlePrice: platterSidesEnabled ? 6 : undefined,
+        platterDrink: selectedDrink ? { id: String(selectedDrink.id), name: selectedDrink.name } : undefined, drinkAddOnPrice: selectedDrink ? 1.99 : undefined,
+        platterCake: selectedCake ? { id: String(selectedCake.id), name: selectedCake.name } : undefined, cakeAddOnPrice: selectedCake ? 2.99 : undefined,
+        kidsMealIncluded: isKidsMeal ? { mainItem: product.includedItems?.[0] || product.description, fries: product.includedItems?.[1] || 'Fries', fruitShoot: selectedFruitShoot?.id ? { id: selectedFruitShoot.id, name: selectedFruitShoot.name } : undefined } : undefined,
+        boxMealIncluded: isBoxMeal ? { items: product.includedItems || [], drink: selectedBoxDrink ? { id: String(selectedBoxDrink.id), name: selectedBoxDrink.name } : undefined } : undefined,
+        sharingMealIncluded: isSharingMeal ? { items: product.includedItems || [], dips: sharingDips } : undefined,
+        friedMealConfiguration: friedConfiguration, friedWingsConfiguration: baseCategory === 'fried-wings' ? friedConfiguration : undefined,
+        selectedFreeToppings: selectedFreeToppings.map((item) => ({ id: item.id, name: item.name })),
+      },
+    };
+    setIsSubmitting(true);
+    if (editingItem) removeFromCart(editingItem.productId, editingItem.customization);
+    addToCart(cartItem); onAdded?.(product); onClose();
+  };
 
-            <div className="flex min-h-0 flex-col overflow-hidden bg-white">
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-5 [scrollbar-color:#ead8c6_transparent] [scrollbar-width:thin] sm:p-7 lg:p-8">
-                <div className="pr-10">
-                  <h2 id="product-detail-title" className="text-3xl font-black leading-tight text-[#1a120f] sm:text-4xl">
-                    {product.name}
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-[#6b5b55] sm:text-base">{product.description}</p>
-                  <p className="mt-4 text-2xl font-black text-[#99041e]">
-                    {product.startingPrice ? 'From ' : ''}£{product.price.toFixed(2)}
-                  </p>
-                </div>
+  const renderMealGroup = (group: MealOptionGroup) => {
+    const value = selectedMealOptions[group.id];
+    const values = Array.isArray(value) ? value : value ? [value] : [];
+    return <div className="space-y-2" role={group.multiple ? 'group' : 'radiogroup'}>{!group.required && <OptionRow label="Not Now" selected={skippedSteps.includes(group.id)} onClick={() => { setSelectedMealOptions((current) => { const next = { ...current }; delete next[group.id]; return next; }); setSkipped(group.id, true); setError(''); }} radio={!group.multiple} />}{group.options.map((option) => { const selected = values.some((item) => (item.id || item.name) === (option.id || option.name)); const selectedValue = values.find((item) => (item.id || item.name) === (option.id || option.name)); return <div key={option.id || option.name}><OptionRow label={option.name} selected={selected} onClick={() => toggleMealOption(group, option)} price={option.price} radio={!group.multiple} />{selected && option.modifiers?.map((modifier) => <div className="ml-9 mt-2" key={modifier.id}><OptionRow label={modifier.name} selected={Boolean(selectedValue?.selectedModifiers?.some((item) => item.id === modifier.id))} onClick={() => toggleModifier(group.id, option, modifier)} price={modifier.price} /></div>)}</div>; })}</div>;
+  };
 
-                {isKidsMeal && (
-                  <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Fruit Shoot</h3>
-                    {fruitShootOptions.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {fruitShootOptions.map((option) => {
-                          const selected = selectedFruitShootId === option.id;
-                          return (
-                            <button
-                              key={option.id || option.name}
-                              type="button"
-                              onClick={() => setSelectedFruitShootId(option.id || option.name)}
-                              aria-pressed={selected}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                                selected
-                                  ? 'border-[#99041e] bg-[#99041e] text-white'
-                                  : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                              }`}
-                            >
-                              {option.name} · Included
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-[#ead8c6] bg-[#fff8ed] px-4 py-3 text-sm font-semibold text-[#6b5b55]">
-                        Fruit Shoot Drink Included
-                      </div>
-                    )}
-                    {!kidsDrinkComplete && (
-                      <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one Fruit Shoot.</p>
-                    )}
-                  </section>
-                )}
+  const renderStep = () => {
+    const id = activeStep.id;
+    if (id === 'flavour') return <div className="space-y-2" role="radiogroup">{(baseCategory === 'fried-wings' ? ['Normal', 'Spicy'] : FLAVOUR_OPTIONS).map((item) => <OptionRow key={item} label={item} selected={selectedFlavour === item} onClick={() => { setSelectedFlavour(item); setError(''); }} radio />)}</div>;
+    if (id === 'meal-type') return <div className="space-y-2" role="radiogroup"><OptionRow label="Regular" detail={`£${product.price.toFixed(2)}`} selected={mealType === 'Regular'} onClick={() => { setMealType('Regular'); setGoLarge(null); setSelectedMealOptions({}); setSelectedFriedDrinkId(null); setSelectedFriedDipId(null); setSelectedFriedFriesModifierId(null); setError(''); }} radio /><OptionRow label="Meal" detail={`£${(product.price + getMealCharge(product)).toFixed(2)}`} selected={mealType === 'Meal'} onClick={() => { setMealType('Meal'); setError(''); }} radio /></div>;
+    if (id === 'go-large') return <div className="space-y-2" role="radiogroup"><OptionRow label="Regular Meal" selected={goLarge === false} onClick={() => { setGoLarge(false); setError(''); }} price={0} radio /><OptionRow label={goLargeOption.name} selected={goLarge === true} onClick={() => { setGoLarge(true); setError(''); }} price={goLargeOption.price} radio /></div>;
+    if (id.startsWith('meal-')) { const group = MEAL_OPTION_GROUPS.find((item) => item.id === id.replace('meal-', '')); return group ? renderMealGroup(group) : null; }
+    if (id === 'kids-drink') return <div className="space-y-2" role="radiogroup">{fruitShootOptions.map((item) => <OptionRow key={item.id || item.name} label={item.name} selected={selectedFruitShootId === item.id} onClick={() => { setSelectedFruitShootId(item.id || item.name); setError(''); }} price={0} radio />)}</div>;
+    if (id === 'box-drink' || id === 'fried-drink') { const selected = id === 'box-drink' ? selectedBoxMealDrinkId : selectedFriedDrinkId; return <div className="space-y-2" role="radiogroup">{regularDrinks.map((item) => <OptionRow key={item.id} label={item.name} selected={selected === String(item.id)} onClick={() => { if (id === 'box-drink') setSelectedBoxMealDrinkId(String(item.id)); else setSelectedFriedDrinkId(String(item.id)); setError(''); }} price={0} radio />)}</div>; }
+    if (id === 'fried-fries') return <div className="space-y-2"><OptionRow label={regularFries?.name || 'Regular Fries'} selected onClick={() => undefined} price={0} radio />{friesModifier && <OptionRow label={friesModifier.name} selected={selectedFriedFriesModifierId === friesModifier.id} onClick={() => setSelectedFriedFriesModifierId((current) => current === friesModifier.id ? null : friesModifier.id)} price={friesModifier.price} />}</div>;
+    if (id === 'fried-dip') return <div className="space-y-2" role="radiogroup">{dipOptions.map((item) => <OptionRow key={item.id || item.name} label={item.name} selected={selectedFriedDipId === item.id} onClick={() => { setSelectedFriedDipId(item.id || item.name); setError(''); }} price={0} radio />)}</div>;
+    if (id === 'sharing-dips') return <div className="space-y-2">{dipOptions.map((item) => { const count = selectedSharingDipIds.filter((value) => value === item.id).length; return <div key={item.id || item.name} className="flex items-center justify-between rounded-2xl border border-[#ead8c6] bg-white p-3"><span className="font-bold">{item.name} · Included</span><div className="flex items-center gap-2"><button aria-label={`Remove ${item.name}`} onClick={() => setSelectedSharingDipIds((current) => { const index = current.lastIndexOf(item.id || item.name); return index < 0 ? current : current.filter((_, i) => i !== index); })} className="h-9 w-9 rounded-xl border text-[#99041e]"><Minus size={15} className="mx-auto" /></button><b>{count}</b><button aria-label={`Add ${item.name}`} disabled={selectedSharingDipIds.length >= (product.requiredDipCount || 0)} onClick={() => { setSelectedSharingDipIds((current) => [...current, item.id || item.name]); setError(''); }} className="h-9 w-9 rounded-xl border text-[#99041e] disabled:opacity-40"><Plus size={15} className="mx-auto" /></button></div></div>; })}</div>;
+    if (id === 'platter-sides') return <div className="space-y-2"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); setPlatterSidesEnabled(false); setSelectedPlatterSideIds([]); setError(''); }} radio /><p className="text-sm font-bold text-[#6b5b55]">{selectedPlatterSideIds.length} of 3 selected</p>{eligiblePlatterSides.map((item) => { const itemId = String(item.id); const selected = selectedPlatterSideIds.includes(itemId); return <div key={item.id}><OptionRow label={item.name} selected={selected} onClick={() => { setSkipped(id, false); setPlatterSidesEnabled(true); setSelectedPlatterSideIds((current) => selected ? current.filter((value) => value !== itemId) : current.length < 3 ? [...current, itemId] : current); setError(''); }} />{selected && item.quickAddOptions?.map((modifier) => <div className="ml-9 mt-2" key={modifier.id}><OptionRow label={modifier.name} selected={piriPiriSideIds.includes(itemId)} onClick={() => setPiriPiriSideIds((current) => current.includes(itemId) ? current.filter((value) => value !== itemId) : [...current, itemId])} price={modifier.price} /></div>)}</div>; })}</div>;
+    if (id === 'platter-drink' || id === 'platter-cake') { const items = id === 'platter-drink' ? platterDrinks : platterCakes; const selected = id === 'platter-drink' ? selectedPlatterDrinkId : selectedPlatterCakeId; return <div className="space-y-2" role="radiogroup"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); if (id === 'platter-drink') setSelectedPlatterDrinkId(null); else setSelectedPlatterCakeId(null); setError(''); }} radio />{items.map((item) => <OptionRow key={item.id} label={item.name} selected={selected === String(item.id)} onClick={() => { setSkipped(id, false); if (id === 'platter-drink') setSelectedPlatterDrinkId(String(item.id)); else setSelectedPlatterCakeId(String(item.id)); setError(''); }} price={id === 'platter-drink' ? 1.99 : 2.99} radio />)}</div>; }
+    if (id === 'extras' || id === 'free-toppings') { const items = id === 'extras' ? product.popupModifiers || [] : product.freeToppings || []; const selected = id === 'extras' ? selectedProductModifierIds : selectedFreeToppingIds; const setter = id === 'extras' ? setSelectedProductModifierIds : setSelectedFreeToppingIds; return <div className="space-y-2"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); setter([]); setError(''); }} />{items.map((item) => <OptionRow key={item.id} label={item.name} selected={selected.includes(item.id)} onClick={() => { setSkipped(id, false); setter((current) => current.includes(item.id) ? current.filter((value) => value !== item.id) : item.maxSelections === 1 ? [item.id] : [...current, item.id]); setError(''); }} price={item.price} />)}</div>; }
+    if (id === 'special-instructions') return <div><textarea value={specialInstructions} onChange={(event) => { setSpecialInstructions(event.target.value); setSkipped(id, false); setError(''); }} maxLength={240} rows={4} placeholder="Allergies or preparation notes?" className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-white p-4 outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/30" /><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSpecialInstructions(''); setSkipped(id, true); setError(''); }} /></div>;
+    return <div className="space-y-3 rounded-2xl border border-[#ead8c6] bg-white p-5"><p className="font-black text-[#99041e]">{product.name}</p><p className="text-sm text-[#6b5b55]">{selectedFlavour && `Flavour: ${selectedFlavour}`}{mealType && ` · ${mealType}`}{mealSelected && goLarge ? ` · ${goLargeOption.name}` : ''}</p><p className="text-2xl font-black text-[#99041e]">£{total.toFixed(2)}</p></div>;
+  };
 
-                {isBoxMeal && product.requiresIncludedDrink && (
-                  <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Drink</h3>
-                      {boxMealDrinkOptions.length > 0 && <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>}
-                    </div>
-                    {boxMealDrinkOptions.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {boxMealDrinkOptions.map((drink) => {
-                          const drinkId = String(drink.id);
-                          const selected = selectedBoxMealDrinkId === drinkId;
-                          return (
-                            <button
-                              key={drink.id}
-                              type="button"
-                              onClick={() => setSelectedBoxMealDrinkId(drinkId)}
-                              aria-pressed={selected}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                                selected
-                                  ? 'border-[#99041e] bg-[#99041e] text-white'
-                                  : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                              }`}
-                            >
-                              {drink.name} · Included
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-[#ead8c6] bg-[#fff8ed] px-4 py-3 text-sm font-semibold text-[#6b5b55]">
-                        Drink Included
-                      </div>
-                    )}
-                    {!boxMealDrinkComplete && (
-                      <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one drink.</p>
-                    )}
-                  </section>
-                )}
-
-                {isSharingMeal && (
-                  <section>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Dips</h3>
-                        <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">{requiredSharingDipCount} required</span>
-                      </div>
-                      <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">
-                        {selectedSharingDipIds.length} of {requiredSharingDipCount} selected
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {sharingDipOptions.map((dip) => {
-                        const dipId = dip.id || '';
-                        const selectedQuantity = selectedSharingDipIds.filter((selectedId) => selectedId === dipId).length;
-                        return (
-                          <div key={dipId} className="flex items-center justify-between gap-3 rounded-2xl border border-[#ead8c6] bg-[#fff8ed] px-4 py-2.5">
-                            <span className="text-sm font-medium text-[#1a120f]">{dip.name} · Included</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => removeSharingDip(dipId)}
-                                disabled={selectedQuantity === 0}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#ead8c6] bg-white text-[#99041e] transition hover:border-[#99041e] disabled:pointer-events-none disabled:opacity-35"
-                                aria-label={`Remove ${dip.name}`}
-                              >
-                                <Minus size={14} />
-                              </button>
-                              <span className="min-w-8 text-center text-sm font-black text-[#1a120f]">×{selectedQuantity}</span>
-                              <button
-                                type="button"
-                                onClick={() => addSharingDip(dipId)}
-                                disabled={selectedSharingDipIds.length >= requiredSharingDipCount}
-                                className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#ead8c6] bg-white text-[#99041e] transition hover:border-[#99041e] disabled:pointer-events-none disabled:opacity-35"
-                                aria-label={`Add ${dip.name}`}
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {!sharingDipsComplete && (
-                      <p className="mt-2 text-xs font-bold text-[#99041e]">Please select exactly {requiredSharingDipCount} dips to continue.</p>
-                    )}
-                  </section>
-                )}
-
-                {isFriedMealProduct && (
-                  <>
-                    {isFriedWings && (
-                      <section>
-                        <div className="mb-3 flex items-center gap-2">
-                          <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Flavour</h3>
-                          <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {(['Normal', 'Spicy'] as const).map((flavour) => (
-                            <button
-                              key={flavour}
-                              type="button"
-                              onClick={() => setSelectedFriedWingsFlavour(flavour)}
-                              aria-pressed={selectedFriedWingsFlavour === flavour}
-                              className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
-                                selectedFriedWingsFlavour === flavour
-                                  ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                                  : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                              }`}
-                            >
-                              {flavour}
-                            </button>
-                          ))}
-                        </div>
-                        {selectedFriedWingsFlavour === null && (
-                          <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one flavour.</p>
-                        )}
-                      </section>
-                    )}
-
-                    <section>
-                      <div className="mb-3 flex items-center gap-2">
-                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Option</h3>
-                        <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        {(['Single', 'Meal'] as const).map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSize(option);
-                              if (option === 'Single') {
-                                setSelectedFriedWingsDrinkId(null);
-                                setSelectedFriedWingsDipId(null);
-                                setSelectedFriedWingsFriesModifierId(null);
-                              }
-                            }}
-                            aria-pressed={selectedSize === option}
-                            className={`rounded-2xl border px-4 py-3 text-left transition ${
-                              selectedSize === option
-                                ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                                : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                            }`}
-                          >
-                            <span className="block text-sm font-medium">{option}</span>
-                            <span className={`mt-1 block text-xs font-semibold ${selectedSize === option ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                              {option === 'Meal' ? `+£${(product.mealPrice || 0).toFixed(2)}` : 'Included'}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-
-                    {friedWingsMealSelected && (
-                      <>
-                        <section>
-                          <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Included Fries</h3>
-                          <div className="rounded-2xl border border-[#ead8c6] bg-[#fff8ed] px-4 py-3 text-sm font-semibold text-[#6b5b55]">
-                            {friedWingsRegularFries?.name || 'Regular Fries'} — Included
-                          </div>
-                          {friedWingsFriesModifier && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedFriedWingsFriesModifierId((current) => (
-                                current === friedWingsFriesModifier.id ? null : friedWingsFriesModifier.id
-                              ))}
-                              aria-pressed={selectedFriedWingsFriesModifierId === friedWingsFriesModifier.id}
-                              className={`mt-1.5 rounded-full border px-3 py-1 text-[10px] font-black transition ${
-                                selectedFriedWingsFriesModifierId === friedWingsFriesModifier.id
-                                  ? 'border-[#ffc257] bg-[#ffc257] text-[#1a120f]'
-                                  : 'border-[#ead8c6] bg-[#fff8ed] text-[#99041e] hover:border-[#99041e]'
-                              }`}
-                            >
-                              Piri Piri +£{friedWingsFriesModifier.price.toFixed(2)}
-                            </button>
-                          )}
-                        </section>
-                        <section>
-                          <div className="mb-3 flex items-center gap-2">
-                            <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Drink</h3>
-                            <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {friedWingsDrinkOptions.map((drink) => {
-                              const drinkId = String(drink.id);
-                              const selected = selectedFriedWingsDrinkId === drinkId;
-                              return (
-                                <button
-                                  key={drink.id}
-                                  type="button"
-                                  onClick={() => setSelectedFriedWingsDrinkId(drinkId)}
-                                  aria-pressed={selected}
-                                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${selected ? 'border-[#99041e] bg-[#99041e] text-white' : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'}`}
-                                >
-                                  {drink.name} · Included
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {selectedFriedWingsDrinkId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one drink.</p>}
-                        </section>
-                        <section>
-                          <div className="mb-3 flex items-center gap-2">
-                            <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Choose Your Dip</h3>
-                            <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {friedWingsDipOptions.map((dip) => {
-                              const dipId = dip.id || '';
-                              const selected = selectedFriedWingsDipId === dipId;
-                              return (
-                                <button
-                                  key={dipId}
-                                  type="button"
-                                  onClick={() => setSelectedFriedWingsDipId(dipId)}
-                                  aria-pressed={selected}
-                                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${selected ? 'border-[#99041e] bg-[#99041e] text-white' : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'}`}
-                                >
-                                  {dip.name} · Included
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {selectedFriedWingsDipId === null && <p className="mt-2 text-xs font-bold text-[#99041e]">Please choose one dip.</p>}
-                        </section>
-                      </>
-                    )}
-                  </>
-                )}
-
-                {isPlatter && (
-                  <>
-                    <section>
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Add 3 Sides to any Platter for only £6.00</h3>
-                          <p className="mt-1 text-xs font-semibold text-[#6b5b55]">Excludes Tender Strips &amp; Maeme’s Wings</p>
-                        </div>
-                        <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">
-                          {selectedPlatterSideIds.length} of 3 selected
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPlatterSidesEnabled((current) => !current);
-                          if (platterSidesEnabled) {
-                            setSelectedPlatterSideIds([]);
-                            setPiriPiriSideIds([]);
-                          }
-                        }}
-                        aria-pressed={platterSidesEnabled}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                          platterSidesEnabled
-                            ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                            : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                        }`}
-                      >
-                        <span className="text-sm font-black">Add 3 Sides +£6.00</span>
-                      </button>
-
-                      {platterSidesEnabled && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {eligiblePlatterSides.map((side) => {
-                            const sideId = String(side.id);
-                            const selected = selectedPlatterSideIds.includes(sideId);
-                            const supportsPiriPiri = Boolean(side.quickAddOptions?.some((option) => option.id === 'piri-piri-seasoning'));
-                            const piriPiriSelected = piriPiriSideIds.includes(sideId);
-                            return (
-                              <div key={side.id} className="flex flex-col gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => togglePlatterSide(sideId)}
-                                  aria-pressed={selected}
-                                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                                    selected
-                                      ? 'border-[#99041e] bg-[#99041e] text-white'
-                                      : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                                  }`}
-                                >
-                                  {side.name}
-                                </button>
-                                {selected && supportsPiriPiri && (
-                                  <button
-                                    type="button"
-                                    onClick={() => togglePiriPiriSide(sideId)}
-                                    aria-pressed={piriPiriSelected}
-                                    className={`rounded-full border px-3 py-1 text-[10px] font-black transition ${
-                                      piriPiriSelected
-                                        ? 'border-[#ffc257] bg-[#ffc257] text-[#1a120f]'
-                                        : 'border-[#ead8c6] bg-[#fff8ed] text-[#99041e] hover:border-[#99041e]'
-                                    }`}
-                                  >
-                                    Piri Piri +£0.30
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {platterSidesEnabled && !platterSidesComplete && (
-                        <p className="mt-2 text-xs font-bold text-[#99041e]">Please select exactly 3 sides to continue.</p>
-                      )}
-                    </section>
-
-                    <section>
-                      <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Add any 1.5L Drink for only £1.99</h3>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPlatterDrinkId(null)}
-                          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                            selectedPlatterDrinkId === null
-                              ? 'border-[#99041e] bg-[#99041e] text-white'
-                              : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                          }`}
-                        >
-                          No drink
-                        </button>
-                        {platterDrinks.map((drink) => (
-                          <button
-                            key={drink.id}
-                            type="button"
-                            onClick={() => setSelectedPlatterDrinkId(String(drink.id))}
-                            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                              selectedPlatterDrinkId === String(drink.id)
-                                ? 'border-[#99041e] bg-[#99041e] text-white'
-                                : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                            }`}
-                          >
-                            {drink.name.replace(/ 1\.75L Bottle$/i, '')}
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-
-                    <section>
-                      <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Add any Cake Slice for only £2.99</h3>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPlatterCakeId(null)}
-                          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                            selectedPlatterCakeId === null
-                              ? 'border-[#99041e] bg-[#99041e] text-white'
-                              : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                          }`}
-                        >
-                          No cake
-                        </button>
-                        {platterCakes.map((cake) => (
-                          <button
-                            key={cake.id}
-                            type="button"
-                            onClick={() => setSelectedPlatterCakeId(cake.id)}
-                            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                              selectedPlatterCakeId === cake.id
-                                ? 'border-[#99041e] bg-[#99041e] text-white'
-                                : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                            }`}
-                          >
-                            {cake.name}
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  </>
-                )}
-
-                {optionVisibility.showSize && (
-                  <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Size</h3>
-                      <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {mealSizeOptions.map((size) => (
-                        <button
-                          key={size.name}
-                          onClick={() => {
-                            setSelectedSize(size.name);
-                            if (size.name !== 'Meal') {
-                              setGoLarge(false);
-                              setSelectedMealOptions({});
-                            }
-                          }}
-                          className={`rounded-2xl border px-4 py-3 text-left transition ${
-                            selectedSize === size.name
-                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                          }`}
-                        >
-                          <span className="block text-sm font-medium">{size.name}</span>
-                          <span className={`mt-1 block text-xs font-semibold ${selectedSize === size.name ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                            {size.price > 0 ? `+£${size.price.toFixed(2)}` : 'Included'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    {mealSelected && (
-                      <div className="mt-3 grid grid-cols-1 gap-3">
-                        <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Meal Option</h3>
-                        <button
-                          onClick={() => setGoLarge((current) => !current)}
-                          className={`rounded-2xl border px-4 py-3 text-left transition ${
-                            goLarge
-                              ? 'border-[#99041e] bg-[#99041e] text-white shadow-[0_14px_32px_rgba(153,4,30,0.20)]'
-                              : 'border-[#ead8c6] bg-[#fff8ed] text-[#1a120f] hover:border-[#99041e]'
-                          }`}
-                        >
-                          <span className="block text-sm font-medium">{goLargeOption.name}</span>
-                          <span className={`mt-1 block text-xs font-semibold ${goLarge ? 'text-white/75' : 'text-[#6b5b55]'}`}>
-                            +£{goLargeOption.price.toFixed(2)}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                {optionVisibility.showFlavour && (
-                  <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Flavour / Heat / Spice Level</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {FLAVOUR_OPTIONS.map((flavour) => (
-                        <button
-                          key={flavour}
-                          onClick={() => setSelectedFlavour(flavour)}
-                          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                            selectedFlavour === flavour
-                              ? 'border-[#99041e] bg-[#99041e] text-white'
-                              : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                          }`}
-                        >
-                          {flavour}
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {product.popupModifiers && product.popupModifiers.length > 0 && (
-                  <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Extras</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {product.popupModifiers.map((modifier) => {
-                        const selected = selectedProductModifierIds.includes(modifier.id);
-                        return (
-                          <button
-                            key={modifier.id}
-                            type="button"
-                            onClick={() => toggleProductModifier(modifier.id)}
-                            aria-pressed={selected}
-                            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                              selected
-                                ? 'border-[#99041e] bg-[#99041e] text-white'
-                                : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                            }`}
-                          >
-                            {modifier.name} +£{modifier.price.toFixed(2)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                {optionVisibility.showSize && mealSelected && MEAL_OPTION_GROUPS.map((group) => (
-                  <section key={group.id}>
-                    <div className="mb-3 flex items-center gap-2">
-                      <h3 className="text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">{group.title}</h3>
-                      {group.required && <span className="rounded-full bg-[#fff8ed] px-2.5 py-1 text-xs font-black text-[#99041e]">Required</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {group.options.map((option) => {
-                        const groupSelection = selectedMealOptions[group.id];
-                        const selectedOption = Array.isArray(groupSelection)
-                          ? groupSelection.find((item) => (item.id || item.name) === (option.id || option.name))
-                          : (groupSelection?.id || groupSelection?.name) === (option.id || option.name) ? groupSelection : undefined;
-                        const selected = Boolean(selectedOption);
-                        return (
-                          <div key={option.id || option.name} className="flex flex-col items-start gap-1">
-                            <button
-                              onClick={() => toggleMealOption(group, option)}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                                selected
-                                  ? 'border-[#99041e] bg-[#99041e] text-white'
-                                  : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                              }`}
-                            >
-                              {option.name}{option.price > 0 ? ` +£${option.price.toFixed(2)}` : ''}
-                            </button>
-                            {selected && option.modifiers?.map((modifier) => {
-                              const modifierSelected = selectedOption?.selectedModifiers?.some((item) => item.id === modifier.id) || false;
-                              return (
-                                <button
-                                  key={modifier.id}
-                                  type="button"
-                                  onClick={() => toggleMealOptionModifier(group.id, option, modifier)}
-                                  aria-pressed={modifierSelected}
-                                  className={`rounded-full border px-3 py-1 text-[10px] font-black transition ${
-                                    modifierSelected
-                                      ? 'border-[#ffc257] bg-[#ffc257] text-[#1a120f]'
-                                      : 'border-[#ead8c6] bg-[#fff8ed] text-[#99041e] hover:border-[#99041e]'
-                                  }`}
-                                >
-                                  Piri Piri +£{modifier.price.toFixed(2)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {mealOptionErrors.includes(group.id) && (
-                      <p className="mt-2 text-xs font-bold text-[#99041e]">Please select an option</p>
-                    )}
-                  </section>
-                ))}
-
-                {product.freeToppings && product.freeToppings.length > 0 && (
-                  <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">19 Free Toppings</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {product.freeToppings.map((topping) => {
-                        const selected = selectedFreeToppingIds.includes(topping.id);
-                        return (
-                          <button
-                            key={topping.id}
-                            type="button"
-                            onClick={() => toggleFreeTopping(topping.id)}
-                            aria-pressed={selected}
-                            className={`min-h-10 max-w-full whitespace-normal rounded-full border px-4 py-2 text-left text-sm font-medium leading-snug transition ${
-                              selected
-                                ? 'border-[#99041e] bg-[#99041e] text-white'
-                                : 'border-[#ead8c6] bg-white text-[#1a120f] hover:border-[#99041e] hover:bg-[#fff8ed]'
-                            }`}
-                          >
-                            {topping.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                {optionVisibility.showSpecialInstructions && (
-                  <section>
-                    <h3 className="mb-3 text-[15px] font-black uppercase tracking-[0.08em] text-[#1a120f]">Special Instructions</h3>
-                    <textarea
-                      value={specialInstructions}
-                      onChange={(event) => setSpecialInstructions(event.target.value)}
-                      placeholder="Allergies or preparation notes?"
-                      rows={3}
-                      className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-4 text-sm font-medium text-[#1a120f] outline-none transition placeholder:text-[#8b7a73] focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/25"
-                    />
-                  </section>
-                )}
-              </div>
-
-              <div className="shrink-0 border-t border-[#ead8c6] bg-white/96 p-4 shadow-[0_-12px_34px_rgba(50,24,16,0.08)] backdrop-blur sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="flex h-12 items-center justify-between rounded-2xl border border-[#ead8c6] bg-[#fff8ed] p-1 sm:w-36">
-                    <button
-                      onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-[#99041e] transition hover:bg-white"
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus size={18} />
-                    </button>
-                    <span className="min-w-8 text-center text-base font-black text-[#1a120f]">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity((current) => current + 1)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-[#99041e] transition hover:bg-white"
-                      aria-label="Increase quantity"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={!platterSidesComplete || !kidsDrinkComplete || !boxMealDrinkComplete || !sharingDipsComplete || !friedWingsConfigurationComplete}
-                    className="min-h-12 flex-1 rounded-2xl bg-[#ffc257] px-6 py-3 text-base font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Add to cart · £{calculatedTotal.toFixed(2)}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  return <>{!embedded && <div className="fixed inset-0 z-[70] bg-[#2b0710]/60" onClick={onClose} />}<div className={embedded ? "relative w-full" : "fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4"}><div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="product-detail-title" className={embedded ? "relative flex h-[min(72dvh,720px)] min-h-[560px] w-full flex-col overflow-hidden rounded-[22px] border border-[#f0d59d] bg-[#fffaf2] shadow-sm" : "relative flex h-[calc(100dvh-1rem)] max-h-[95dvh] w-full max-w-[620px] flex-col overflow-hidden rounded-[26px] border border-[#f0d59d] bg-[#fffaf2] shadow-[0_30px_90px_rgba(26,18,15,.35)]"}><button data-close onClick={onClose} aria-label="Close product details" className="absolute right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-[#99041e] text-white focus-visible:ring-4 focus-visible:ring-[#ffc257]"><X size={22} /></button><div ref={scrollRef} onScroll={(event) => setIsCollapsed(event.currentTarget.scrollTop > 56)} className="min-h-0 flex-1 overflow-y-auto pb-44 [scrollbar-color:#99041e_transparent] [scrollbar-width:thin]"><header className={`sticky top-0 z-20 overflow-hidden border-b border-[#f0d59d] bg-white/95 backdrop-blur transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-[92px]' : 'h-[360px] sm:h-[420px]'}`}><div className={`flex h-full transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'items-center gap-3 px-4 pr-16' : 'flex-col items-center justify-center px-8 pb-5 pt-12 text-center'}`}><img src={product.image} alt={product.name} className={`shrink-0 object-contain transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-16 w-16' : 'h-[230px] w-full sm:h-[280px]'}`} /><div className={isCollapsed ? 'min-w-0' : ''}><h2 id="product-detail-title" className={`${isCollapsed ? 'truncate text-base' : 'mt-2 text-2xl sm:text-3xl'} font-black text-[#99041e]`}>{product.name}</h2>{!isCollapsed && product.description && <p className="mx-auto mt-2 max-w-lg text-sm leading-5 text-[#6b5b55]">{product.description}</p>}<p className={`${isCollapsed ? 'text-sm' : 'mt-2 text-xl'} font-black text-[#99041e]`}>£{total.toFixed(2)} {isCollapsed && <span className="ml-2 text-xs text-[#7b6861]">Step {stepIndex + 1} of {steps.length}</span>}</p></div></div></header><main className="px-4 pt-5 sm:px-7"><div aria-live="polite" className="mb-4 flex items-center justify-between gap-3"><span className="text-xs font-black uppercase tracking-[.16em] text-[#99041e]">Step {stepIndex + 1} of {steps.length}</span><span className="rounded-full bg-[#fff0d5] px-3 py-1 text-xs font-black text-[#99041e]">{activeStep.optional ? 'Optional' : 'Required'}</span></div><section data-invalid={Boolean(error)} className={`rounded-[22px] border bg-[#fffaf2] p-4 transition sm:p-5 ${error ? 'border-[#99041e] ring-2 ring-[#99041e]/15' : 'border-[#f0d59d]'}`}><h3 className="text-xl font-black text-[#2e1c18]">{activeStep.title}</h3><p className="mt-1 text-sm font-semibold text-[#78645d]">{activeStep.optional ? 'Choose one or more options, or select Not Now.' : 'Complete this selection to continue.'}</p><div data-first-option tabIndex={-1} className="mt-4">{renderStep()}</div>{error && <p role="alert" className="mt-3 text-sm font-black text-[#99041e]">{error}</p>}</section></main></div><footer className="absolute inset-x-0 bottom-0 z-30 border-t border-[#e5a93e] bg-[#ffc257] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_34px_rgba(50,24,16,.13)]"><div className="mb-3 flex items-center justify-between gap-3">{stepIndex > 0 ? <button onClick={() => goToStep(stepIndex - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-black text-[#99041e] focus-visible:ring-4 focus-visible:ring-white"><ArrowLeft size={18} /> Back</button> : <span />}<div className="flex h-11 items-center rounded-full bg-white/55 p-1"><button onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1} aria-label="Decrease quantity" className="h-9 w-9 rounded-full text-[#99041e] disabled:opacity-40"><Minus size={17} className="mx-auto" /></button><b className="min-w-8 text-center">{quantity}</b><button onClick={() => setQuantity((value) => Math.min(99, value + 1))} aria-label="Increase quantity" className="h-9 w-9 rounded-full text-[#99041e]"><Plus size={17} className="mx-auto" /></button></div></div><button onClick={handleContinue} disabled={isSubmitting} aria-busy={isSubmitting} className="min-h-14 w-full rounded-full bg-[#99041e] px-5 text-base font-black text-white shadow-[0_7px_0_#5f0213] focus-visible:ring-4 focus-visible:ring-white disabled:opacity-60">{isSubmitting ? (editingItem ? 'Updating…' : 'Adding…') : `${editingItem && activeStep.id === 'confirmation' ? 'Update' : 'Add'} · £${total.toFixed(2)}`}</button></footer></div></div></>;
 }

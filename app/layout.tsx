@@ -57,7 +57,7 @@ export default function RootLayout({
             <Header />
             <PostcodeModalHost />
             <AssistantLoader />
-            <main className="min-h-screen pt-20">
+            <main className="min-h-screen pt-[var(--site-header-height)]">
               {children}
             </main>
             <Footer />

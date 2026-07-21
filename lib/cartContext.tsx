@@ -74,6 +74,7 @@ export type OrderType = 'delivery' | 'pickup';
 
 export interface CartContextType {
   items: CartItem[];
+  isHydrated: boolean;
   selectedBranch: Branch | null;
   selectedOrderType: OrderType | null;
   addToCart: (item: CartItem) => void;
@@ -94,7 +95,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<OrderType | null>(null);
-  const [, setIsHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -210,6 +211,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     <CartContext.Provider
       value={{
         items,
+        isHydrated,
         selectedBranch,
         selectedOrderType,
         addToCart,

@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ShoppingBag, Store, Truck } from 'lucide-react';
+import { KeyboardEvent, PointerEvent, WheelEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import ProductCard from '@/components/ordering/ProductCard';
+import OrderingContextBanner from '@/components/menu/OrderingContextBanner';
 import { MENU_DATA, MENU_CATEGORY_DATA, MenuItem, MenuQuickAddOption } from '@/lib/menuData';
 import { useCart } from '@/lib/cartContext';
-import { formatBranchDisplay } from '@/lib/branchData';
-import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 function slugify(value: string) {
   return value
@@ -29,7 +29,18 @@ const DIRECT_ADD_CATEGORY_SLUGS = new Set([
 ]);
 
 export default function CompleteMenuPage() {
-  const { items, selectedBranch, selectedOrderType, addToCart, updateQuantity, setOrderType } = useCart();
+  const router = useRouter();
+  const {
+    items,
+    isHydrated,
+    selectedBranch,
+    selectedOrderType,
+    addToCart,
+    updateQuantity,
+    setOrderType,
+    getCartCount,
+    getCartTotal,
+  } = useCart();
   const [activeCategory, setActiveCategory] = useState(MENU_CATEGORY_DATA[0].id);
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -40,6 +51,9 @@ export default function CompleteMenuPage() {
   const [canScrollCategoryLeft, setCanScrollCategoryLeft] = useState(false);
   const [canScrollCategoryRight, setCanScrollCategoryRight] = useState(true);
   const categoryRailRef = useRef<HTMLDivElement>(null);
+  const categoryNavRef = useRef<HTMLDivElement>(null);
+  const categoryDragRef = useRef({ startX: 0, startScrollLeft: 0, dragging: false });
+  const didDragCategoryRailRef = useRef(false);
 
   const productsByCategory = useMemo(() => (
     MENU_CATEGORY_DATA.map((category) => ({
@@ -139,6 +153,55 @@ export default function CompleteMenuPage() {
     setCanScrollCategoryRight(rail.scrollLeft < maxScrollLeft - 6);
   };
 
+  const handleCategoryWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const rail = categoryRailRef.current;
+    if (!rail || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+    event.preventDefault();
+    rail.scrollLeft += event.deltaY;
+  };
+
+  const handleCategoryKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return;
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button[data-category]'));
+    const currentIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (currentIndex < 0) return;
+
+    event.preventDefault();
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? buttons.length - 1
+        : Math.min(buttons.length - 1, Math.max(0, currentIndex + (event.key === 'ArrowRight' ? 1 : -1)));
+    buttons[nextIndex]?.focus();
+    buttons[nextIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  };
+
+  const handleCategoryPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    const rail = categoryRailRef.current;
+    if (!rail) return;
+    categoryDragRef.current = {
+      startX: event.clientX,
+      startScrollLeft: rail.scrollLeft,
+      dragging: true,
+    };
+    didDragCategoryRailRef.current = false;
+  };
+
+  const handleCategoryPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const rail = categoryRailRef.current;
+    const drag = categoryDragRef.current;
+    if (!rail || !drag.dragging) return;
+    const distance = event.clientX - drag.startX;
+    if (Math.abs(distance) > 5) didDragCategoryRailRef.current = true;
+    rail.scrollLeft = drag.startScrollLeft - distance;
+  };
+
+  const handleCategoryPointerEnd = () => {
+    if (!categoryRailRef.current || !categoryDragRef.current.dragging) return;
+    categoryDragRef.current.dragging = false;
+  };
+
   useEffect(() => {
     const rail = categoryRailRef.current;
     if (!rail) return;
@@ -154,6 +217,19 @@ export default function CompleteMenuPage() {
   }, []);
 
   useEffect(() => {
+    const nav = categoryNavRef.current;
+    if (!nav) return;
+    const updateHeight = () => document.documentElement.style.setProperty('--menu-nav-height', `${nav.offsetHeight}px`);
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(nav);
+    updateHeight();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--menu-nav-height');
+    };
+  }, []);
+
+  useEffect(() => {
     if (!selectedBranch) return;
 
     if (selectedOrderType === 'delivery' && !selectedBranch.deliveryAvailable && selectedBranch.pickupAvailable) {
@@ -164,6 +240,12 @@ export default function CompleteMenuPage() {
       setOrderType(selectedBranch.deliveryAvailable ? 'delivery' : 'pickup');
     }
   }, [selectedBranch, selectedOrderType, setOrderType]);
+
+  useEffect(() => {
+    if (isHydrated && (!selectedBranch || !selectedOrderType)) {
+      router.replace('/order');
+    }
+  }, [isHydrated, router, selectedBranch, selectedOrderType]);
 
   useEffect(() => {
     const targetId = window.location.hash.slice(1);
@@ -203,83 +285,25 @@ export default function CompleteMenuPage() {
     window.setTimeout(() => setToast(null), 2600);
   };
 
+  if (!isHydrated || !selectedBranch || !selectedOrderType) {
+    return (
+      <main className="flex min-h-[100svh] items-center justify-center bg-[#fff8ed] px-4">
+        <p className="text-sm font-black text-[#99041e]">Loading your ordering details…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#fff8ed] pb-24 text-[#1a120f]">
-      <section className="bg-[#99041e] py-12 text-white lg:py-16">
-        <div className="page-container">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-5xl font-black tracking-tight sm:text-6xl">Menu</h1>
-              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-white/85 sm:text-lg">
-                Freshly grilled, full of flavour, made your way.
-              </p>
-            </div>
+      <OrderingContextBanner
+        branch={selectedBranch}
+        orderType={selectedOrderType}
+        cartCount={getCartCount()}
+        cartTotal={getCartTotal()}
+        onOrderTypeChange={setOrderType}
+      />
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[430px]">
-              <div className="h-full rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                <div className="flex items-start gap-3">
-                  <Store size={20} className="mt-0.5 shrink-0 text-[#ffc257]" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-white/65">Branch</p>
-                    <p className="mt-1 break-words text-sm font-black">{selectedBranch?.branchName || 'Selected Branch'}</p>
-                    {selectedBranch && (
-                      <>
-                        <p className="mt-0.5 text-xs font-bold text-white/90">{selectedBranch.postcode}</p>
-                        {selectedBranch.address && (
-                          <p className="mt-1 break-words text-xs leading-5 text-white/75">
-                            {selectedBranch.address}{selectedBranch.postcode ? `, ${selectedBranch.postcode}` : ''}
-                          </p>
-                        )}
-                        <p className={`mt-1 text-xs font-bold ${selectedBranch.isOpen === false ? 'text-[#ffc257]' : 'text-white/90'}`}>
-                          {formatBranchDisplay(selectedBranch)}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="h-full rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                <div className="flex items-start gap-3">
-                  {selectedOrderType === 'pickup' ? <ShoppingBag size={20} className="text-[#ffc257]" /> : <Truck size={20} className="text-[#ffc257]" />}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-white/65">Order type</p>
-                    <p className="mt-1 text-sm font-black">{getOrderTypeLabel(selectedOrderType)}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-white/15 bg-black/10 p-1">
-                      {(['delivery', 'pickup'] as const).map((type) => {
-                        const available = !selectedBranch || (type === 'delivery' ? selectedBranch.deliveryAvailable : selectedBranch.pickupAvailable);
-                        return (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => available && selectedBranch && setOrderType(type)}
-                            disabled={!selectedBranch || !available}
-                            aria-pressed={selectedOrderType === type}
-                            className={`min-h-9 rounded-lg px-2 py-1.5 text-xs font-black transition ${
-                              selectedOrderType === type
-                                ? 'bg-[#ffc257] text-[#1a120f] shadow-sm'
-                                : 'text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40'
-                            }`}
-                          >
-                            {getOrderTypeLabel(type)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {selectedBranch && !selectedBranch.deliveryAvailable && (
-                      <p className="mt-2 text-[11px] leading-4 text-white/75">Delivery is currently unavailable from this branch.</p>
-                    )}
-                    {selectedBranch && !selectedBranch.pickupAvailable && (
-                      <p className="mt-2 text-[11px] leading-4 text-white/75">Collection is currently unavailable from this branch.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="menu-category-carousel sticky top-20 z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
+      <div ref={categoryNavRef} className="menu-category-carousel sticky top-[var(--site-header-height)] z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
         <div className="page-container flex items-center gap-3">
           <button
             onClick={() => scrollCategoryRail('left')}
@@ -291,13 +315,28 @@ export default function CompleteMenuPage() {
           </button>
           <div
             ref={categoryRailRef}
-            className="flex flex-1 snap-x snap-mandatory gap-2 overflow-x-auto py-4 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            onWheel={handleCategoryWheel}
+            onKeyDown={handleCategoryKeyDown}
+            onPointerDown={handleCategoryPointerDown}
+            onPointerMove={handleCategoryPointerMove}
+            onPointerUp={handleCategoryPointerEnd}
+            onPointerCancel={handleCategoryPointerEnd}
+            role="navigation"
+            aria-label="Menu categories"
+            className="flex flex-1 cursor-grab snap-x snap-mandatory gap-2 overflow-x-auto py-4 scroll-smooth active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {MENU_CATEGORY_DATA.map((category) => (
               <button
                 key={category.id}
                 data-category={category.slug}
-                onClick={() => handleCategoryClick(category.id, category.anchor)}
+                onClick={(event) => {
+                  if (didDragCategoryRailRef.current) {
+                    event.preventDefault();
+                    didDragCategoryRailRef.current = false;
+                    return;
+                  }
+                  handleCategoryClick(category.id, category.anchor);
+                }}
                 className={`shrink-0 snap-start rounded-full border-2 px-4 py-2.5 text-sm font-black transition ${
                   activeCategory === category.id
                     ? 'border-[#99041e] bg-[#ffc257] text-[#1a120f] shadow-sm'
@@ -319,10 +358,15 @@ export default function CompleteMenuPage() {
         </div>
       </div>
 
-      <div className="page-container py-10 lg:py-12">
+      <div className="site-container-wide py-10 lg:py-12">
         <div className="space-y-14">
           {productsByCategory.map(({ category, products }) => (
-            <section key={category.id} id={category.anchor} data-menu-section={category.id} className="scroll-mt-40">
+            <section
+              key={category.id}
+              id={category.anchor}
+              data-menu-section={category.id}
+              style={{ scrollMarginTop: 'calc(var(--site-header-height) + var(--menu-nav-height, 76px) + 1rem)' }}
+            >
               <div className="mb-5 flex items-end justify-between gap-4 border-b border-[#f0d59d]/70 pb-4">
                 <div>
                   <h2 className="text-3xl font-black tracking-tight text-[#1a120f]">{category.title}</h2>
@@ -333,9 +377,14 @@ export default function CompleteMenuPage() {
               </div>
 
               {products.length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {products.map((product) => (
-                    <ProductCard key={product.id} product={product} onAdd={handleAddProduct} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={handleAddProduct}
+                      isSelected={showProductModal && selectedProduct?.id === product.id}
+                    />
                   ))}
                 </div>
               ) : (
@@ -347,6 +396,12 @@ export default function CompleteMenuPage() {
           ))}
         </div>
       </div>
+
+      <footer className="border-t border-[#f0d59d] bg-white px-4 py-5 text-center">
+        <p className="text-sm font-semibold text-[#6b5b55]">
+          Menu FAQ: Have questions about ingredients, allergens or customisation? Please speak to our team before ordering.
+        </p>
+      </footer>
 
       {toast && (
         <div className="fixed bottom-24 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-[0_18px_46px_rgba(153,4,30,0.28)] lg:bottom-8 lg:left-auto lg:right-8 lg:mx-0">

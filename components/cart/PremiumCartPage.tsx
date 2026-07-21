@@ -6,7 +6,7 @@ import { Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
-import { categorySlug, getProductOptionVisibility } from '@/lib/productOptionConfig';
+import { getProductConfiguration } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
 const recommendedNames = [
@@ -23,7 +23,7 @@ const recommendedNames = [
 function formatOptions(item: CartItem) {
   const size = item.selectedSize || item.customization?.selectedSize;
   const product = MENU_DATA.find((candidate) => candidate.id === item.productId);
-  const flavour = product && categorySlug(product.category) === 'maemes-burgers'
+  const flavour = product && getProductConfiguration(product).baseCategorySlug === 'maemes-burgers'
     ? undefined
     : item.selectedFlavour || item.selectedSpiceLevel || item.customization?.selectedSpiceLevel;
   const addOns = item.selectedAddOns || item.customization?.selectedAddOns || [];
@@ -50,14 +50,11 @@ function getItemTotal(item: CartItem) {
 function getEditableProduct(item: CartItem) {
   const product = MENU_DATA.find((candidate) => candidate.id === item.productId);
   if (!product) return null;
-  const isPlatter = categorySlug(product.category) === 'maemes-platter';
-  const isKidsMeal = categorySlug(product.category) === 'kids-meal';
-  const isBoxMeal = categorySlug(product.category) === 'box-meals';
-  const isSharingMeal = categorySlug(product.category) === 'sharing-meal';
-  const isFriedWings = categorySlug(product.category) === 'fried-wings';
-  const isFriedChicken = categorySlug(product.category) === 'fried-chicken';
-  const isFriedBoneless = categorySlug(product.category) === 'fried-boneless';
-  return isPlatter || isKidsMeal || isBoxMeal || isSharingMeal || isFriedWings || isFriedChicken || isFriedBoneless || getProductOptionVisibility(product.category).showSize ? product : null;
+  const configuration = getProductConfiguration(product);
+  const baseCategory = configuration.baseCategorySlug;
+  const isSpecialConfiguration = ['maemes-platter', 'kids-meal', 'box-meals', 'sharing-meal', 'fried-wings', 'fried-chicken', 'fried-boneless'].includes(baseCategory);
+  const hasProductOptions = Boolean(product.popupModifiers?.length || product.freeToppings?.length);
+  return isSpecialConfiguration || configuration.showFlavour || configuration.showMealOptions || hasProductOptions ? product : null;
 }
 
 export default function PremiumCartPage() {

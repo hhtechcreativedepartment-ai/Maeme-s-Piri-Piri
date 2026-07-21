@@ -288,7 +288,7 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
   }, [steps.length]);
 
   const mealOptionsList = Object.values(selectedMealOptions).flat();
-  const mealOptionsTotal = mealSelected ? mealOptionsList.reduce((sum, item) => sum + item.price + (item.selectedModifiers || []).reduce((total, modifier) => total + modifier.price, 0), 0) : 0;
+  const mealOptionsTotal = mealOptionsList.reduce((sum, item) => sum + item.price + (item.selectedModifiers || []).reduce((total, modifier) => total + modifier.price, 0), 0);
   const selectedModifiers = (product?.popupModifiers || []).filter((item) => selectedProductModifierIds.includes(item.id));
   const selectedFreeToppings = (product?.freeToppings || []).filter((item) => selectedFreeToppingIds.includes(item.id));
   const selectedPlatterSides = eligiblePlatterSides.filter((item) => selectedPlatterSideIds.includes(String(item.id)));
@@ -441,7 +441,7 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     const selectedFriedDrink = regularDrinks.find((item) => String(item.id) === selectedFriedDrinkId);
     const selectedFriedDip = dipOptions.find((item) => item.id === selectedFriedDipId);
     const platterSides = selectedPlatterSides.map((item) => ({ id: String(item.id), name: item.name, modifier: piriPiriSideIds.includes(String(item.id)) ? { id: 'piri-piri-seasoning', name: 'Piri Piri seasoning', price: 0.3 } : undefined }));
-    const mealAddOns: CartItemAddOn[] = mealSelected ? mealOptionsList.map((item) => ({ id: item.id, name: item.name, price: item.price, modifiers: item.selectedModifiers })) : [];
+    const mealAddOns: CartItemAddOn[] = mealOptionsList.map((item) => ({ id: item.id, name: item.name, price: item.price, modifiers: item.selectedModifiers }));
     const friedConfiguration = isFried ? { option: (mealSelected ? 'Meal' : 'Single') as 'Single' | 'Meal', mealCharge, fries: mealSelected && regularFries ? { id: String(regularFries.id), name: regularFries.name, price: 0, modifier: selectedFriedFriesModifierId === friesModifier?.id ? friesModifier : undefined } : undefined, drink: mealSelected && selectedFriedDrink ? { id: String(selectedFriedDrink.id), name: selectedFriedDrink.name } : undefined, dip: mealSelected && selectedFriedDip?.id ? { id: selectedFriedDip.id, name: selectedFriedDip.name } : undefined } : undefined;
     const sharingDips = dipOptions.flatMap((item) => { const count = selectedSharingDipIds.filter((id) => id === item.id).length; return count && item.id ? [{ id: item.id, name: item.name, quantity: count }] : []; });
     const configuredAddOns: CartItemAddOn[] = [

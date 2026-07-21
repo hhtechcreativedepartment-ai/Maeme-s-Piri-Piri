@@ -229,6 +229,18 @@ export function getProductConfigurationSteps(product: MenuItem, mealType: 'Regul
   }
   if (product.popupModifiers?.length) steps.push({ id: 'extras', title: 'Choose extras', optional: true });
   if (product.freeToppings?.length) steps.push({ id: 'free-toppings', title: 'Choose free toppings', optional: true });
+  if (!mealSelected && MEAL_SELECTION_CATEGORY_SLUGS.has(baseCategory)) {
+    const regularAddOnGroupOrder = ['sides', 'dip', 'cake-slice'];
+    const regularGroupTitles: Record<string, string> = {
+      sides: 'Choose sides & add-ons',
+      dip: 'Choose your dip',
+      'cake-slice': 'Choose your dessert',
+    };
+    regularAddOnGroupOrder.forEach((groupId) => {
+      const group = MEAL_OPTION_GROUPS.find((candidate) => candidate.id === groupId);
+      if (group?.options.length) steps.push({ id: `meal-${group.id}`, title: regularGroupTitles[group.id] || group.title, optional: !group.required });
+    });
+  }
   if (fullOptions || ['box-meals', 'sharing-meal', 'fried-wings', 'fried-chicken', 'fried-boneless'].includes(baseCategory)) {
     steps.push({ id: 'special-instructions', title: 'Special instructions', optional: true });
   }

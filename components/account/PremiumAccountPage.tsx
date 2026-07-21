@@ -10,6 +10,7 @@ import { Order } from '@/lib/orderUtils';
 import { useFavourites } from '@/lib/favouritesContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
 import ProductCard from '@/components/ordering/ProductCard';
+import OrderingHeader from '@/components/ordering/OrderingHeader';
 
 type AccountTab = 'profile' | 'history' | 'tracking' | 'favourites' | 'addresses' | 'promos';
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
@@ -247,10 +248,12 @@ export default function PremiumAccountPage() {
   };
 
   if (isLoading) {
-    return <main className="min-h-screen bg-[#fff8ed]" />;
+    return <><OrderingHeader /><main className="min-h-screen bg-[#fff8ed]" /></>;
   }
 
   return (
+    <>
+    <OrderingHeader />
     <main className="min-h-screen overflow-x-hidden bg-[#fff8ed] px-4 py-10 text-[#1a120f] sm:px-6 lg:px-8 lg:py-14">
       <div className="mx-auto max-w-[1320px] min-w-0">
         <header className="mb-8 min-w-0 overflow-hidden rounded-[28px] border border-[#f0d59d] bg-white p-6 shadow-[0_18px_50px_rgba(50,24,16,0.08)]">
@@ -508,6 +511,7 @@ export default function PremiumAccountPage() {
       )}
       {toast && <div className="fixed bottom-8 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-xl lg:left-auto lg:right-8 lg:mx-0">{toast}</div>}
     </main>
+    </>
   );
 }
 

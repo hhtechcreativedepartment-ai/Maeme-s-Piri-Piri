@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import ProductCard from '@/components/ordering/ProductCard';
-import OrderingContextBanner from '@/components/menu/OrderingContextBanner';
+import OrderingHeader from '@/components/ordering/OrderingHeader';
 import { MENU_DATA, MENU_CATEGORY_DATA, MenuItem, MenuQuickAddOption } from '@/lib/menuData';
 import { useCart } from '@/lib/cartContext';
 
@@ -38,8 +38,6 @@ export default function CompleteMenuPage() {
     addToCart,
     updateQuantity,
     setOrderType,
-    getCartCount,
-    getCartTotal,
   } = useCart();
   const [activeCategory, setActiveCategory] = useState(MENU_CATEGORY_DATA[0].id);
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
@@ -287,23 +285,20 @@ export default function CompleteMenuPage() {
 
   if (!isHydrated || !selectedBranch || !selectedOrderType) {
     return (
+      <>
+      <OrderingHeader />
       <main className="flex min-h-[100svh] items-center justify-center bg-[#fff8ed] px-4">
         <p className="text-sm font-black text-[#99041e]">Loading your ordering details…</p>
       </main>
+      </>
     );
   }
 
   return (
     <main className="min-h-screen bg-[#fff8ed] pb-24 text-[#1a120f]">
-      <OrderingContextBanner
-        branch={selectedBranch}
-        orderType={selectedOrderType}
-        cartCount={getCartCount()}
-        cartTotal={getCartTotal()}
-        onOrderTypeChange={setOrderType}
-      />
+      <OrderingHeader />
 
-      <div ref={categoryNavRef} className="menu-category-carousel sticky top-[var(--site-header-height)] z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
+      <div ref={categoryNavRef} className="menu-category-carousel sticky top-[var(--ordering-header-height,0px)] z-[60] border-b border-[#f0d59d] bg-white/95 shadow-[0_12px_30px_rgba(50,24,16,0.06)] backdrop-blur">
         <div className="page-container flex items-center gap-3">
           <button
             onClick={() => scrollCategoryRail('left')}

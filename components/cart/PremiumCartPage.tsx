@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
+import { ArrowLeft, Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderingHeader from '@/components/ordering/OrderingHeader';
 import { CartItem, useCart } from '@/lib/cartContext';
@@ -125,7 +125,7 @@ export default function PremiumCartPage() {
             Add your favourite Maeme&apos;s dishes to get started.
           </p>
           <Link
-            href="/menu"
+            href="/order/menu"
             className="mt-8 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#99041e] px-7 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(153,4,30,0.22)] transition hover:bg-[#7f0318]"
           >
             Explore Menu
@@ -141,10 +141,19 @@ export default function PremiumCartPage() {
     <OrderingHeader />
     <main className="min-h-screen bg-[#fff8ed] px-4 py-10 text-[#1a120f] sm:px-6 lg:px-8 lg:py-14">
       <div className="mx-auto max-w-[1320px]">
-        <header className="mb-10">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#99041e]">YOUR ORDER</p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Cart</h1>
-          <p className="mt-2 text-base leading-7 text-[#6b5b55]">Review your order before checkout.</p>
+        <header className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#99041e]">YOUR ORDER</p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Cart</h1>
+            <p className="mt-2 text-base leading-7 text-[#6b5b55]">Review your order before checkout.</p>
+          </div>
+          <Link
+            href="/order/menu"
+            className="inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-full border-2 border-[#99041e] bg-white px-5 text-sm font-black text-[#99041e] transition hover:bg-[#fff0d5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
+          >
+            <ArrowLeft size={18} />
+            Back to Menu
+          </Link>
         </header>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">

@@ -2,34 +2,41 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { Clock3, MapPin, ShoppingBag, Truck, UserRound } from 'lucide-react';
-import { Branch } from '@/lib/branchData';
-import { OrderType } from '@/lib/cartContext';
+import { useCart } from '@/lib/cartContext';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 
-interface OrderingContextBannerProps {
-  branch: Branch | null;
-  orderType: OrderType | null;
-  cartCount: number;
-  cartTotal: number;
-  onOrderTypeChange: (orderType: OrderType) => void;
-}
-
-export default function OrderingContextBanner({
-  branch,
-  orderType,
-  cartCount,
-  cartTotal,
-  onOrderTypeChange,
-}: OrderingContextBannerProps) {
+export default function OrderingHeader() {
+  const pathname = usePathname();
+  const headerRef = useRef<HTMLElement>(null);
+  const { selectedBranch: branch, selectedOrderType: orderType, isHydrated, setOrderType, getCartCount, getCartTotal } = useCart();
+  const cartCount = getCartCount();
+  const cartTotal = getCartTotal();
+  const cartActive = pathname === '/cart';
+  const accountActive = pathname === '/account';
   const estimatedTime = branch
     ? orderType === 'delivery'
       ? branch.deliveryTime
       : branch.pickupTime
     : undefined;
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () => document.documentElement.style.setProperty('--ordering-header-height', `${header.offsetHeight}px`);
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    updateHeight();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--ordering-header-height');
+    };
+  }, []);
+
   return (
-    <section className="relative overflow-hidden bg-[#99041e] text-white">
+    <header ref={headerRef} className="sticky top-0 z-[70] overflow-hidden bg-[#99041e] text-white">
       <div
         className="pointer-events-none absolute inset-0 opacity-20"
         aria-hidden="true"
@@ -39,12 +46,12 @@ export default function OrderingContextBanner({
           backgroundSize: '34px 34px, 28px 28px',
         }}
       />
-      <div className="site-container-wide relative grid gap-4 py-4 sm:py-5 lg:grid-cols-[180px_minmax(0,1fr)_auto] lg:items-center">
-        <Link href="/" className="hidden w-fit rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 lg:block" aria-label="Maeme's home">
-          <Image src="/images/maemes-logo.png" alt="Maeme's Piri Piri" width={164} height={88} priority className="h-16 w-auto object-contain" />
+      <div className="site-container-wide relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-4 py-3 sm:gap-x-5 sm:py-4 lg:grid-cols-[180px_minmax(0,1fr)_auto] lg:gap-4 lg:py-5">
+        <Link href="/order/menu" className="w-fit rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60" aria-label="Return to ordering menu">
+          <Image src="/images/maemes-logo.png" alt="Maeme's Piri Piri" width={164} height={88} priority className="h-12 w-auto object-contain sm:h-14 lg:h-16" />
         </Link>
 
-        <div className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+        <div className="order-3 col-span-2 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 sm:gap-x-4 lg:order-none lg:col-span-1">
           <button
             type="button"
             data-open-postcode-modal
@@ -73,7 +80,7 @@ export default function OrderingContextBanner({
                     key={type}
                     type="button"
                     disabled={!branch || !available}
-                    onClick={() => onOrderTypeChange(type)}
+                    onClick={() => setOrderType(type)}
                     aria-pressed={orderType === type}
                     className={`min-h-8 flex-1 rounded-full px-2 text-[11px] font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257] disabled:cursor-not-allowed disabled:opacity-40 ${
                       orderType === type ? 'bg-[#ffc257] text-[#99041e]' : 'text-white hover:bg-white/10'
@@ -98,18 +105,18 @@ export default function OrderingContextBanner({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-end">
-          <Link href="/cart" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#ffc257] px-4 text-sm font-black text-[#99041e] shadow-[0_10px_24px_rgba(65,0,12,0.18)] transition hover:bg-[#ffd17b] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50">
+        <nav className="grid min-w-0 grid-cols-2 gap-2 lg:flex lg:justify-end" aria-label="Ordering navigation">
+          <Link href="/cart" aria-current={cartActive ? 'page' : undefined} aria-label={`Basket, ${cartCount} items, £${cartTotal.toFixed(2)}`} className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-[#ffc257] px-3 text-xs font-black text-[#99041e] shadow-[0_10px_24px_rgba(65,0,12,0.18)] transition hover:bg-[#ffd17b] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 sm:min-h-12 sm:gap-2 sm:px-4 sm:text-sm ${cartActive ? 'ring-2 ring-white ring-offset-2 ring-offset-[#99041e]' : ''}`}>
             <ShoppingBag size={17} />
-            <span>{cartCount}</span>
-            <span className="border-l border-[#99041e]/25 pl-2">Basket £{cartTotal.toFixed(2)}</span>
+            <span>{isHydrated ? cartCount : '–'}</span>
+            <span className="truncate border-l border-[#99041e]/25 pl-1.5 sm:pl-2">Basket {isHydrated ? `£${cartTotal.toFixed(2)}` : '…'}</span>
           </Link>
-          <Link href="/account" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#ffc257]/60 bg-white/10 px-4 text-sm font-black text-white transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/50">
-            <UserRound size={17} className="text-[#ffc257]" />
-            <span>My Account</span>
+          <Link href="/account" aria-current={accountActive ? 'page' : undefined} aria-label="My Account" className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full border border-[#ffc257]/60 px-3 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/50 sm:min-h-12 sm:px-4 sm:text-sm ${accountActive ? 'bg-[#ffc257] text-[#99041e]' : 'bg-white/10 text-white hover:bg-white/15'}`}>
+            <UserRound size={17} className={accountActive ? 'text-[#99041e]' : 'text-[#ffc257]'} />
+            <span className="truncate">My Account</span>
           </Link>
-        </div>
+        </nav>
       </div>
-    </section>
+    </header>
   );
 }

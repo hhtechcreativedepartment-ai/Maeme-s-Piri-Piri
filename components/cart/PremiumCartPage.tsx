@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
+import OrderingHeader from '@/components/ordering/OrderingHeader';
 import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
 import { getProductConfiguration } from '@/lib/productOptionConfig';
@@ -114,6 +115,8 @@ export default function PremiumCartPage() {
 
   if (items.length === 0) {
     return (
+      <>
+      <OrderingHeader />
       <main className="min-h-screen bg-[#fff8ed] px-4 py-16 sm:px-6 lg:px-8">
         <section className="mx-auto max-w-[900px] rounded-[24px] border border-[#f0d59d] bg-white px-6 py-20 text-center shadow-[0_18px_50px_rgba(50,24,16,0.08)]">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#99041e]">YOUR ORDER</p>
@@ -129,10 +132,13 @@ export default function PremiumCartPage() {
           </Link>
         </section>
       </main>
+      </>
     );
   }
 
   return (
+    <>
+    <OrderingHeader />
     <main className="min-h-screen bg-[#fff8ed] px-4 py-10 text-[#1a120f] sm:px-6 lg:px-8 lg:py-14">
       <div className="mx-auto max-w-[1320px]">
         <header className="mb-10">
@@ -315,5 +321,6 @@ export default function PremiumCartPage() {
         onAdded={handleAdded}
       />
     </main>
+    </>
   );
 }

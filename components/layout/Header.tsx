@@ -29,7 +29,7 @@ export default function Header() {
   };
 
   useEffect(() => {
-    if (pathname === '/login' || isOrderFlowRoute(pathname)) {
+    if (pathname === '/login' || pathname === '/account' || isOrderFlowRoute(pathname)) {
       document.documentElement.style.setProperty('--site-header-height', '0px');
       return;
     }
@@ -47,7 +47,7 @@ export default function Header() {
     return () => observer.disconnect();
   }, [pathname]);
 
-  if (pathname === '/login' || isOrderFlowRoute(pathname)) {
+  if (pathname === '/login' || pathname === '/account' || isOrderFlowRoute(pathname)) {
     return null;
   }
 

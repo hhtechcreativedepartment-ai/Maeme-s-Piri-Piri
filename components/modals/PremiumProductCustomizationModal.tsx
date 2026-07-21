@@ -59,10 +59,34 @@ function OptionRow({ label, selected, onClick, price, detail, radio, disabled }:
   );
 }
 
+function getSummaryMetrics(scrollElement: HTMLElement, embedded: boolean) {
+  const mobile = embedded || window.innerWidth < 768;
+  if (!mobile) {
+    return {
+      mobile,
+      expandedHeight: Math.min(445, Math.max(430, Math.round(scrollElement.clientHeight * 0.46))),
+      imageHeight: 280,
+      compactHeight: 164,
+      compactImageSize: 108,
+    };
+  }
+
+  const shortViewport = window.innerHeight <= 700 || scrollElement.clientHeight <= 650;
+  const expandedHeight = shortViewport ? 300 : window.innerWidth <= 390 ? 330 : 340;
+  return {
+    mobile,
+    expandedHeight,
+    imageHeight: shortViewport ? 118 : window.innerWidth <= 390 ? 138 : 145,
+    compactHeight: shortViewport ? 112 : 124,
+    compactImageSize: shortViewport ? 68 : 78,
+  };
+}
+
 export default function PremiumProductCustomizationModal({ isOpen, product, onClose, onAdded, editingItem, embedded = false }: Props) {
   const { addToCart, removeFromCart } = useCart();
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const imageTransitionRef = useRef(false);
   const lastProductScrollTopRef = useRef(0);
@@ -157,8 +181,24 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
   useEffect(() => {
     if (!isOpen) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
-    const overflow = document.body.style.overflow;
-    if (!embedded) document.body.style.overflow = 'hidden';
+    const body = document.body;
+    const previousBodyStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      left: body.style.left,
+      right: body.style.right,
+    };
+    const pageScrollY = window.scrollY;
+    if (!embedded) {
+      body.style.overflow = 'hidden';
+      body.style.position = 'fixed';
+      body.style.top = `-${pageScrollY}px`;
+      body.style.width = '100%';
+      body.style.left = '0';
+      body.style.right = '0';
+    }
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') return onClose();
       if (event.key !== 'Tab' || !modalRef.current) return;
@@ -169,8 +209,34 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     };
     document.addEventListener('keydown', keydown);
     requestAnimationFrame(() => modalRef.current?.querySelector<HTMLElement>('[data-close]')?.focus());
-    return () => { if (!embedded) document.body.style.overflow = overflow; document.removeEventListener('keydown', keydown); restoreFocusRef.current?.focus(); };
+    return () => {
+      if (!embedded) {
+        body.style.overflow = previousBodyStyles.overflow;
+        body.style.position = previousBodyStyles.position;
+        body.style.top = previousBodyStyles.top;
+        body.style.width = previousBodyStyles.width;
+        body.style.left = previousBodyStyles.left;
+        body.style.right = previousBodyStyles.right;
+        window.scrollTo(0, pageScrollY);
+      }
+      document.removeEventListener('keydown', keydown);
+      restoreFocusRef.current?.focus();
+    };
   }, [embedded, isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !modalRef.current || !footerRef.current) return;
+    const modal = modalRef.current;
+    const footer = footerRef.current;
+    const updateFooterHeight = () => modal.style.setProperty('--product-footer-height', `${Math.ceil(footer.getBoundingClientRect().height)}px`);
+    updateFooterHeight();
+    const observer = new ResizeObserver(updateFooterHeight);
+    observer.observe(footer);
+    return () => {
+      observer.disconnect();
+      modal.style.removeProperty('--product-footer-height');
+    };
+  }, [isOpen, stepIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -180,32 +246,42 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
 
     const resizeHero = () => {
       const heroImage = hero.querySelector<HTMLElement>('img');
+      const heroContent = hero.firstElementChild as HTMLElement | null;
+      const metrics = getSummaryMetrics(scrollElement, embedded);
       if (isCollapsed) {
-        hero.style.height = embedded || window.innerWidth < 640 ? '142px' : '164px';
+        hero.style.height = `${metrics.compactHeight}px`;
         if (heroImage) {
-          heroImage.style.height = embedded || window.innerWidth < 640 ? '88px' : '108px';
-          heroImage.style.width = embedded || window.innerWidth < 640 ? '88px' : '108px';
+          heroImage.style.height = `${metrics.compactImageSize}px`;
+          heroImage.style.width = `${metrics.compactImageSize}px`;
+        }
+        if (heroContent && metrics.mobile) {
+          heroContent.style.paddingTop = '12px';
+          heroContent.style.paddingBottom = '12px';
         }
         return;
       }
-      if (heroImage && (embedded || window.innerWidth < 640)) {
-        heroImage.style.height = '180px';
+      if (heroImage && metrics.mobile) {
+        heroImage.style.height = `${metrics.imageHeight}px`;
         heroImage.style.width = '100%';
       } else if (heroImage) {
         heroImage.style.removeProperty('height');
         heroImage.style.removeProperty('width');
       }
-      const minimum = embedded || window.innerWidth < 640 ? 340 : 430;
-      const maximum = embedded || window.innerWidth < 640 ? 360 : 445;
-      const responsiveHeight = Math.round(scrollElement.clientHeight * (embedded || window.innerWidth < 640 ? 0.42 : 0.46));
-      hero.style.height = `${Math.min(maximum, Math.max(minimum, responsiveHeight))}px`;
+      if (heroContent && metrics.mobile) {
+        heroContent.style.paddingTop = '28px';
+        heroContent.style.paddingBottom = '22px';
+      } else if (heroContent) {
+        heroContent.style.removeProperty('padding-top');
+        heroContent.style.removeProperty('padding-bottom');
+      }
+      hero.style.height = `${metrics.expandedHeight}px`;
     };
 
     resizeHero();
     const observer = new ResizeObserver(resizeHero);
     observer.observe(scrollElement);
     return () => observer.disconnect();
-  }, [isCollapsed, isOpen]);
+  }, [embedded, isCollapsed, isOpen]);
 
   useEffect(() => {
     setStepIndex((current) => Math.min(current, Math.max(0, steps.length - 1)));
@@ -275,18 +351,21 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
       const scrollElement = scrollRef.current;
       const hero = scrollElement?.querySelector<HTMLElement>('header');
       const heroImage = hero?.querySelector<HTMLElement>('img');
+      const heroContent = hero?.firstElementChild as HTMLElement | null;
       if (hero && scrollElement) {
-        const minimum = embedded || window.innerWidth < 640 ? 340 : 430;
-        const maximum = embedded || window.innerWidth < 640 ? 360 : 445;
-        const ratio = embedded || window.innerWidth < 640 ? 0.42 : 0.46;
-        hero.style.height = `${Math.min(maximum, Math.max(minimum, Math.round(scrollElement.clientHeight * ratio)))}px`;
-      }
-      if (heroImage && (embedded || window.innerWidth < 640)) {
-        heroImage.style.height = '180px';
-        heroImage.style.width = '100%';
-      } else {
-        heroImage?.style.removeProperty('height');
-        heroImage?.style.removeProperty('width');
+        const metrics = getSummaryMetrics(scrollElement, embedded);
+        hero.style.height = `${metrics.expandedHeight}px`;
+        if (heroImage && metrics.mobile) {
+          heroImage.style.height = `${metrics.imageHeight}px`;
+          heroImage.style.width = '100%';
+        } else {
+          heroImage?.style.removeProperty('height');
+          heroImage?.style.removeProperty('width');
+        }
+        if (heroContent && metrics.mobile) {
+          heroContent.style.paddingTop = '28px';
+          heroContent.style.paddingBottom = '22px';
+        }
       }
       scrollElement?.scrollTo({ top: 0, behavior: 'smooth' });
       window.setTimeout(() => {
@@ -301,11 +380,9 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     const scrollTop = scrollRef.current?.scrollTop || 0;
     const scrollingUp = scrollTop < lastProductScrollTopRef.current;
     const scrollingDown = scrollTop > lastProductScrollTopRef.current;
-    const expandedHeaderHeight = Math.min(
-      embedded || window.innerWidth < 640 ? 360 : 445,
-      Math.max(embedded || window.innerWidth < 640 ? 340 : 430, Math.round((scrollRef.current?.clientHeight || 800) * (embedded || window.innerWidth < 640 ? 0.42 : 0.46))),
-    );
-    const compactHeaderHeight = embedded || window.innerWidth < 640 ? 142 : 164;
+    const metrics = scrollRef.current ? getSummaryMetrics(scrollRef.current, embedded) : null;
+    const expandedHeaderHeight = metrics?.expandedHeight || 430;
+    const compactHeaderHeight = metrics?.compactHeight || 164;
     const contentBoundary = expandedHeaderHeight - compactHeaderHeight;
     lastProductScrollTopRef.current = scrollTop;
     setCollapsedState((current) => {
@@ -330,11 +407,13 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
       requestAnimationFrame(() => {
         const hero = scrollRef.current?.querySelector<HTMLElement>('header');
         const heroImage = hero?.querySelector<HTMLElement>('img');
-        const compactHeight = embedded || window.innerWidth < 640 ? 142 : 164;
+        const metrics = scrollRef.current ? getSummaryMetrics(scrollRef.current, embedded) : null;
+        const compactHeight = metrics?.compactHeight || 164;
         if (hero) hero.style.height = `${compactHeight}px`;
         if (heroImage) {
-          heroImage.style.height = embedded || window.innerWidth < 640 ? '88px' : '108px';
-          heroImage.style.width = embedded || window.innerWidth < 640 ? '88px' : '108px';
+          const imageSize = metrics?.compactImageSize || 108;
+          heroImage.style.height = `${imageSize}px`;
+          heroImage.style.width = `${imageSize}px`;
         }
         window.setTimeout(() => {
           const invalidSection = modalRef.current?.querySelector<HTMLElement>('[data-invalid="true"]');
@@ -412,9 +491,9 @@ export default function PremiumProductCustomizationModal({ isOpen, product, onCl
     if (id === 'platter-sides') return <div className="space-y-2"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); setPlatterSidesEnabled(false); setSelectedPlatterSideIds([]); setError(''); }} radio /><p className="text-sm font-bold text-[#6b5b55]">{selectedPlatterSideIds.length} of 3 selected</p>{eligiblePlatterSides.map((item) => { const itemId = String(item.id); const selected = selectedPlatterSideIds.includes(itemId); return <div key={item.id}><OptionRow label={item.name} selected={selected} onClick={() => { setSkipped(id, false); setPlatterSidesEnabled(true); setSelectedPlatterSideIds((current) => selected ? current.filter((value) => value !== itemId) : current.length < 3 ? [...current, itemId] : current); setError(''); }} />{selected && item.quickAddOptions?.map((modifier) => <div className="ml-9 mt-2" key={modifier.id}><OptionRow label={modifier.name} selected={piriPiriSideIds.includes(itemId)} onClick={() => setPiriPiriSideIds((current) => current.includes(itemId) ? current.filter((value) => value !== itemId) : [...current, itemId])} price={modifier.price} /></div>)}</div>; })}</div>;
     if (id === 'platter-drink' || id === 'platter-cake') { const items = id === 'platter-drink' ? platterDrinks : platterCakes; const selected = id === 'platter-drink' ? selectedPlatterDrinkId : selectedPlatterCakeId; return <div className="space-y-2" role="radiogroup"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); if (id === 'platter-drink') setSelectedPlatterDrinkId(null); else setSelectedPlatterCakeId(null); setError(''); }} radio />{items.map((item) => <OptionRow key={item.id} label={item.name} selected={selected === String(item.id)} onClick={() => { setSkipped(id, false); if (id === 'platter-drink') setSelectedPlatterDrinkId(String(item.id)); else setSelectedPlatterCakeId(String(item.id)); setError(''); }} price={id === 'platter-drink' ? 1.99 : 2.99} radio />)}</div>; }
     if (id === 'extras' || id === 'free-toppings') { const items = id === 'extras' ? product.popupModifiers || [] : product.freeToppings || []; const selected = id === 'extras' ? selectedProductModifierIds : selectedFreeToppingIds; const setter = id === 'extras' ? setSelectedProductModifierIds : setSelectedFreeToppingIds; return <div className="space-y-2"><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSkipped(id, true); setter([]); setError(''); }} />{items.map((item) => <OptionRow key={item.id} label={item.name} selected={selected.includes(item.id)} onClick={() => { setSkipped(id, false); setter((current) => current.includes(item.id) ? current.filter((value) => value !== item.id) : item.maxSelections === 1 ? [item.id] : [...current, item.id]); setError(''); }} price={item.price} />)}</div>; }
-    if (id === 'special-instructions') return <div><textarea value={specialInstructions} onChange={(event) => { setSpecialInstructions(event.target.value); setSkipped(id, false); setError(''); }} maxLength={240} rows={4} placeholder="Allergies or preparation notes?" className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-white p-4 outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/30" /><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSpecialInstructions(''); setSkipped(id, true); setError(''); }} /></div>;
+    if (id === 'special-instructions') return <div><textarea value={specialInstructions} onChange={(event) => { setSpecialInstructions(event.target.value); setSkipped(id, false); setError(''); }} onFocus={(event) => window.setTimeout(() => event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' }), 180)} maxLength={240} rows={4} placeholder="Allergies or preparation notes?" className="w-full resize-none rounded-2xl border border-[#ead8c6] bg-white p-4 outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#ffc257]/30" /><OptionRow label="Not Now" selected={skippedSteps.includes(id)} onClick={() => { setSpecialInstructions(''); setSkipped(id, true); setError(''); }} /></div>;
     return <div className="space-y-3 rounded-2xl border border-[#ead8c6] bg-white p-5"><p className="font-black text-[#99041e]">{product.name}</p><p className="text-sm text-[#6b5b55]">{selectedFlavour && `Flavour: ${selectedFlavour}`}{mealType && ` · ${mealType}`}{mealSelected && goLarge ? ` · ${goLargeOption.name}` : ''}</p><p className="text-2xl font-black text-[#99041e]">£{total.toFixed(2)}</p></div>;
   };
 
-  return <>{!embedded && <div className="fixed inset-0 z-[70] bg-[#2b0710]/60" onClick={onClose} />}<div className={embedded ? "relative w-full" : "fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4"}><div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="product-detail-title" className={embedded ? "relative flex h-[min(72dvh,720px)] min-h-[560px] w-full flex-col overflow-hidden rounded-[22px] border border-[#f0d59d] bg-[#fffaf2] shadow-sm" : "relative flex h-[calc(100dvh-1rem)] max-h-[95dvh] w-full max-w-[620px] flex-col overflow-hidden rounded-[26px] border border-[#f0d59d] bg-[#fffaf2] shadow-[0_30px_90px_rgba(26,18,15,.35)]"}><button data-close onClick={onClose} aria-label="Close product details" className="absolute right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-[#99041e] text-white focus-visible:ring-4 focus-visible:ring-[#ffc257]"><X size={22} /></button><div ref={scrollRef} onScroll={(event) => setIsCollapsed(event.currentTarget.scrollTop > 56)} className="min-h-0 flex-1 overflow-y-auto pb-44 [scrollbar-color:#99041e_transparent] [scrollbar-width:thin]"><header className={`sticky top-0 z-20 overflow-hidden border-b border-[#f0d59d] bg-white/95 backdrop-blur transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-[92px]' : 'h-[360px] sm:h-[420px]'}`}><div className={`flex h-full transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'items-center gap-3 px-4 pr-16' : 'flex-col items-center justify-center px-8 pb-5 pt-12 text-center'}`}><img src={product.image} alt={product.name} className={`shrink-0 object-contain transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-16 w-16' : 'h-[230px] w-full sm:h-[280px]'}`} /><div className={isCollapsed ? 'min-w-0' : ''}><h2 id="product-detail-title" className={`${isCollapsed ? 'truncate text-base' : 'mt-2 text-2xl sm:text-3xl'} font-black text-[#99041e]`}>{product.name}</h2>{!isCollapsed && product.description && <p className="mx-auto mt-2 max-w-lg text-sm leading-5 text-[#6b5b55]">{product.description}</p>}<p className={`${isCollapsed ? 'text-sm' : 'mt-2 text-xl'} font-black text-[#99041e]`}>£{total.toFixed(2)} {isCollapsed && <span className="ml-2 text-xs text-[#7b6861]">Step {stepIndex + 1} of {steps.length}</span>}</p></div></div></header><main className="px-4 pt-5 sm:px-7"><div aria-live="polite" className="mb-4 flex items-center justify-between gap-3"><span className="text-xs font-black uppercase tracking-[.16em] text-[#99041e]">Step {stepIndex + 1} of {steps.length}</span><span className="rounded-full bg-[#fff0d5] px-3 py-1 text-xs font-black text-[#99041e]">{activeStep.optional ? 'Optional' : 'Required'}</span></div><section data-invalid={Boolean(error)} className={`rounded-[22px] border bg-[#fffaf2] p-4 transition sm:p-5 ${error ? 'border-[#99041e] ring-2 ring-[#99041e]/15' : 'border-[#f0d59d]'}`}><h3 className="text-xl font-black text-[#2e1c18]">{activeStep.title}</h3><p className="mt-1 text-sm font-semibold text-[#78645d]">{activeStep.optional ? 'Choose one or more options, or select Not Now.' : 'Complete this selection to continue.'}</p><div data-first-option tabIndex={-1} className="mt-4">{renderStep()}</div>{error && <p role="alert" className="mt-3 text-sm font-black text-[#99041e]">{error}</p>}</section></main></div><footer className="absolute inset-x-0 bottom-0 z-30 border-t border-[#e5a93e] bg-[#ffc257] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_34px_rgba(50,24,16,.13)]"><div className={`mb-3 flex items-center gap-3 ${stepIndex > 0 ? 'justify-between' : 'justify-center'}`}>{stepIndex > 0 ? <button onClick={() => goToStep(stepIndex - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-black text-[#99041e] focus-visible:ring-4 focus-visible:ring-white"><ArrowLeft size={18} /> Back</button> : <span />}<div className="flex h-11 items-center rounded-full bg-white/55 p-1"><button onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1} aria-label="Decrease quantity" className="h-9 w-9 rounded-full text-[#99041e] disabled:opacity-40"><Minus size={17} className="mx-auto" /></button><b className="min-w-8 text-center">{quantity}</b><button onClick={() => setQuantity((value) => Math.min(99, value + 1))} aria-label="Increase quantity" className="h-9 w-9 rounded-full text-[#99041e]"><Plus size={17} className="mx-auto" /></button></div></div><button onClick={handleContinue} disabled={isSubmitting} aria-busy={isSubmitting} className="min-h-14 w-full rounded-full bg-[#99041e] px-5 text-base font-black text-white shadow-[0_7px_0_#5f0213] focus-visible:ring-4 focus-visible:ring-white disabled:opacity-60">{isSubmitting ? (editingItem ? 'Updating…' : 'Adding…') : `${editingItem && activeStep.id === 'confirmation' ? 'Update' : 'Add'} · £${total.toFixed(2)}`}</button></footer></div></div></>;
+  return <>{!embedded && <div className="fixed inset-0 z-[70] bg-[#2b0710]/60" onClick={onClose} />}<div className={embedded ? "relative w-full" : "fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4"}><div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="product-detail-title" className={embedded ? "product-config-modal relative flex h-[min(72dvh,720px)] min-h-[560px] w-full flex-col overflow-hidden rounded-[22px] border border-[#f0d59d] bg-[#fffaf2] shadow-sm" : "product-config-modal relative flex h-[calc(100svh-1rem)] max-h-[calc(100svh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[26px] border border-[#f0d59d] bg-[#fffaf2] shadow-[0_30px_90px_rgba(26,18,15,.35)] supports-[height:100dvh]:h-[calc(100dvh-1rem)] supports-[height:100dvh]:max-h-[calc(100dvh-1rem)] sm:h-[min(94dvh,900px)] sm:max-h-[94dvh] sm:max-w-[620px]"}><button data-close onClick={onClose} aria-label="Close product details" className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex h-12 w-12 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#99041e] text-white focus-visible:ring-4 focus-visible:ring-[#ffc257]"><X size={22} /></button><div ref={scrollRef} onScroll={(event) => setIsCollapsed(event.currentTarget.scrollTop > 56)} className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pb-[calc(var(--product-footer-height,140px)+1rem)] [scrollbar-color:#99041e_transparent] [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]"><header className={`sticky top-0 z-20 overflow-hidden border-b border-[#f0d59d] bg-white/95 backdrop-blur transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-[92px]' : 'h-[360px] sm:h-[420px]'}`}><div className={`flex h-full transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'items-center gap-3 px-4 pr-16' : 'flex-col items-center justify-center px-8 pb-5 pt-12 text-center'}`}><img src={product.image} alt={product.name} className={`shrink-0 object-contain transition-all duration-300 motion-reduce:transition-none ${isCollapsed ? 'h-16 w-16' : 'h-[230px] w-full sm:h-[280px]'}`} /><div className={isCollapsed ? 'min-w-0' : ''}><h2 id="product-detail-title" className={`${isCollapsed ? 'truncate text-base' : 'mt-2 line-clamp-2 text-[clamp(1.625rem,7vw,2.125rem)] leading-tight sm:text-3xl'} font-black text-[#99041e]`}>{product.name}</h2>{!isCollapsed && product.description && <p className="mx-auto mt-2 line-clamp-3 max-w-lg px-1 text-sm leading-5 text-[#6b5b55]">{product.description}</p>}<p className={`${isCollapsed ? 'text-sm' : 'mt-2 text-xl'} font-black text-[#99041e]`}>£{total.toFixed(2)} {isCollapsed && <span className="ml-2 text-xs text-[#7b6861]">Step {stepIndex + 1} of {steps.length}</span>}</p></div></div></header><main className="px-4 pt-4 sm:px-7 sm:pt-5"><div aria-live="polite" className="mb-4 flex items-center justify-between gap-3"><span className="text-xs font-black uppercase tracking-[.16em] text-[#99041e]">Step {stepIndex + 1} of {steps.length}</span><span className="rounded-full bg-[#fff0d5] px-3 py-1 text-xs font-black text-[#99041e]">{activeStep.optional ? 'Optional' : 'Required'}</span></div><section data-invalid={Boolean(error)} className={`rounded-[22px] border bg-[#fffaf2] p-4 transition sm:p-5 ${error ? 'border-[#99041e] ring-2 ring-[#99041e]/15' : 'border-[#f0d59d]'}`}><h3 className="text-xl font-black text-[#2e1c18]">{activeStep.title}</h3><p className="mt-1 text-sm font-semibold text-[#78645d]">{activeStep.optional ? 'Choose one or more options, or select Not Now.' : 'Complete this selection to continue.'}</p><div data-first-option tabIndex={-1} className="mt-4">{renderStep()}</div>{error && <p role="alert" className="mt-3 text-sm font-black text-[#99041e]">{error}</p>}</section></main></div><footer ref={footerRef} className="absolute inset-x-0 bottom-0 z-30 border-t border-[#e5a93e] bg-[#ffc257] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_34px_rgba(50,24,16,.13)]"><div className={`mb-3 flex items-center gap-3 ${stepIndex > 0 ? 'justify-between' : 'justify-center'}`}>{stepIndex > 0 ? <button onClick={() => goToStep(stepIndex - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-black text-[#99041e] focus-visible:ring-4 focus-visible:ring-white"><ArrowLeft size={18} /> Back</button> : <span />}<div className="flex h-11 items-center rounded-full bg-white/55 p-1"><button onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1} aria-label="Decrease quantity" className="h-9 w-9 rounded-full text-[#99041e] disabled:opacity-40"><Minus size={17} className="mx-auto" /></button><b className="min-w-8 text-center">{quantity}</b><button onClick={() => setQuantity((value) => Math.min(99, value + 1))} aria-label="Increase quantity" className="h-9 w-9 rounded-full text-[#99041e]"><Plus size={17} className="mx-auto" /></button></div></div><button onClick={handleContinue} disabled={isSubmitting} aria-busy={isSubmitting} className="min-h-14 w-full rounded-full bg-[#99041e] px-5 text-base font-black text-white shadow-[0_7px_0_#5f0213] focus-visible:ring-4 focus-visible:ring-white disabled:opacity-60">{isSubmitting ? (editingItem ? 'Updating…' : 'Adding…') : `${editingItem && activeStep.id === 'confirmation' ? 'Update' : 'Add'} · £${total.toFixed(2)}`}</button></footer></div></div></>;
 }

@@ -372,6 +372,52 @@
   animation: product-config-enter 210ms ease-out;
 }
 
+@media (max-width: 767px) {
+  .product-config-modal {
+    width: calc(100% - 0px);
+    overscroll-behavior: contain;
+  }
+
+  .product-config-modal header h2 {
+    max-width: 100%;
+    font-size: clamp(1.625rem, 7vw, 2.125rem);
+    line-height: 1.12;
+  }
+
+  .product-config-modal header p {
+    overflow-wrap: anywhere;
+  }
+
+  .product-config-modal [class*='overflow-y-auto'] {
+    scrollbar-width: none;
+  }
+
+  .product-config-modal [class*='overflow-y-auto']::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .product-config-modal main {
+    padding-inline: 1rem;
+  }
+}
+
+@media (max-width: 390px), (max-height: 700px) {
+  .product-config-modal header h2 {
+    font-size: clamp(1.5rem, 6.7vw, 1.85rem);
+  }
+
+  .product-config-modal header h2 + p {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1.15rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
+
 .product-config-options > section {
   border: 1px solid #ead8c6;
   border-radius: 16px;

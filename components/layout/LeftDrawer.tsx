@@ -6,7 +6,6 @@ import { X, FileText, Gift, MapPinIcon, Utensils } from 'lucide-react';
 interface LeftDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onOrderEntry: () => void;
 }
 
 const menuItems = [
@@ -17,7 +16,7 @@ const menuItems = [
   { label: 'Franchising', href: '/franchising', icon: FileText },
 ];
 
-export default function LeftDrawer({ isOpen, onClose, onOrderEntry }: LeftDrawerProps) {
+export default function LeftDrawer({ isOpen, onClose }: LeftDrawerProps) {
   return (
     <>
       <div
@@ -59,16 +58,11 @@ export default function LeftDrawer({ isOpen, onClose, onOrderEntry }: LeftDrawer
             return (
               <Link
                 key={`${item.label}-${item.href}`}
-                href={item.href}
+                href={item.label === 'Menu' ? '/order?notice=1' : item.href}
+                target={item.label === 'Menu' ? '_blank' : undefined}
+                rel={item.label === 'Menu' ? 'noopener noreferrer' : undefined}
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#1a120f] transition-colors hover:bg-[#fff8ed]"
-                onClick={(event) => {
-                  if (item.label === 'Menu') {
-                    event.preventDefault();
-                    onOrderEntry();
-                  } else {
-                    onClose();
-                  }
-                }}
+                onClick={onClose}
               >
                 <Icon size={20} className="text-[#99041e]" />
                 {item.label}

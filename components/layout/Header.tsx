@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Menu } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { isOrderFlowRoute } from '@/lib/orderFlowRoutes';
 import LeftDrawer from './LeftDrawer';
 import { socialIcons } from './SocialIcons';
 
 export default function Header() {
-  const router = useRouter();
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const drawerButtonRef = useRef<HTMLButtonElement>(null);
@@ -22,11 +21,6 @@ export default function Header() {
     { label: 'Our App', href: '/app' },
     { label: 'Franchising', href: '/franchising' },
   ];
-
-  const openOrderNotice = () => {
-    setIsDrawerOpen(false);
-    router.push('/order?notice=1');
-  };
 
   useEffect(() => {
     if (pathname === '/login' || pathname === '/account' || isOrderFlowRoute(pathname)) {
@@ -78,12 +72,9 @@ export default function Header() {
           {navLinks.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
-              onClick={(event) => {
-                if (link.label !== 'Menu') return;
-                event.preventDefault();
-                openOrderNotice();
-              }}
+              href={link.label === 'Menu' ? '/order?notice=1' : link.href}
+              target={link.label === 'Menu' ? '_blank' : undefined}
+              rel={link.label === 'Menu' ? 'noopener noreferrer' : undefined}
               className={`relative whitespace-nowrap py-2 text-sm font-black leading-none text-[#1f1210] transition-colors hover:text-[var(--maeme-red)] ${
                 pathname === link.href ? 'text-[var(--maeme-red)] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-[var(--maeme-red)]' : ''
               }`}
@@ -105,18 +96,20 @@ export default function Header() {
             ))}
           </div>
 
-          <button
-            onClick={openOrderNotice}
+          <Link
+            href="/order?notice=1"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[var(--maeme-red)] px-3 text-xs font-black leading-none text-white shadow-[0_12px_28px_rgba(var(--maeme-red-rgb),0.20)] transition hover:bg-[var(--maeme-red-dark)] sm:h-11 sm:px-5 sm:text-sm lg:px-6"
           >
             <span className="hidden sm:inline">Order Now</span>
             <span className="sm:hidden">Order</span>
-          </button>
+          </Link>
 
         </div>
       </div>
 
-      <LeftDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} onOrderEntry={openOrderNotice} />
+      <LeftDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </header>
   );
 }

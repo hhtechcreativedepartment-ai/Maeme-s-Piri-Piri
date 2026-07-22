@@ -3,9 +3,11 @@
 import Link from 'next/link';
 
 const orderingFooterLinks = [
+  { label: 'FAQ', href: '/contact' },
+  { label: 'Refunds for Missing or Incorrect Orders', href: '/contact' },
   { label: 'Privacy Policy', href: '/privacy-policy' },
-  { label: 'Terms & Conditions', href: '/terms-and-conditions' },
   { label: 'Contact Us', href: '/contact' },
+  { label: "Query a Maeme's App order", href: '/contact' },
 ];
 
 export default function OrderingFooter() {

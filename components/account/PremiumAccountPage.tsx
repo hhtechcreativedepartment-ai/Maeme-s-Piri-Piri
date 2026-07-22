@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Store, Trash2, Truck, User, Utensils, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, FileText, Gift, Heart, History, LogIn, LogOut, MapPin, Plus, Trash2, Truck, User, Utensils, X } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { useOrders } from '@/lib/ordersContext';
 import { Order } from '@/lib/orderUtils';
@@ -37,7 +37,6 @@ const tabs = [
 
 const profileLinks = [
   { label: 'Explore Menu', href: '/menu', icon: Utensils },
-  { label: 'Branch Locator', href: '/branches', icon: Store },
   { label: 'Privacy Policy', href: '/privacy-policy', icon: FileText },
   { label: 'Terms & Conditions', href: '/terms-and-conditions', icon: FileText },
 ];

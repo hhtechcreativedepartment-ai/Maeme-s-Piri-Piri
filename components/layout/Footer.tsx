@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { CreditCard, Mail, MapPin, Phone, Smartphone } from 'lucide-react';
 import { socialIcons } from './SocialIcons';
 import { isOrderFlowRoute } from '@/lib/orderFlowRoutes';
+import OrderingFooter from '@/components/ordering/OrderingFooter';
 
 const quickLinks = [
   { label: 'Menu', href: '/menu' },
@@ -27,6 +28,15 @@ const legalLinks = [
 
 export default function Footer() {
   const pathname = usePathname();
+  const usesOrderingFooter = pathname === '/order/menu'
+    || pathname === '/menu'
+    || pathname === '/cart'
+    || pathname === '/checkout'
+    || pathname === '/account';
+
+  if (usesOrderingFooter) {
+    return <OrderingFooter />;
+  }
 
   if (pathname === '/login' || isOrderFlowRoute(pathname)) {
     return null;

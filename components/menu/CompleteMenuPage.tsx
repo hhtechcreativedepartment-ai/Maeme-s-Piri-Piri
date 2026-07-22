@@ -392,12 +392,6 @@ export default function CompleteMenuPage() {
         </div>
       </div>
 
-      <footer className="border-t border-[#f0d59d] bg-white px-4 py-5 text-center">
-        <p className="text-sm font-semibold text-[#6b5b55]">
-          Menu FAQ: Have questions about ingredients, allergens or customisation? Please speak to our team before ordering.
-        </p>
-      </footer>
-
       {toast && (
         <div className="fixed bottom-24 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-[0_18px_46px_rgba(153,4,30,0.28)] lg:bottom-8 lg:left-auto lg:right-8 lg:mx-0">
           {toast}

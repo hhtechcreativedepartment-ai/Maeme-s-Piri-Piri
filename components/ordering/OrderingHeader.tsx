@@ -111,9 +111,8 @@ export default function OrderingHeader() {
             <span>{isHydrated ? cartCount : '–'}</span>
             <span className="truncate border-l border-[#99041e]/25 pl-1.5 sm:pl-2">Basket {isHydrated ? `£${cartTotal.toFixed(2)}` : '…'}</span>
           </Link>
-          <Link href="/account" aria-current={accountActive ? 'page' : undefined} aria-label="My Account" className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full border border-[#ffc257]/60 px-3 text-xs font-black transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/50 sm:min-h-12 sm:px-4 sm:text-sm ${accountActive ? 'bg-[#ffc257] text-[#99041e]' : 'bg-white/10 text-white hover:bg-white/15'}`}>
-            <UserRound size={17} className={accountActive ? 'text-[#99041e]' : 'text-[#ffc257]'} />
-            <span className="truncate">My Account</span>
+          <Link href="/account" aria-current={accountActive ? 'page' : undefined} aria-label="Open profile" title="Profile" className={`inline-flex h-11 w-11 shrink-0 items-center justify-center justify-self-end rounded-full border border-[#ffc257]/60 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/50 sm:h-12 sm:w-12 ${accountActive ? 'bg-[#ffc257] text-[#99041e]' : 'bg-white/10 text-white hover:bg-white/15'}`}>
+            <UserRound size={19} className={accountActive ? 'text-[#99041e]' : 'text-[#ffc257]'} />
           </Link>
         </nav>
       </div>

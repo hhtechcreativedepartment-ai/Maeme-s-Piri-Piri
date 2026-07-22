@@ -47,9 +47,9 @@ export default function OrderingHeader() {
         }}
       />
       <div className="site-container-wide relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-4 py-3 sm:gap-x-5 sm:py-4 lg:grid-cols-[180px_minmax(0,1fr)_auto] lg:gap-4 lg:py-5">
-        <Link href="/" className="w-fit rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60" aria-label="Go to Maeme's homepage">
+        <a href="/order" className="w-fit rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60" aria-label="Return to Collection or Delivery selection">
           <Image src="/images/maemes-logo.png" alt="Maeme's Piri Piri" width={164} height={88} priority className="h-12 w-auto object-contain sm:h-14 lg:h-16" />
-        </Link>
+        </a>
 
         <div className="order-3 col-span-2 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 sm:gap-x-4 lg:order-none lg:col-span-1">
           <button

@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Loader2, X } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 
-type AuthView = 'phone' | 'otp' | 'registration' | 'success';
+type AuthView = 'phone' | 'login-otp' | 'registration' | 'registration-otp' | 'success';
+type FieldErrors = Partial<Record<'name' | 'phone' | 'email', string>>;
 
 interface CheckoutLoginModalProps {
   isOpen: boolean;
@@ -42,26 +43,31 @@ export default function CheckoutLoginModal({
   onContinueAsGuest,
   returnFocusRef,
 }: CheckoutLoginModalProps) {
-  const { sendOTP, verifyOTP, signup, currentPhone } = useAuth();
+  const { sendOTP, verifyOTP, signup, currentPhone, checkAccount } = useAuth();
   const titleId = useId();
   const descriptionId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const otpRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const registrationPhoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
   const submissionRef = useRef(false);
   const completionRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<AuthView>('phone');
-  const [registrationJourney, setRegistrationJourney] = useState(false);
   const [phone, setPhone] = useState('');
+  const [registrationPhone, setRegistrationPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [successKind, setSuccessKind] = useState<'login' | 'registration'>('login');
+  const [resendNotice, setResendNotice] = useState('');
 
   useEffect(() => setMounted(true), []);
 
@@ -71,14 +77,17 @@ export default function CheckoutLoginModal({
     completionRef.current = false;
     submissionRef.current = false;
     setView('phone');
-    setRegistrationJourney(false);
     setPhone('');
+    setRegistrationPhone('');
     setOtp('');
     setName('');
     setEmail('');
     setError('');
+    setFieldErrors({});
     setLoading(false);
     setGuestLoading(false);
+    setSuccessKind('login');
+    setResendNotice('');
     setResendSeconds(0);
 
     const scrollY = window.scrollY;
@@ -115,7 +124,13 @@ export default function CheckoutLoginModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const target = view === 'phone' ? phoneRef.current : view === 'otp' ? otpRef.current : nameRef.current;
+    const target = view === 'phone'
+      ? phoneRef.current
+      : view === 'login-otp' || view === 'registration-otp'
+        ? otpRef.current
+        : view === 'registration'
+          ? nameRef.current
+          : null;
     window.setTimeout(() => target?.focus(), 0);
   }, [isOpen, view]);
 
@@ -156,6 +171,15 @@ export default function CheckoutLoginModal({
   const handlePhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhoneInput(event.target.value));
     setError('');
+    setResendNotice('');
+  };
+
+  const openRegistration = () => {
+    setRegistrationPhone(phone);
+    setOtp('');
+    setError('');
+    setFieldErrors({});
+    setView('registration');
   };
 
   const submitPhone = async (event?: FormEvent) => {
@@ -172,10 +196,16 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
+      const account = await checkAccount(`+44${digits}`);
+      if (!account.phoneExists) {
+        setError('We could not find an account with this phone number.');
+        phoneRef.current?.focus();
+        return;
+      }
       await sendOTP(`+44${digits}`);
       setOtp('');
       setResendSeconds(30);
-      setView('otp');
+      setView('login-otp');
     } catch {
       setError('We could not send a code. Please try again.');
       phoneRef.current?.focus();
@@ -185,9 +215,10 @@ export default function CheckoutLoginModal({
     }
   };
 
-  const completeAuthentication = () => {
+  const completeAuthentication = (kind: 'login' | 'registration' = 'login') => {
     if (completionRef.current) return;
     completionRef.current = true;
+    setSuccessKind(kind);
     setView('success');
     window.setTimeout(onAuthenticated, 350);
   };
@@ -214,11 +245,11 @@ export default function CheckoutLoginModal({
     setError('');
     try {
       const result = await verifyOTP(otp);
-      if (result.accountExists) {
-        completeAuthentication();
-      } else {
-        setView('registration');
+      if (!result.accountExists) {
+        setError('We could not find an account with this phone number.');
+        return;
       }
+      completeAuthentication('login');
     } catch (nextError) {
       setError(customerMessage(nextError, 'We could not verify the code. Please try again.'));
       otpRef.current?.focus();
@@ -236,6 +267,7 @@ export default function CheckoutLoginModal({
     try {
       await sendOTP(currentPhone);
       setResendSeconds(30);
+      setResendNotice('A new verification code has been sent.');
     } catch {
       setError('We could not resend the code. Please try again.');
     } finally {
@@ -247,13 +279,55 @@ export default function CheckoutLoginModal({
   const submitRegistration = async (event?: FormEvent) => {
     event?.preventDefault();
     if (submissionRef.current) return;
-    if (!name.trim()) {
-      setError('Please enter your name.');
-      nameRef.current?.focus();
-      return;
+    const nextErrors: FieldErrors = {};
+    const trimmedName = name.trim();
+    const registrationDigits = registrationPhone.replace(/\D/g, '');
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedName || !/[A-Za-z]/.test(trimmedName) || !/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(trimmedName)) {
+      nextErrors.name = 'Please enter your name.';
     }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
+    if (registrationDigits.length !== 10) nextErrors.phone = 'Please enter a valid phone number.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      nextErrors.email = 'Please enter a valid email address.';
+    }
+    setFieldErrors(nextErrors);
+    if (nextErrors.name) nameRef.current?.focus();
+    else if (nextErrors.phone) registrationPhoneRef.current?.focus();
+    else if (nextErrors.email) emailRef.current?.focus();
+    if (Object.keys(nextErrors).length) return;
+
+    submissionRef.current = true;
+    setLoading(true);
+    setError('');
+    try {
+      const account = await checkAccount(`+44${registrationDigits}`, trimmedEmail);
+      if (account.phoneExists || account.emailExists) {
+        const duplicateErrors: FieldErrors = {};
+        if (account.phoneExists) duplicateErrors.phone = 'An account already exists with this phone number. Sign in instead.';
+        if (account.emailExists) duplicateErrors.email = 'An account already exists with this email address.';
+        setFieldErrors(duplicateErrors);
+        if (account.phoneExists) registrationPhoneRef.current?.focus();
+        else emailRef.current?.focus();
+        return;
+      }
+      await sendOTP(`+44${registrationDigits}`);
+      setOtp('');
+      setResendSeconds(30);
+      setView('registration-otp');
+    } catch (nextError) {
+      setError(customerMessage(nextError, 'We could not send a verification code. Please try again.'));
+    } finally {
+      submissionRef.current = false;
+      setLoading(false);
+    }
+  };
+
+  const submitRegistrationOtp = async (event?: FormEvent) => {
+    event?.preventDefault();
+    if (submissionRef.current) return;
+    if (otp.length !== 4) {
+      setError('Please enter the verification code.');
+      otpRef.current?.focus();
       return;
     }
 
@@ -261,10 +335,12 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      await signup(name.trim(), email.trim() || undefined);
-      completeAuthentication();
+      await verifyOTP(otp);
+      await signup(name.trim(), email.trim().toLowerCase());
+      completeAuthentication('registration');
     } catch (nextError) {
       setError(customerMessage(nextError, 'We could not create your account. Please try again.'));
+      otpRef.current?.focus();
     } finally {
       submissionRef.current = false;
       setLoading(false);
@@ -291,7 +367,15 @@ export default function CheckoutLoginModal({
       >
         <header className="relative flex min-h-[76px] shrink-0 items-center justify-center bg-[#ffc257] px-16 py-4">
           <h2 id={titleId} className="text-center text-2xl font-black text-[#99041e]">
-            {view === 'registration' ? 'Create Account' : view === 'otp' ? 'Verification' : view === 'success' ? 'Signed In' : 'Sign In'}
+            {view === 'registration'
+              ? 'Create New Account'
+              : view === 'registration-otp'
+                ? 'Verify Your Phone Number'
+                : view === 'login-otp'
+                  ? 'Verify Your Number'
+                  : view === 'success'
+                    ? successKind === 'registration' ? 'Account Created Successfully' : 'Signed In'
+                    : 'Sign In'}
           </h2>
           <button
             type="button"
@@ -306,12 +390,13 @@ export default function CheckoutLoginModal({
 
         <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-6 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-7">
           <p id={descriptionId} className="text-center text-sm font-semibold leading-6 text-[#6b5b55]">
-            {view === 'phone' && (registrationJourney
-              ? 'Enter your mobile number to start creating your Maeme’s account.'
-              : 'Sign in to continue your order.')}
-            {view === 'otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
-            {view === 'registration' && 'Complete your details to create your Maeme’s account.'}
-            {view === 'success' && 'Your account is ready. Continuing to your order…'}
+            {view === 'phone' && 'Sign in to continue your order.'}
+            {view === 'login-otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
+            {view === 'registration-otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
+            {view === 'registration' && 'Enter your details, then verify your phone number.'}
+            {view === 'success' && (successKind === 'registration'
+              ? `Welcome to Maeme’s, ${name.trim().split(/\s+/)[0] || 'customer'}. Continuing…`
+              : 'Welcome back. Continuing…')}
           </p>
 
           {view === 'phone' && (
@@ -333,6 +418,24 @@ export default function CheckoutLoginModal({
                 />
               </div>
               <ErrorMessage id={`${titleId}-error`} message={error} />
+              {error.includes('could not find an account') && (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={openRegistration}
+                    className="min-h-11 flex-1 rounded-xl border border-[#99041e] px-3 text-sm font-black text-[#99041e]"
+                  >
+                    Create New Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => phoneRef.current?.focus()}
+                    className="min-h-11 flex-1 rounded-xl px-3 text-sm font-black text-[#99041e]"
+                  >
+                    Try Another Number
+                  </button>
+                </div>
+              )}
               <ActionButton loading={loading} label="Continue with Phone" loadingLabel="Sending code…" />
               {onContinueAsGuest && (
                 <button
@@ -361,19 +464,15 @@ export default function CheckoutLoginModal({
               <p className="text-center text-sm font-black text-[#31201b]">New to Maeme’s?</p>
               <button
                 type="button"
-                onClick={() => {
-                  setRegistrationJourney(true);
-                  setError('');
-                  phoneRef.current?.focus();
-                }}
+                onClick={openRegistration}
                 className="mt-3 min-h-[52px] w-full rounded-2xl border-2 border-[#99041e] bg-white px-5 text-sm font-black text-[#99041e] transition hover:bg-[#fff0d5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
               >
-                Create Account
+                Create New Account
               </button>
             </form>
           )}
 
-          {view === 'otp' && (
+          {view === 'login-otp' && (
             <form onSubmit={submitOtp} className="mt-6">
               <label htmlFor={`${titleId}-otp`} className="block text-sm font-black text-[#31201b]">Verification Code</label>
               <input
@@ -393,6 +492,7 @@ export default function CheckoutLoginModal({
                 className="mt-2 min-h-[54px] w-full rounded-2xl border border-[#d9c9bd] bg-white px-4 text-center text-2xl font-black tracking-[0.5em] text-[#31201b] outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
               />
               <ErrorMessage id={`${titleId}-error`} message={error} />
+              {resendNotice && <p aria-live="polite" className="mt-2 text-sm font-bold text-[#126336]">{resendNotice}</p>}
               <ActionButton loading={loading} label="Verify & Continue" loadingLabel="Verifying…" />
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm font-black">
                 <button
@@ -429,24 +529,67 @@ export default function CheckoutLoginModal({
                   value={name}
                   onChange={(event) => {
                     setName(event.target.value);
-                    setError('');
+                    setFieldErrors((current) => ({ ...current, name: undefined }));
                   }}
+                  aria-invalid={Boolean(fieldErrors.name)}
+                  aria-describedby={fieldErrors.name ? `${titleId}-name-error` : undefined}
                   className="mt-2 min-h-[52px] w-full rounded-2xl border border-[#d9c9bd] bg-white px-4 text-base font-semibold outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
                 />
+                <ErrorMessage id={`${titleId}-name-error`} message={fieldErrors.name || ''} />
               </div>
               <div>
-                <label htmlFor={`${titleId}-email`} className="block text-sm font-black text-[#31201b]">Email Address <span className="font-semibold text-[#78645d]">(optional)</span></label>
+                <label htmlFor={`${titleId}-registration-phone`} className="block text-sm font-black text-[#31201b]">Phone Number</label>
+                <div className="mt-2 flex min-h-[52px] overflow-hidden rounded-2xl border border-[#d9c9bd] bg-white focus-within:border-[#99041e] focus-within:ring-4 focus-within:ring-[#99041e]/10">
+                  <span className="flex items-center border-r border-[#ead8c6] px-4 text-sm font-black text-[#99041e]">+44</span>
+                  <input
+                    ref={registrationPhoneRef}
+                    id={`${titleId}-registration-phone`}
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    value={registrationPhone}
+                    onChange={(event) => {
+                      setRegistrationPhone(formatPhoneInput(event.target.value));
+                      setFieldErrors((current) => ({ ...current, phone: undefined }));
+                    }}
+                    aria-invalid={Boolean(fieldErrors.phone)}
+                    aria-describedby={fieldErrors.phone ? `${titleId}-phone-error` : undefined}
+                    className="min-w-0 flex-1 bg-transparent px-4 text-base font-semibold text-[#31201b] outline-none"
+                  />
+                </div>
+                <ErrorMessage id={`${titleId}-phone-error`} message={fieldErrors.phone || ''} />
+                {fieldErrors.phone?.includes('already exists') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhone(registrationPhone);
+                      setView('phone');
+                      setError('');
+                      setFieldErrors({});
+                    }}
+                    className="mt-2 min-h-11 text-sm font-black text-[#99041e] underline underline-offset-4"
+                  >
+                    Continue with Phone
+                  </button>
+                )}
+              </div>
+              <div>
+                <label htmlFor={`${titleId}-email`} className="block text-sm font-black text-[#31201b]">Email Address</label>
                 <input
+                  ref={emailRef}
                   id={`${titleId}-email`}
                   type="email"
                   autoComplete="email"
                   value={email}
                   onChange={(event) => {
                     setEmail(event.target.value);
-                    setError('');
+                    setFieldErrors((current) => ({ ...current, email: undefined }));
                   }}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? `${titleId}-email-error` : undefined}
                   className="mt-2 min-h-[52px] w-full rounded-2xl border border-[#d9c9bd] bg-white px-4 text-base font-semibold outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
                 />
+                <ErrorMessage id={`${titleId}-email-error`} message={fieldErrors.email || ''} />
               </div>
               <ErrorMessage id={`${titleId}-error`} message={error} />
               <ActionButton loading={loading} label="Create Account" loadingLabel="Creating account…" />
@@ -454,13 +597,71 @@ export default function CheckoutLoginModal({
                 type="button"
                 onClick={() => {
                   setView('phone');
-                  setRegistrationJourney(false);
                   setError('');
+                  setFieldErrors({});
                 }}
                 className="flex min-h-11 w-full items-center justify-center gap-2 text-sm font-black text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]"
               >
                 <ArrowLeft size={16} /> Back to Sign In
               </button>
+            </form>
+          )}
+
+          {view === 'registration-otp' && (
+            <form onSubmit={submitRegistrationOtp} className="mt-6">
+              <label htmlFor={`${titleId}-registration-otp`} className="block text-sm font-black text-[#31201b]">Verification Code</label>
+              <input
+                ref={otpRef}
+                id={`${titleId}-registration-otp`}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={4}
+                value={otp}
+                onChange={(event) => {
+                  setOtp(event.target.value.replace(/\D/g, '').slice(0, 4));
+                  setError('');
+                }}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${titleId}-registration-otp-error` : undefined}
+                className="mt-2 min-h-[54px] w-full rounded-2xl border border-[#d9c9bd] bg-white px-4 text-center text-2xl font-black tracking-[0.5em] text-[#31201b] outline-none focus:border-[#99041e] focus:ring-4 focus:ring-[#99041e]/10"
+              />
+              <ErrorMessage id={`${titleId}-registration-otp-error`} message={error} />
+              {resendNotice && <p aria-live="polite" className="mt-2 text-sm font-bold text-[#126336]">{resendNotice}</p>}
+              <ActionButton loading={loading} label="Verify & Create Account" loadingLabel="Creating account…" />
+              <div className="mt-5 grid gap-2 text-sm font-black sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('registration');
+                    setOtp('');
+                    setError('');
+                    window.setTimeout(() => registrationPhoneRef.current?.focus(), 0);
+                  }}
+                  className="inline-flex min-h-11 items-center gap-1 text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]"
+                >
+                  <ArrowLeft size={16} /> Change Number
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('registration');
+                    setOtp('');
+                    setError('');
+                  }}
+                  className="min-h-11 text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]"
+                >
+                  Back to Registration
+                </button>
+                <button
+                  type="button"
+                  onClick={resendOtp}
+                  disabled={loading || resendSeconds > 0}
+                  className="min-h-11 text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257] disabled:text-[#8a7770] sm:col-span-2"
+                >
+                  {resendSeconds > 0 ? `Resend in ${resendSeconds}s` : 'Resend Code'}
+                </button>
+              </div>
             </form>
           )}
 

@@ -19,9 +19,27 @@ export interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   currentPhone: string | null;
+  checkAccount: (phone: string, email?: string) => Promise<{ phoneExists: boolean; emailExists: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const REGISTERED_USERS_KEY = 'maemes.registeredUsers';
+
+function normalisePhone(phone: string) {
+  return `+44${phone.replace(/\D/g, '').slice(-10)}`;
+}
+
+function readRegisteredUsers(): User[] {
+  try {
+    return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY) || '[]') as User[];
+  } catch {
+    return [];
+  }
+}
+
+function saveRegisteredUsers(users: User[]) {
+  localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +77,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const checkAccount = async (phone: string, email?: string) => {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const normalisedPhone = normalisePhone(phone);
+    const normalisedEmail = email?.trim().toLowerCase();
+    const registeredUsers = readRegisteredUsers();
+    const phoneExists = registeredUsers.some(candidate => normalisePhone(candidate.phone) === normalisedPhone)
+      || parseInt(normalisedPhone.replace(/\D/g, ''), 10) % 2 === 0;
+    const emailExists = Boolean(normalisedEmail && registeredUsers.some(
+      candidate => candidate.email?.trim().toLowerCase() === normalisedEmail
+    ));
+    return { phoneExists, emailExists };
+  };
+
   const verifyOTP = async (otp: string): Promise<{ accountExists: boolean }> => {
     setIsLoading(true);
     try {
@@ -73,16 +104,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No phone number set');
       }
 
-      // Check if user exists (mock: even phone numbers exist, odd don't)
-      const accountExists = parseInt(currentPhone.replace(/\D/g, '')) % 2 === 0;
+      const normalisedPhone = normalisePhone(currentPhone);
+      const registeredUser = readRegisteredUsers().find(
+        candidate => normalisePhone(candidate.phone) === normalisedPhone
+      );
+      // Existing prototype accounts use even phone numbers; newly registered
+      // accounts are resolved from the same persisted auth registry.
+      const accountExists = Boolean(registeredUser) || parseInt(normalisedPhone.replace(/\D/g, ''), 10) % 2 === 0;
       
       if (accountExists) {
         // Mock user login
-        const existingUser: User = {
-          userId: `user_${currentPhone.replace(/\D/g, '')}`,
-          phone: currentPhone,
+        const existingUser: User = registeredUser || {
+          userId: `user_${normalisedPhone.replace(/\D/g, '')}`,
+          phone: normalisedPhone,
           name: 'John Doe',
-          email: `user${currentPhone.replace(/\D/g, '')}@example.com`,
+          email: `user${normalisedPhone.replace(/\D/g, '')}@example.com`,
           createdAt: new Date().toISOString(),
         };
         setUser(existingUser);
@@ -108,13 +144,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No phone number set');
       }
 
+      const normalisedPhone = normalisePhone(currentPhone);
+      const registeredUsers = readRegisteredUsers();
+      if (registeredUsers.some(candidate => normalisePhone(candidate.phone) === normalisedPhone)) {
+        throw new Error('An account already exists with this phone number.');
+      }
+      const normalisedEmail = email?.trim().toLowerCase();
+      if (normalisedEmail && registeredUsers.some(candidate => candidate.email?.trim().toLowerCase() === normalisedEmail)) {
+        throw new Error('An account already exists with this email address.');
+      }
+
       const newUser: User = {
         userId: `user_${Date.now()}`,
-        phone: currentPhone,
+        phone: normalisedPhone,
         name,
-        email: email || undefined,
+        email: normalisedEmail || undefined,
         createdAt: new Date().toISOString(),
       };
+      saveRegisteredUsers([...registeredUsers, newUser]);
       setUser(newUser);
       localStorage.setItem('currentUser', JSON.stringify(newUser));
       setOtpSent(false);
@@ -142,6 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isAuthenticated: !!user,
         currentPhone,
+        checkAccount,
       }}
     >
       {children}

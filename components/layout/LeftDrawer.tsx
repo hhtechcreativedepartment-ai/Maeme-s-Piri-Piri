@@ -58,9 +58,7 @@ export default function LeftDrawer({ isOpen, onClose }: LeftDrawerProps) {
             return (
               <Link
                 key={`${item.label}-${item.href}`}
-                href={item.label === 'Menu' ? '/order?notice=1' : item.href}
-                target={item.label === 'Menu' ? '_blank' : undefined}
-                rel={item.label === 'Menu' ? 'noopener noreferrer' : undefined}
+                href={item.href}
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#1a120f] transition-colors hover:bg-[#fff8ed]"
                 onClick={onClose}
               >

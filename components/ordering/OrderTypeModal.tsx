@@ -21,7 +21,7 @@ export default function OrderTypeModal({
   isOpen,
   onClose,
   redirectToMenu = true,
-  redirectPath = '/menu',
+  redirectPath = '/order/menu',
   initialOrderType = 'delivery',
   onSelected,
 }: OrderTypeModalProps) {

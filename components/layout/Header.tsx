@@ -15,7 +15,7 @@ export default function Header() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Menu', href: '/order' },
+    { label: 'Menu', href: '/menu' },
     { label: 'Our Food', href: '/food' },
     { label: 'Stores', href: '/branches' },
     { label: 'Our App', href: '/app' },
@@ -72,9 +72,7 @@ export default function Header() {
           {navLinks.map((link) => (
             <Link
               key={link.href}
-              href={link.label === 'Menu' ? '/order?notice=1' : link.href}
-              target={link.label === 'Menu' ? '_blank' : undefined}
-              rel={link.label === 'Menu' ? 'noopener noreferrer' : undefined}
+              href={link.href}
               className={`relative whitespace-nowrap py-2 text-sm font-black leading-none text-[#1f1210] transition-colors hover:text-[var(--maeme-red)] ${
                 pathname === link.href ? 'text-[var(--maeme-red)] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-[var(--maeme-red)]' : ''
               }`}

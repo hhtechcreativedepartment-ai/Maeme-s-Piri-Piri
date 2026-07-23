@@ -21,6 +21,8 @@ export interface AuthContextType {
   isLoading: boolean;
   sendOTP: (phone: string, intent?: OtpIntent) => Promise<{ phone: string; intent: OtpIntent }>;
   verifyOTP: (otp: string, intent?: OtpIntent) => Promise<{ accountExists: boolean; user?: User }>;
+  createAccount: (name: string, email: string) => Promise<User>;
+  applyAuthenticatedSession: (user: User) => Promise<void>;
   signup: (name: string, email?: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -29,11 +31,13 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const REGISTERED_USERS_KEY = 'maemes.registeredUsers';
+const USERS_KEY = 'maemes.users';
+const LEGACY_REGISTERED_USERS_KEY = 'maemes.registeredUsers';
 
 function readRegisteredUsers(): User[] {
   try {
-    const stored = JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY) || '[]') as User[];
+    const stored = JSON.parse(localStorage.getItem(USERS_KEY) || '[]') as User[];
+    const legacyStored = JSON.parse(localStorage.getItem(LEGACY_REGISTERED_USERS_KEY) || '[]') as User[];
     const seeded: User[] = demoUsers.map(candidate => ({
       ...candidate,
       phone: normalizePhoneNumber(candidate.phone) || candidate.phone,
@@ -41,7 +45,7 @@ function readRegisteredUsers(): User[] {
       phoneVerified: true,
       accountStatus: 'active',
     }));
-    const merged = [...seeded, ...stored].reduce<User[]>((users, candidate) => {
+    const merged = [...stored, ...legacyStored, ...seeded].reduce<User[]>((users, candidate) => {
       const phone = normalizePhoneNumber(candidate.phone);
       if (!phone || users.some(user => user.phone === phone)) return users;
       users.push({
@@ -52,6 +56,9 @@ function readRegisteredUsers(): User[] {
       });
       return users;
     }, []);
+    if (legacyStored.length || !localStorage.getItem(USERS_KEY)) {
+      saveRegisteredUsers(merged);
+    }
     return merged;
   } catch {
     return [];
@@ -59,7 +66,7 @@ function readRegisteredUsers(): User[] {
 }
 
 function saveRegisteredUsers(users: User[]) {
-  localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -167,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email?: string) => {
+  const createAccount = async (name: string, email: string) => {
     setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
@@ -176,17 +183,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('No phone number set');
       }
 
-      if (currentOtpIntent !== 'register') {
-        throw new Error('Registration verification is required.');
-      }
       const normalisedPhone = normalizePhoneNumber(currentPhone);
       if (!normalisedPhone) throw new Error('Invalid phone number');
       const registeredUsers = readRegisteredUsers();
       if (findUserByPhone(registeredUsers, normalisedPhone)) {
         throw new Error('An account already exists with this phone number.');
       }
-      const normalisedEmail = email?.trim().toLowerCase();
-      if (normalisedEmail && registeredUsers.some(candidate => candidate.email?.trim().toLowerCase() === normalisedEmail)) {
+      const normalisedEmail = email.trim().toLowerCase();
+      if (registeredUsers.some(candidate => candidate.email?.trim().toLowerCase() === normalisedEmail)) {
         throw new Error('An account already exists with this email address.');
       }
 
@@ -194,14 +198,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userId: `user_${Date.now()}`,
         phone: normalisedPhone,
         name,
-        email: normalisedEmail || undefined,
+        email: normalisedEmail,
         createdAt: new Date().toISOString(),
         phoneVerified: true,
         accountStatus: 'active',
       };
       saveRegisteredUsers([...registeredUsers, newUser]);
-      setUser(newUser);
-      localStorage.setItem('currentUser', JSON.stringify(newUser));
       setOtpSent(false);
       return newUser;
     } catch (error) {
@@ -212,7 +214,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const applyAuthenticatedSession = async (authenticatedUser: User) => {
+    const canonicalPhone = normalizePhoneNumber(authenticatedUser.phone);
+    if (!canonicalPhone) throw new Error('Invalid phone number');
+    const activeUser: User = {
+      ...authenticatedUser,
+      phone: canonicalPhone,
+      phoneVerified: true,
+      accountStatus: 'active',
+    };
+    localStorage.setItem('currentUser', JSON.stringify(activeUser));
+    setUser(activeUser);
+  };
+
+  const signup = async (name: string, email?: string) => {
+    const newUser = await createAccount(name, email || '');
+    await applyAuthenticatedSession(newUser);
+    return newUser;
+  };
+
   const logout = () => {
+    if (user) {
+      const registeredUsers = readRegisteredUsers();
+      if (!findUserByPhone(registeredUsers, user.phone)) {
+        saveRegisteredUsers([...registeredUsers, {
+          ...user,
+          phone: normalizePhoneNumber(user.phone) || user.phone,
+          phoneVerified: true,
+          accountStatus: 'active',
+        }]);
+      }
+    }
     setUser(null);
     localStorage.removeItem('currentUser');
   };
@@ -224,6 +256,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         sendOTP,
         verifyOTP,
+        createAccount,
+        applyAuthenticatedSession,
         signup,
         logout,
         isAuthenticated: !!user,

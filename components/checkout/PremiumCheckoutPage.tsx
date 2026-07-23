@@ -390,7 +390,7 @@ export default function PremiumCheckoutPage() {
             Your cart is empty. Add your favourite Maeme&apos;s dishes before checkout.
           </p>
           <Link
-            href="/menu"
+            href="/order/menu"
             className="mt-8 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#99041e] px-7 py-3 text-sm font-black text-white shadow-[0_14px_34px_rgba(153,4,30,0.22)] transition hover:bg-[#7f0318]"
           >
             Explore Menu

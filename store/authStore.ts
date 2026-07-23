@@ -1,6 +1,7 @@
 import type { UserSession } from '@/types';
 import { readStorage, removeStorage, writeStorage } from '@/utils/storage';
 import { users } from '@/data/users';
+import { findUserByPhone, normalizePhoneNumber } from '@/lib/phoneNumber';
 
 const SESSION_KEY = 'maemes.userSession';
 const USERS_KEY = 'maemes.users';
@@ -20,8 +21,9 @@ export const authStore = {
   },
 
   login(phone: string) {
-    const normalisedPhone = phone.trim();
-    const user = getUsers().find(candidate => candidate.phone === normalisedPhone) || null;
+    const normalisedPhone = normalizePhoneNumber(phone);
+    if (!normalisedPhone) return null;
+    const user = findUserByPhone(getUsers(), normalisedPhone) || null;
     if (user) writeStorage(SESSION_KEY, user);
     return user;
   },
@@ -31,11 +33,18 @@ export const authStore = {
   },
 
   createAccount(data: Omit<UserSession, 'userId'>) {
+    const normalisedPhone = normalizePhoneNumber(data.phone);
+    if (!normalisedPhone) throw new Error('Invalid phone number');
+    const existingUsers = getUsers();
+    if (findUserByPhone(existingUsers, normalisedPhone)) {
+      throw new Error('An account already exists with this phone number.');
+    }
     const newUser: UserSession = {
       ...data,
+      phone: normalisedPhone,
       userId: `user-${Date.now()}`,
     };
-    const nextUsers = [...getUsers(), newUser];
+    const nextUsers = [...existingUsers, newUser];
     saveUsers(nextUsers);
     writeStorage(SESSION_KEY, newUser);
     return newUser;

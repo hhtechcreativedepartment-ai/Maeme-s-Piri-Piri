@@ -248,7 +248,7 @@ export default function PremiumAccountPage() {
     showToast('Logged out');
   };
 
-  if (isLoading) {
+  if (isLoading && !isLoginModalOpen) {
     return <><OrderingHeader /><main className="min-h-screen bg-[#fff8ed]" /></>;
   }
 

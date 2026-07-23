@@ -1,5 +1,6 @@
 'use client';
 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface PublicMenuCategoryNavProps {
@@ -55,6 +56,8 @@ export default function PublicMenuCategoryNav({ categories }: PublicMenuCategory
     });
   }, [activeAnchor]);
 
+  const arrowClassName = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white p-0 text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:h-10 sm:w-10';
+
   return (
     <nav
       aria-label="Menu categories"
@@ -65,9 +68,9 @@ export default function PublicMenuCategoryNav({ categories }: PublicMenuCategory
           type="button"
           aria-label="Scroll categories left"
           onClick={() => scrollCategories('left')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:h-10 sm:w-10"
+          className={arrowClassName}
         >
-          ‹
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         </button>
 
         <div
@@ -102,9 +105,9 @@ export default function PublicMenuCategoryNav({ categories }: PublicMenuCategory
           type="button"
           aria-label="Scroll categories right"
           onClick={() => scrollCategories('right')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:h-10 sm:w-10"
+          className={arrowClassName}
         >
-          ›
+          <ChevronRight className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
         </button>
       </div>
     </nav>

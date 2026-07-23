@@ -228,6 +228,20 @@ export default function CompleteMenuPage() {
   }, []);
 
   useEffect(() => {
+    const rail = categoryRailRef.current;
+    if (!rail) return;
+
+    const activeButton = rail.querySelector<HTMLButtonElement>(
+      `button[data-category="${activeCategory}"]`,
+    );
+    activeButton?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }, [activeCategory]);
+
+  useEffect(() => {
     if (!selectedBranch) return;
 
     if (selectedOrderType === 'delivery' && !selectedBranch.deliveryAvailable && selectedBranch.pickupAvailable) {
@@ -323,7 +337,7 @@ export default function CompleteMenuPage() {
             {MENU_CATEGORY_DATA.map((category) => (
               <button
                 key={category.id}
-                data-category={category.slug}
+                data-category={category.id}
                 onClick={(event) => {
                   if (didDragCategoryRailRef.current) {
                     event.preventDefault();

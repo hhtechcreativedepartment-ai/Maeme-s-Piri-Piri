@@ -81,29 +81,6 @@ export default function PublicSiteFooter() {
                 className="h-11 w-auto object-contain sm:h-14"
               />
             </Link>
-
-            <div className="mt-3 flex items-center justify-center gap-2.5" aria-label="Maeme’s social media">
-              {socialLinks.map(({ label, href, icon: Icon }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[#ffc257] transition hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-              <span
-                role="img"
-                aria-label="Maeme’s TikTok"
-                title="Maeme’s TikTok"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[#ffc257]"
-              >
-                <TikTokIcon className="h-4 w-4" />
-              </span>
-            </div>
           </div>
 
           <div className="order-3 flex items-center justify-center gap-2 md:justify-end">
@@ -137,6 +114,29 @@ export default function PublicSiteFooter() {
               <ArrowUp size={18} strokeWidth={2.5} aria-hidden="true" />
             </button>
           </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-center gap-2.5" aria-label="Maeme’s social media">
+          {socialLinks.map(({ label, href, icon: Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[#ffc257] transition hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]"
+            >
+              <Icon className="h-4 w-4" />
+            </a>
+          ))}
+          <span
+            role="img"
+            aria-label="Maeme’s TikTok"
+            title="Maeme’s TikTok"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[#ffc257]"
+          >
+            <TikTokIcon className="h-4 w-4" />
+          </span>
         </div>
 
         <div className="mt-4 flex flex-col items-center justify-center gap-1 border-t border-white/15 pt-3 text-center text-[11px] font-semibold text-white/75 sm:mt-5 sm:flex-row sm:gap-4 sm:pt-4">

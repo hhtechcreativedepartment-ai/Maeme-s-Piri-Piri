@@ -49,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-[#ededed]" suppressHydrationWarning>
-      <body className="antialiased bg-[#ededed] text-[#1F1F1F]">
+      <body className="flex min-h-[100dvh] flex-col antialiased bg-[#ededed] text-[#1F1F1F]">
         <AuthProvider>
           <CartProvider>
             <OrdersProvider>
@@ -57,7 +57,7 @@ export default function RootLayout({
             <Header />
             <PostcodeModalHost />
             <AssistantLoader />
-            <main className="min-h-screen pt-[var(--site-header-height)]">
+            <main className="min-h-0 flex-1 pt-[var(--site-header-height)]">
               {children}
             </main>
             <Footer />

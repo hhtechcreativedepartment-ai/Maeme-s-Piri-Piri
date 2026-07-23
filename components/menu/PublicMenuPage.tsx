@@ -93,31 +93,31 @@ export default function PublicMenuPage() {
               <span aria-hidden="true" className="h-px flex-1 bg-[#e8d5ae]" />
             </div>
 
-            <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-14 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-14 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
               {category.products.map(product => (
                 <article
                   key={`${category.id}-${product.id}`}
-                  className="group flex min-w-0 flex-col"
+                  className="group flex min-h-[152px] min-w-0 flex-row items-stretch gap-4 overflow-hidden rounded-[18px] border border-[#f0e0ca] bg-white p-4 shadow-[0_6px_20px_rgba(50,24,16,0.05)] sm:min-h-0 sm:flex-col sm:gap-0 sm:overflow-visible sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none"
                 >
-                  <div className="flex h-56 items-center justify-center sm:h-60 lg:h-64">
+                  <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center self-center overflow-hidden rounded-[14px] bg-white sm:h-60 sm:w-full sm:self-auto sm:overflow-visible sm:rounded-none lg:h-64">
                     <img
                       src={product.image}
                       alt={product.name}
                       loading="lazy"
-                      className="h-full w-full scale-[1.06] object-contain transition-transform duration-300 group-hover:scale-[1.1]"
+                      className="h-full w-full object-contain p-1 transition-transform duration-300 group-hover:scale-[1.04] sm:scale-[1.06] sm:p-0 sm:group-hover:scale-[1.1]"
                     />
                   </div>
 
-                  <div className="mt-5 flex flex-1 flex-col">
-                    <h3 className="text-base font-black leading-tight text-[#99041e]">
+                  <div className="flex min-h-[120px] min-w-0 flex-1 flex-col py-0 sm:mt-5 sm:min-h-0">
+                    <h3 className="line-clamp-2 text-[15px] font-black leading-[1.18] text-[#99041e] sm:text-base sm:leading-tight">
                       {product.name}
                     </h3>
                     {product.description && (
-                      <p className="mt-2 text-xs font-semibold leading-5 text-[#6b514a]">
+                      <p className="mt-1.5 line-clamp-3 text-xs font-semibold leading-[1.45] text-[#6b514a] sm:mt-2 sm:leading-5">
                         {product.description}
                       </p>
                     )}
-                    <p className="mt-auto pt-3 text-left text-[10px] font-black uppercase tracking-[0.1em] text-[#99041e]">
+                    <p className="mt-auto border-t border-[#f0d59d]/70 pt-2 text-left text-[10px] font-black uppercase tracking-[0.1em] text-[#99041e] sm:border-0 sm:pt-3">
                       {typeof product.kcal === 'number'
                         ? `${product.kcal} kcal`
                         : `${getEstimatedKcal(product.id, product.category)} kcal`}

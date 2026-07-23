@@ -17,6 +17,14 @@ export interface CheckoutState {
 }
 
 const CHECKOUT_STATE_KEY = 'checkoutState';
+const COMPLETED_ORDER_TRANSIENT_KEYS = [
+  CHECKOUT_STATE_KEY,
+  'maemes.checkout',
+  'maemes.checkout.draft',
+  'maemes.checkout.pendingOrder',
+  'maemes.checkout.paymentSubmission',
+  'maemes.appliedPromo',
+];
 
 export const saveCheckoutState = (state: CheckoutState) => {
   localStorage.setItem(CHECKOUT_STATE_KEY, JSON.stringify(state));
@@ -36,6 +44,10 @@ export const getCheckoutState = (): CheckoutState | null => {
 
 export const clearCheckoutState = () => {
   localStorage.removeItem(CHECKOUT_STATE_KEY);
+};
+
+export const clearCompletedOrderState = () => {
+  COMPLETED_ORDER_TRANSIENT_KEYS.forEach((key) => localStorage.removeItem(key));
 };
 
 export const hasCheckoutState = (): boolean => {

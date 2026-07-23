@@ -1,15 +1,28 @@
 ﻿'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Check, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useOrders } from '@/lib/ordersContext';
 import { getLastOrder } from '@/lib/orderUtils';
+import { BRANCHES } from '@/lib/branchData';
+import { useCart } from '@/lib/cartContext';
+import { clearCompletedOrderState } from '@/lib/checkoutStateUtils';
 
 export default function OrderSuccessPage() {
   const params = useParams<{ orderId: string }>();
+  const router = useRouter();
   const routeOrderId = params.orderId;
   const { currentOrder, getOrderByNumber } = useOrders();
+  const {
+    clearCart,
+    isHydrated,
+    selectedBranch,
+    selectedOrderType,
+  } = useCart();
+  const [startingNewOrder, setStartingNewOrder] = useState(false);
+  const newOrderStartedRef = useRef(false);
   const order =
     getOrderByNumber(routeOrderId) ||
     (currentOrder?.orderNumber === routeOrderId ? currentOrder : null) ||
@@ -18,6 +31,29 @@ export default function OrderSuccessPage() {
   const orderNumber = order?.orderNumber || routeOrderId;
   const estimatedTime = order?.estimatedTime ? `${order.estimatedTime} min` : '35-45 min';
   const restaurant = order?.branchName || "Maeme's";
+
+  const startNewOrder = () => {
+    if (!isHydrated || startingNewOrder || newOrderStartedRef.current) return;
+    newOrderStartedRef.current = true;
+    setStartingNewOrder(true);
+
+    clearCart();
+    clearCompletedOrderState();
+
+    const currentBranch = selectedBranch
+      ? BRANCHES.find(branch => branch.branchId === selectedBranch.branchId)
+      : null;
+    const hasValidSelection = Boolean(
+      currentBranch
+      && selectedOrderType
+      && (
+        (selectedOrderType === 'delivery' && currentBranch.deliveryAvailable)
+        || (selectedOrderType === 'pickup' && currentBranch.pickupAvailable)
+      ),
+    );
+
+    router.push(hasValidSelection ? '/order/menu' : '/order');
+  };
 
   return (
     <main className="grid min-h-screen place-items-center bg-[#fff8ed] px-4 py-16 text-[#1a120f] sm:px-6 lg:px-8">
@@ -47,14 +83,18 @@ export default function OrderSuccessPage() {
             href={`/track/${orderNumber}`}
             className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#ffc257] px-7 py-3 text-sm font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e]"
           >
-            Track order
+            Track Order
           </Link>
-          <Link
-            href="/"
-            className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-[#f0d59d] bg-white px-7 py-3 text-sm font-black text-[#99041e] transition hover:bg-[#fff8ed]"
+          <button
+            type="button"
+            onClick={startNewOrder}
+            disabled={!isHydrated || startingNewOrder}
+            aria-busy={startingNewOrder}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[#f0d59d] bg-white px-7 py-3 text-sm font-black text-[#99041e] transition hover:bg-[#fff8ed] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 disabled:cursor-wait disabled:opacity-65"
           >
-            Back to home
-          </Link>
+            {startingNewOrder && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
+            {startingNewOrder ? 'Starting New Order…' : 'Start a New Order'}
+          </button>
         </div>
       </section>
     </main>

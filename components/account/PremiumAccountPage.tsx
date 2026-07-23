@@ -11,6 +11,7 @@ import { useFavourites } from '@/lib/favouritesContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
 import ProductCard from '@/components/ordering/ProductCard';
 import OrderingHeader from '@/components/ordering/OrderingHeader';
+import CheckoutLoginModal from '@/components/auth/CheckoutLoginModal';
 
 type AccountTab = 'profile' | 'history' | 'tracking' | 'favourites' | 'addresses' | 'promos';
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
@@ -81,6 +82,7 @@ export default function PremiumAccountPage() {
   const [orderPendingCancellation, setOrderPendingCancellation] = useState<Order | null>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [otherCancellationReason, setOtherCancellationReason] = useState('');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLoading) {
@@ -238,7 +240,7 @@ export default function PremiumAccountPage() {
   };
 
   const handleLogin = () => {
-    router.push('/login?redirect=/account');
+    setIsLoginModalOpen(true);
   };
 
   const handleLogout = () => {
@@ -510,6 +512,14 @@ export default function PremiumAccountPage() {
       )}
       {toast && <div className="fixed bottom-8 left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-[#99041e] px-5 py-4 text-sm font-black text-white shadow-xl lg:left-auto lg:right-8 lg:mx-0">{toast}</div>}
     </main>
+    <CheckoutLoginModal
+      isOpen={isLoginModalOpen}
+      onClose={() => setIsLoginModalOpen(false)}
+      onAuthenticated={() => {
+        setIsLoginModalOpen(false);
+        showToast('Logged in successfully');
+      }}
+    />
     </>
   );
 }

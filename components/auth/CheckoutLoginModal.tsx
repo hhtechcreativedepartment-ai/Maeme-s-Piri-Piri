@@ -7,10 +7,11 @@ import { useAuth } from '@/lib/authContext';
 
 type AuthView = 'phone' | 'otp' | 'registration' | 'success';
 
-interface CheckoutAuthModalProps {
+interface CheckoutLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthenticated: () => void;
+  onContinueAsGuest?: () => void;
   returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -28,12 +29,19 @@ function customerMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export default function CheckoutAuthModal({
+function maskPhone(phone: string | null) {
+  if (!phone) return 'your mobile number';
+  const digits = phone.replace(/\D/g, '');
+  return `+44 •••• ${digits.slice(-4)}`;
+}
+
+export default function CheckoutLoginModal({
   isOpen,
   onClose,
   onAuthenticated,
+  onContinueAsGuest,
   returnFocusRef,
-}: CheckoutAuthModalProps) {
+}: CheckoutLoginModalProps) {
   const { sendOTP, verifyOTP, signup, currentPhone } = useAuth();
   const titleId = useId();
   const descriptionId = useId();
@@ -53,6 +61,7 @@ export default function CheckoutAuthModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -69,6 +78,7 @@ export default function CheckoutAuthModal({
     setEmail('');
     setError('');
     setLoading(false);
+    setGuestLoading(false);
     setResendSeconds(0);
 
     const scrollY = window.scrollY;
@@ -182,6 +192,14 @@ export default function CheckoutAuthModal({
     window.setTimeout(onAuthenticated, 350);
   };
 
+  const continueAsGuest = () => {
+    if (!onContinueAsGuest || submissionRef.current || completionRef.current) return;
+    submissionRef.current = true;
+    completionRef.current = true;
+    setGuestLoading(true);
+    window.setTimeout(onContinueAsGuest, 150);
+  };
+
   const submitOtp = async (event?: FormEvent) => {
     event?.preventDefault();
     if (submissionRef.current) return;
@@ -290,8 +308,8 @@ export default function CheckoutAuthModal({
           <p id={descriptionId} className="text-center text-sm font-semibold leading-6 text-[#6b5b55]">
             {view === 'phone' && (registrationJourney
               ? 'Enter your mobile number to start creating your Maeme’s account.'
-              : 'Sign in to review your order and continue to checkout.')}
-            {view === 'otp' && `We sent a verification code to ${currentPhone || 'your mobile number'}.`}
+              : 'Sign in to continue your order.')}
+            {view === 'otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
             {view === 'registration' && 'Complete your details to create your Maeme’s account.'}
             {view === 'success' && 'Your account is ready. Continuing to your order…'}
           </p>
@@ -315,8 +333,31 @@ export default function CheckoutAuthModal({
                 />
               </div>
               <ErrorMessage id={`${titleId}-error`} message={error} />
-              <ActionButton loading={loading} label="Continue" loadingLabel="Sending code…" />
-              <div className="my-6 h-px bg-[#ead8c6]" />
+              <ActionButton loading={loading} label="Continue with Phone" loadingLabel="Sending code…" />
+              {onContinueAsGuest && (
+                <button
+                  type="button"
+                  onClick={continueAsGuest}
+                  disabled={loading || guestLoading}
+                  aria-busy={guestLoading}
+                  className="mt-3 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#99041e] bg-white px-5 text-base font-black text-[#99041e] transition hover:bg-[#fff0d5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {guestLoading && <Loader2 size={18} className="animate-spin" aria-hidden="true" />}
+                  {guestLoading ? 'Continuing…' : 'Continue as Guest'}
+                </button>
+              )}
+              <p className="px-2 pt-4 text-center text-xs font-semibold leading-5 text-[#78645d]">
+                By continuing, you agree to our{' '}
+                <a href="/terms-and-conditions" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
+                  Terms
+                </a>{' '}
+                and{' '}
+                <a href="/privacy-policy" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
+                  Privacy Policy
+                </a>
+                .
+              </p>
+              <div className="my-5 h-px bg-[#ead8c6]" />
               <p className="text-center text-sm font-black text-[#31201b]">New to Maeme’s?</p>
               <button
                 type="button"

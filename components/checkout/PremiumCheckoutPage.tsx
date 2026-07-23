@@ -24,7 +24,7 @@ import { MENU_DATA } from '@/lib/menuData';
 import { categorySlug } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 import OrderingHeader from '@/components/ordering/OrderingHeader';
-import CheckoutAuthModal from '@/components/auth/CheckoutAuthModal';
+import CheckoutLoginModal from '@/components/auth/CheckoutLoginModal';
 
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
 type PaymentMethod = 'cash' | 'card';
@@ -676,7 +676,7 @@ export default function PremiumCheckoutPage() {
         </div>
       </div>
     </main>
-    <CheckoutAuthModal
+    <CheckoutLoginModal
       isOpen={authModalOpen}
       onClose={() => setAuthModalOpen(false)}
       onAuthenticated={() => {

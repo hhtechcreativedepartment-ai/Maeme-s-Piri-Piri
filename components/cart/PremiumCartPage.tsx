@@ -11,7 +11,7 @@ import { getProductConfiguration } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import CheckoutAuthModal from '@/components/auth/CheckoutAuthModal';
+import CheckoutLoginModal from '@/components/auth/CheckoutLoginModal';
 
 const recommendedNames = [
   'Loaded Fries',
@@ -357,13 +357,14 @@ export default function PremiumCartPage() {
         }}
         onAdded={handleAdded}
       />
-      <CheckoutAuthModal
+      <CheckoutLoginModal
         isOpen={authModalOpen}
         onClose={() => {
           checkoutNavigationRef.current = false;
           setAuthModalOpen(false);
         }}
         onAuthenticated={continueToCheckout}
+        onContinueAsGuest={continueToCheckout}
         returnFocusRef={reviewOrderRef}
       />
     </main>

@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useId, useRef, useSta
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Loader2, X } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
+import { formatUkPhoneInput, maskPhoneNumber, normalizePhoneNumber } from '@/lib/phoneNumber';
 
 type AuthView = 'phone' | 'login-otp' | 'registration' | 'registration-otp' | 'success';
 type FieldErrors = Partial<Record<'name' | 'phone' | 'email', string>>;
@@ -28,12 +29,6 @@ function customerMessage(error: unknown, fallback: string) {
   if (/invalid otp/i.test(error.message)) return 'The code is incorrect or has expired.';
   if (/no phone/i.test(error.message)) return 'Please enter your mobile number again.';
   return fallback;
-}
-
-function maskPhone(phone: string | null) {
-  if (!phone) return 'your mobile number';
-  const digits = phone.replace(/\D/g, '');
-  return `+44 •••• ${digits.slice(-4)}`;
 }
 
 export default function CheckoutLoginModal({
@@ -161,15 +156,8 @@ export default function CheckoutLoginModal({
     }
   };
 
-  const formatPhoneInput = (value: string) => {
-    const digits = value.replace(/\D/g, '').replace(/^44/, '').slice(0, 10);
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
-    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
-  };
-
   const handlePhoneChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setPhone(formatPhoneInput(event.target.value));
+    setPhone(formatUkPhoneInput(event.target.value));
     setError('');
     setResendNotice('');
   };
@@ -185,8 +173,8 @@ export default function CheckoutLoginModal({
   const submitPhone = async (event?: FormEvent) => {
     event?.preventDefault();
     if (submissionRef.current) return;
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length !== 10) {
+    const canonicalPhone = normalizePhoneNumber(phone);
+    if (!canonicalPhone) {
       setError('Please enter a valid mobile number.');
       phoneRef.current?.focus();
       return;
@@ -196,13 +184,13 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      const account = await checkAccount(`+44${digits}`);
+      const account = await checkAccount(canonicalPhone);
       if (!account.phoneExists) {
         setError('We could not find an account with this phone number.');
         phoneRef.current?.focus();
         return;
       }
-      await sendOTP(`+44${digits}`);
+      await sendOTP(canonicalPhone, 'login');
       setOtp('');
       setResendSeconds(30);
       setView('login-otp');
@@ -244,7 +232,7 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      const result = await verifyOTP(otp);
+      const result = await verifyOTP(otp, 'login');
       if (!result.accountExists) {
         setError('We could not find an account with this phone number.');
         return;
@@ -265,7 +253,7 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      await sendOTP(currentPhone);
+      await sendOTP(currentPhone, view === 'registration-otp' ? 'register' : 'login');
       setResendSeconds(30);
       setResendNotice('A new verification code has been sent.');
     } catch {
@@ -281,12 +269,12 @@ export default function CheckoutLoginModal({
     if (submissionRef.current) return;
     const nextErrors: FieldErrors = {};
     const trimmedName = name.trim();
-    const registrationDigits = registrationPhone.replace(/\D/g, '');
+    const canonicalRegistrationPhone = normalizePhoneNumber(registrationPhone);
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedName || !/[A-Za-z]/.test(trimmedName) || !/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(trimmedName)) {
       nextErrors.name = 'Please enter your name.';
     }
-    if (registrationDigits.length !== 10) nextErrors.phone = 'Please enter a valid phone number.';
+    if (!canonicalRegistrationPhone) nextErrors.phone = 'Please enter a valid phone number.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       nextErrors.email = 'Please enter a valid email address.';
     }
@@ -300,7 +288,7 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      const account = await checkAccount(`+44${registrationDigits}`, trimmedEmail);
+      const account = await checkAccount(canonicalRegistrationPhone!, trimmedEmail);
       if (account.phoneExists || account.emailExists) {
         const duplicateErrors: FieldErrors = {};
         if (account.phoneExists) duplicateErrors.phone = 'An account already exists with this phone number. Sign in instead.';
@@ -310,7 +298,7 @@ export default function CheckoutLoginModal({
         else emailRef.current?.focus();
         return;
       }
-      await sendOTP(`+44${registrationDigits}`);
+      await sendOTP(canonicalRegistrationPhone!, 'register');
       setOtp('');
       setResendSeconds(30);
       setView('registration-otp');
@@ -335,12 +323,39 @@ export default function CheckoutLoginModal({
     setLoading(true);
     setError('');
     try {
-      await verifyOTP(otp);
+      await verifyOTP(otp, 'register');
       await signup(name.trim(), email.trim().toLowerCase());
       completeAuthentication('registration');
     } catch (nextError) {
       setError(customerMessage(nextError, 'We could not create your account. Please try again.'));
       otpRef.current?.focus();
+    } finally {
+      submissionRef.current = false;
+      setLoading(false);
+    }
+  };
+
+  const signInWithRegistrationPhone = async () => {
+    if (submissionRef.current) return;
+    const canonicalPhone = normalizePhoneNumber(registrationPhone);
+    if (!canonicalPhone) {
+      setFieldErrors(current => ({ ...current, phone: 'Please enter a valid phone number.' }));
+      registrationPhoneRef.current?.focus();
+      return;
+    }
+
+    submissionRef.current = true;
+    setLoading(true);
+    setError('');
+    try {
+      setPhone(formatUkPhoneInput(canonicalPhone));
+      await sendOTP(canonicalPhone, 'login');
+      setOtp('');
+      setFieldErrors({});
+      setResendSeconds(30);
+      setView('login-otp');
+    } catch {
+      setError('We could not send the verification code. Please try again.');
     } finally {
       submissionRef.current = false;
       setLoading(false);
@@ -391,8 +406,8 @@ export default function CheckoutLoginModal({
         <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-6 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-7">
           <p id={descriptionId} className="text-center text-sm font-semibold leading-6 text-[#6b5b55]">
             {view === 'phone' && 'Sign in to continue your order.'}
-            {view === 'login-otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
-            {view === 'registration-otp' && `Enter the verification code sent to ${maskPhone(currentPhone)}.`}
+            {view === 'login-otp' && `Enter the verification code sent to ${maskPhoneNumber(currentPhone)}.`}
+            {view === 'registration-otp' && `Enter the verification code sent to ${maskPhoneNumber(currentPhone)}.`}
             {view === 'registration' && 'Enter your details, then verify your phone number.'}
             {view === 'success' && (successKind === 'registration'
               ? `Welcome to Maeme’s, ${name.trim().split(/\s+/)[0] || 'customer'}. Continuing…`
@@ -549,7 +564,7 @@ export default function CheckoutLoginModal({
                     autoComplete="tel-national"
                     value={registrationPhone}
                     onChange={(event) => {
-                      setRegistrationPhone(formatPhoneInput(event.target.value));
+                      setRegistrationPhone(formatUkPhoneInput(event.target.value));
                       setFieldErrors((current) => ({ ...current, phone: undefined }));
                     }}
                     aria-invalid={Boolean(fieldErrors.phone)}
@@ -561,15 +576,10 @@ export default function CheckoutLoginModal({
                 {fieldErrors.phone?.includes('already exists') && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setPhone(registrationPhone);
-                      setView('phone');
-                      setError('');
-                      setFieldErrors({});
-                    }}
+                    onClick={() => void signInWithRegistrationPhone()}
                     className="mt-2 min-h-11 text-sm font-black text-[#99041e] underline underline-offset-4"
                   >
-                    Continue with Phone
+                    Sign In with this Number
                   </button>
                 )}
               </div>

@@ -6,12 +6,11 @@ import { ArrowUp } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon } from './SocialIcons';
 
 const essentialLinks = [
-  { label: 'Customer Enquiries', href: '/contact' },
+  { label: 'Public Menu', href: '/menu' },
   { label: 'Franchising', href: '/franchising' },
   { label: "What's New", href: '/blog' },
   { label: 'Our Food', href: '/food' },
   { label: 'Stores', href: '/branches' },
-  { label: 'Public Menu', href: '/menu' },
 ];
 
 const socialLinks = [
@@ -54,7 +53,7 @@ export default function PublicSiteFooter() {
       <div className="mx-auto max-w-[1320px] px-4 pb-4 pt-5 sm:px-6 sm:pb-7 sm:pt-8 lg:px-8">
         <div className="grid items-center gap-4 md:grid-cols-[1.1fr_0.8fr_1.1fr] md:gap-8">
           <nav aria-label="Public website footer" className="order-2 md:order-1">
-            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 md:justify-start md:gap-x-5 md:gap-y-2">
+            <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:justify-start lg:flex-nowrap lg:gap-x-3 lg:gap-y-0 xl:gap-x-5">
               {essentialLinks.map(link => (
                 <li key={link.href}>
                   <Link

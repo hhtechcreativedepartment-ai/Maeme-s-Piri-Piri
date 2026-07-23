@@ -53,25 +53,25 @@ export default function PublicMenuPage() {
         />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(83,0,14,0.98)_0%,rgba(153,4,30,0.86)_42%,rgba(93,0,16,0.25)_100%)]" />
 
-        <div className="mx-auto grid min-h-[360px] max-w-[1440px] items-center gap-4 px-5 py-10 sm:min-h-[430px] sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
+        <div className="mx-auto grid min-h-[360px] max-w-[1440px] items-center gap-2 px-4 py-8 sm:min-h-[430px] sm:gap-4 sm:px-8 sm:py-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
           <div className="relative z-10 max-w-xl py-5 text-center lg:text-left">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc257]">
               Flame-grilled favourites
             </p>
             <h2
               id="menu-hero-title"
-              className="mt-4 text-5xl font-black uppercase leading-[0.9] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl"
+              className="mt-4 text-[clamp(2.45rem,12vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.04em] text-white"
             >
               Fired up
               <span className="block text-[#ffc257]">with flavour</span>
             </h2>
-            <p className="mx-auto mt-5 max-w-lg text-base font-semibold leading-7 text-white/90 lg:mx-0">
+            <p className="mx-auto mt-5 max-w-lg text-sm font-semibold leading-6 text-white/90 sm:text-base sm:leading-7 lg:mx-0">
               Discover the full Maeme&apos;s menu, from our signature grilled chicken
               to burgers, wraps, sides and sweet finishes.
             </p>
           </div>
 
-          <div className="relative h-[230px] sm:h-[300px] lg:h-[430px]">
+          <div className="relative h-[210px] min-w-0 sm:h-[300px] lg:h-[430px]">
             <img
               src="/images/grilled-composition.png"
               alt="A selection of Maeme's flame-grilled food"
@@ -83,17 +83,17 @@ export default function PublicMenuPage() {
 
       <PublicMenuCategoryNav categories={categories} />
 
-      <div className="mx-auto max-w-[1380px] space-y-20 px-5 py-12 sm:px-8 lg:space-y-24 lg:px-12 lg:py-16">
+      <div className="mx-auto max-w-[1380px] space-y-16 px-4 py-10 sm:space-y-20 sm:px-8 sm:py-12 lg:space-y-24 lg:px-12 lg:py-16">
         {categories.map(category => (
           <section key={category.id} id={category.anchor} className="scroll-mt-28">
-            <div className="mb-8 flex items-center gap-4">
-              <h2 className="shrink-0 text-xl font-black tracking-tight text-[#99041e] sm:text-2xl">
+            <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8 sm:gap-4">
+              <h2 className="min-w-0 text-lg font-black leading-tight tracking-tight text-[#99041e] sm:shrink-0 sm:text-2xl">
                 {category.title}
               </h2>
               <span aria-hidden="true" className="h-px flex-1 bg-[#e8d5ae]" />
             </div>
 
-            <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-14 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
               {category.products.map(product => (
                 <article
                   key={`${category.id}-${product.id}`}

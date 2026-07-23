@@ -58,14 +58,14 @@ export default function PublicMenuCategoryNav({ categories }: PublicMenuCategory
   return (
     <nav
       aria-label="Menu categories"
-      className="sticky top-[var(--site-header-height)] z-30 border-y border-[#eadfca] bg-white/95 px-4 py-3 shadow-[0_8px_22px_rgba(69,25,18,0.06)] backdrop-blur sm:px-6"
+      className="sticky top-[var(--site-header-height)] z-30 border-y border-[#eadfca] bg-white/95 px-2 py-2.5 shadow-[0_8px_22px_rgba(69,25,18,0.06)] backdrop-blur sm:px-6 sm:py-3"
     >
       <div className="mx-auto flex max-w-[1380px] items-center gap-2">
         <button
           type="button"
           aria-label="Scroll categories left"
           onClick={() => scrollCategories('left')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:h-10 sm:w-10"
         >
           ‹
         </button>
@@ -102,7 +102,7 @@ export default function PublicMenuCategoryNav({ categories }: PublicMenuCategory
           type="button"
           aria-label="Scroll categories right"
           onClick={() => scrollCategories('right')}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d7a9a3] bg-white text-lg font-black text-[#99041e] transition hover:border-[#99041e] hover:bg-[#fff5e5] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#ffc257]/60 sm:h-10 sm:w-10"
         >
           ›
         </button>

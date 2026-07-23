@@ -53,25 +53,25 @@ export default function PublicMenuPage() {
         />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(83,0,14,0.98)_0%,rgba(153,4,30,0.86)_42%,rgba(93,0,16,0.25)_100%)]" />
 
-        <div className="mx-auto grid min-h-[360px] max-w-[1440px] items-center gap-2 px-4 py-8 sm:min-h-[430px] sm:gap-4 sm:px-8 sm:py-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
-          <div className="relative z-10 max-w-xl py-5 text-center lg:text-left">
-            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc257]">
+        <div className="mx-auto grid min-h-[310px] max-w-[1440px] items-center gap-0 px-4 py-5 sm:min-h-[430px] sm:gap-4 sm:px-8 sm:py-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
+          <div className="relative z-10 max-w-xl py-2 text-center sm:py-5 lg:text-left">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ffc257] sm:text-sm sm:tracking-[0.24em]">
               Flame-grilled favourites
             </p>
             <h2
               id="menu-hero-title"
-              className="mt-4 text-[clamp(2.45rem,12vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.04em] text-white"
+              className="mt-3 text-[clamp(2.15rem,11vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.04em] text-white sm:mt-4"
             >
               Fired up
               <span className="block text-[#ffc257]">with flavour</span>
             </h2>
-            <p className="mx-auto mt-5 max-w-lg text-sm font-semibold leading-6 text-white/90 sm:text-base sm:leading-7 lg:mx-0">
+            <p className="mx-auto mt-3 max-w-lg text-xs font-semibold leading-5 text-white/90 sm:mt-5 sm:text-base sm:leading-7 lg:mx-0">
               Discover the full Maeme&apos;s menu, from our signature grilled chicken
               to burgers, wraps, sides and sweet finishes.
             </p>
           </div>
 
-          <div className="relative h-[210px] min-w-0 sm:h-[300px] lg:h-[430px]">
+          <div className="relative h-[155px] min-w-0 sm:h-[300px] lg:h-[430px]">
             <img
               src="/images/grilled-composition.png"
               alt="A selection of Maeme's flame-grilled food"

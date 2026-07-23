@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
@@ -24,6 +24,7 @@ import { MENU_DATA } from '@/lib/menuData';
 import { categorySlug } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
 import OrderingHeader from '@/components/ordering/OrderingHeader';
+import CheckoutAuthModal from '@/components/auth/CheckoutAuthModal';
 
 type AddressType = 'Home' | 'Office' | 'Work' | 'Other';
 type PaymentMethod = 'cash' | 'card';
@@ -125,6 +126,9 @@ export default function PremiumCheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState('');
   const [validationMessage, setValidationMessage] = useState('');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const placeOrderRef = useRef<HTMLButtonElement>(null);
+  const orderSubmissionRef = useRef(false);
 
   useEffect(() => {
     const addresses = localStorage.getItem('maemes.checkout.savedAddresses');
@@ -324,6 +328,8 @@ export default function PremiumCheckoutPage() {
   };
 
   const completeOrder = () => {
+    if (orderSubmissionRef.current) return;
+    orderSubmissionRef.current = true;
     const orderItems = items.map((item) => ({
       productId: item.productId,
       name: item.name,
@@ -356,6 +362,7 @@ export default function PremiumCheckoutPage() {
   };
 
   const handlePlaceOrder = () => {
+    if (orderSubmissionRef.current) return;
     const issue = validateCheckout();
     if (issue) {
       setValidationMessage(issue);
@@ -364,7 +371,7 @@ export default function PremiumCheckoutPage() {
 
     if (!user) {
       saveDraftBeforeLogin();
-      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+      setAuthModalOpen(true);
       return;
     }
 
@@ -651,7 +658,9 @@ export default function PremiumCheckoutPage() {
               )}
 
               <button
+                ref={placeOrderRef}
                 onClick={handlePlaceOrder}
+                disabled={orderSubmissionRef.current}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#ffc257] px-5 py-3 text-sm font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e]"
               >
                 <PackageCheck size={18} />
@@ -667,6 +676,15 @@ export default function PremiumCheckoutPage() {
         </div>
       </div>
     </main>
+    <CheckoutAuthModal
+      isOpen={authModalOpen}
+      onClose={() => setAuthModalOpen(false)}
+      onAuthenticated={() => {
+        setAuthModalOpen(false);
+        completeOrder();
+      }}
+      returnFocusRef={placeOrderRef}
+    />
     </>
   );
 }

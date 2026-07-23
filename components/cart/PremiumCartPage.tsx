@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Minus, Pencil, Plus, ShoppingBag, Trash2, Truck } from 'lucide-react';
 import PremiumProductCustomizationModal from '@/components/modals/PremiumProductCustomizationModal';
 import OrderingHeader from '@/components/ordering/OrderingHeader';
@@ -9,6 +9,9 @@ import { CartItem, useCart } from '@/lib/cartContext';
 import { MENU_DATA, MenuItem } from '@/lib/menuData';
 import { getProductConfiguration } from '@/lib/productOptionConfig';
 import { getOrderTypeLabel } from '@/lib/orderTypeDisplay';
+import { useAuth } from '@/lib/authContext';
+import { useRouter } from 'next/navigation';
+import CheckoutAuthModal from '@/components/auth/CheckoutAuthModal';
 
 const recommendedNames = [
   'Loaded Fries',
@@ -59,6 +62,8 @@ function getEditableProduct(item: CartItem) {
 }
 
 export default function PremiumCartPage() {
+  const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const {
     items,
     selectedBranch,
@@ -70,6 +75,9 @@ export default function PremiumCartPage() {
   const [selectedProduct, setSelectedProduct] = useState<MenuItem | null>(null);
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const reviewOrderRef = useRef<HTMLButtonElement>(null);
+  const checkoutNavigationRef = useRef(false);
 
   const productTotal = getCartTotal();
   const deliveryFee = selectedOrderType === 'delivery' ? selectedBranch?.deliveryFee ?? 2.49 : 0;
@@ -111,6 +119,23 @@ export default function PremiumCartPage() {
   const handleAdded = () => {
     setToast('Added to cart');
     window.setTimeout(() => setToast(null), 2600);
+  };
+
+  const continueToCheckout = () => {
+    if (checkoutNavigationRef.current) return;
+    checkoutNavigationRef.current = true;
+    setAuthModalOpen(false);
+    router.push('/checkout');
+  };
+
+  const handleReviewOrder = () => {
+    if (isAuthLoading) return;
+    if (user) {
+      continueToCheckout();
+      return;
+    }
+    checkoutNavigationRef.current = false;
+    setAuthModalOpen(true);
   };
 
   if (items.length === 0) {
@@ -278,12 +303,15 @@ export default function PremiumCartPage() {
                 </div>
               </div>
 
-              <Link
-                href="/checkout"
-                className="mt-6 block rounded-2xl bg-[#ffc257] px-5 py-3 text-center text-sm font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e]"
+              <button
+                ref={reviewOrderRef}
+                type="button"
+                onClick={handleReviewOrder}
+                disabled={isAuthLoading}
+                className="mt-6 block min-h-12 w-full rounded-2xl bg-[#ffc257] px-5 py-3 text-center text-sm font-black text-[#1a120f] shadow-[0_14px_34px_rgba(255,194,87,0.24)] transition hover:bg-[#e5a93e] disabled:cursor-wait disabled:opacity-70"
               >
-                Review Payment
-              </Link>
+                Review Your Order
+              </button>
             </div>
           </aside>
         </div>
@@ -328,6 +356,15 @@ export default function PremiumCartPage() {
           setEditingItem(null);
         }}
         onAdded={handleAdded}
+      />
+      <CheckoutAuthModal
+        isOpen={authModalOpen}
+        onClose={() => {
+          checkoutNavigationRef.current = false;
+          setAuthModalOpen(false);
+        }}
+        onAuthenticated={continueToCheckout}
+        returnFocusRef={reviewOrderRef}
       />
     </main>
     </>

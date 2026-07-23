@@ -17,7 +17,7 @@ export default function OrderingFooter() {
         <nav aria-label="Ordering help and legal" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 sm:justify-start">
           {orderingFooterLinks.map((link) => (
             <Link
-              key={link.href}
+              key={`${link.href}-${link.label}`}
               href={link.href}
               className="inline-flex min-h-10 items-center rounded-lg text-sm font-bold text-white/90 transition hover:text-[#ffc257] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257] focus-visible:ring-offset-2 focus-visible:ring-offset-[#99041e]"
             >

@@ -15,7 +15,7 @@ export default function Header() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Menu', href: '/order' },
+    { label: 'Menu', href: '/menu' },
     { label: 'Our Food', href: '/food' },
     { label: 'Stores', href: '/branches' },
     { label: 'Our App', href: '/app' },

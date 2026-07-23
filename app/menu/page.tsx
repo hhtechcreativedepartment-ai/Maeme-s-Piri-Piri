@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import PublicMenuPage from '@/components/menu/PublicMenuPage';
 
-export default function LegacyMenuPage() {
-  redirect('/order');
+export default function MenuPage() {
+  return <PublicMenuPage />;
 }

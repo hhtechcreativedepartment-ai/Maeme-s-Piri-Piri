@@ -29,7 +29,6 @@ const legalLinks = [
 export default function Footer() {
   const pathname = usePathname();
   const usesOrderingFooter = pathname === '/order/menu'
-    || pathname === '/menu'
     || pathname === '/cart'
     || pathname === '/checkout'
     || pathname === '/account';

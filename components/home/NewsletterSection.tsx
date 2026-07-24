@@ -17,7 +17,7 @@ export default function NewsletterSection() {
     <section className="bg-white px-4 py-4 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1320px] items-center gap-5 rounded-[20px] bg-[var(--maeme-red)] px-5 py-5 text-white shadow-[0_18px_46px_rgba(var(--maeme-red-rgb),0.18)] md:grid-cols-[1fr_minmax(360px,0.92fr)] lg:px-8">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tight">Get Exclusive Deals &amp; Updates</h2>
+          <h2 className="text-[30px] font-bold uppercase leading-[1.02] tracking-[-0.025em] sm:text-2xl sm:font-black sm:leading-normal sm:tracking-tight">Get Exclusive Deals &amp; Updates</h2>
           <p className="mt-1 text-sm font-medium text-white/80">Join our newsletter and never miss an offer!</p>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:gap-0">

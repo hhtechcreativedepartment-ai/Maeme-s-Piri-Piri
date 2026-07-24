@@ -1,12 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Flame,
   MapPin,
@@ -21,14 +18,18 @@ import { useCart } from '@/lib/cartContext';
 import OrderTypeModal from '@/components/ordering/OrderTypeModal';
 import AppDownloadSection from '@/components/home/AppDownloadSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
-import { MENU_CATEGORY_DATA } from '@/lib/menuData';
 
-const heroSlides = [
-  { name: 'Maeme’s App Rewards Offer', image: '/images/banners/maemes-app-rewards-offer.png' },
-  { name: 'Chicken Rice Box', image: '/images/banners/carousel-image-no-2.jpg' },
-  { name: '5 Spicy Wings Meal', image: '/images/banners/carousel-image-no-3.jpg' },
-  { name: '5 Chicken Nuggets Meal', image: '/images/banners/carousel-image-no-4.jpg' },
-  { name: 'Signature Milkshakes', image: '/images/banners/carousel-image-no-5.jpg' },
+const heroVideos = [
+  {
+    name: 'Our Food and signature flavours',
+    src: '/videos/our-food/our-food-hero-banner.mp4',
+    poster: '/images/our-food-hero-poster.jpg',
+  },
+  {
+    name: 'Maeme’s app offers and rewards',
+    src: '/videos/our-app-hero-banner.mp4',
+    poster: '/images/our-app-hero-poster.jpg',
+  },
 ];
 
 const processSteps = [
@@ -49,61 +50,24 @@ export default function InternationalHomePage() {
   const router = useRouter();
   const { selectedBranch, selectedOrderType } = useCart();
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const menuCarouselRef = useRef<HTMLDivElement>(null);
-  const [canScrollMenuLeft, setCanScrollMenuLeft] = useState(false);
-  const [canScrollMenuRight, setCanScrollMenuRight] = useState(true);
-
-  const updateMenuCarouselState = () => {
-    const carousel = menuCarouselRef.current;
-    if (!carousel) return;
-
-    const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth;
-    setCanScrollMenuLeft(carousel.scrollLeft > 6);
-    setCanScrollMenuRight(carousel.scrollLeft < maxScrollLeft - 6);
-  };
+  const [activeHeroVideo, setActiveHeroVideo] = useState(0);
+  const heroVideoRefs = useRef<Array<HTMLVideoElement | null>>([]);
 
   useEffect(() => {
-    const carousel = menuCarouselRef.current;
-    if (!carousel) return;
+    heroVideoRefs.current.forEach((video, index) => {
+      if (!video) return;
 
-    updateMenuCarouselState();
-    carousel.addEventListener('scroll', updateMenuCarouselState, { passive: true });
-    window.addEventListener('resize', updateMenuCarouselState);
-
-    return () => {
-      carousel.removeEventListener('scroll', updateMenuCarouselState);
-      window.removeEventListener('resize', updateMenuCarouselState);
-    };
-  }, []);
-
-  const scrollMenuCarousel = (direction: 'left' | 'right') => {
-    const carousel = menuCarouselRef.current;
-    if (!carousel) return;
-
-    const cards = Array.from(
-      carousel.querySelectorAll<HTMLElement>('[data-menu-category-card]'),
-    );
-    if (!cards.length) return;
-
-    const firstCardOffset = cards[0].offsetLeft;
-    const currentIndex = cards.reduce((nearestIndex, card, index) => {
-      const cardScrollPosition = card.offsetLeft - firstCardOffset;
-      const nearestScrollPosition = cards[nearestIndex].offsetLeft - firstCardOffset;
-
-      return Math.abs(cardScrollPosition - carousel.scrollLeft) <
-        Math.abs(nearestScrollPosition - carousel.scrollLeft)
-        ? index
-        : nearestIndex;
-    }, 0);
-    const targetIndex = Math.max(
-      0,
-      Math.min(cards.length - 1, currentIndex + (direction === 'left' ? -1 : 1)),
-    );
-
-    carousel.scrollTo({
-      left: cards[targetIndex].offsetLeft - firstCardOffset,
-      behavior: 'smooth',
+      if (index === activeHeroVideo) {
+        video.currentTime = 0;
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
     });
+  }, [activeHeroVideo]);
+
+  const showNextHeroVideo = () => {
+    setActiveHeroVideo((current) => (current + 1) % heroVideos.length);
   };
 
   const requireOrdering = () => {
@@ -125,122 +89,74 @@ export default function InternationalHomePage() {
       <section className="relative bg-white pb-10 pt-8 max-md:box-border max-md:w-full max-md:max-w-full max-md:pb-5 max-md:pt-3 lg:pb-14">
         <div className="page-container max-md:box-border max-md:w-full max-md:max-w-full">
           <div className="relative aspect-[1920/750] min-h-[168px] min-w-0 overflow-hidden rounded-[26px] border border-[#ead7c7] bg-[#fff8ef] shadow-[0_26px_80px_rgba(63,24,18,0.10)] max-md:box-border max-md:h-auto max-md:w-full max-md:max-w-full max-md:min-h-0 max-md:rounded-[18px] sm:min-h-[260px] lg:min-h-0">
-            {heroSlides.map((slide, index) => (
-              <Image
-                key={slide.name}
-                src={slide.image}
-                alt={slide.name}
-                fill
-                sizes="100vw"
-                priority={index === 0}
-                quality={100}
-                className="maeme-hero-slide pointer-events-none absolute inset-0 object-cover max-md:h-full max-md:w-full max-md:max-w-full"
-                style={{ animationDelay: `${index * 2.5 - 0.5}s` }}
-              />
+            {heroVideos.map((video, index) => (
+              <video
+                key={video.src}
+                ref={(element) => {
+                  heroVideoRefs.current[index] = element;
+                }}
+                autoPlay={index === 0}
+                muted
+                playsInline
+                preload={index === 0 ? 'auto' : 'metadata'}
+                poster={video.poster}
+                controls={false}
+                controlsList="nodownload noremoteplayback"
+                disablePictureInPicture
+                disableRemotePlayback
+                aria-label={video.name}
+                aria-hidden={activeHeroVideo !== index}
+                onEnded={showNextHeroVideo}
+                onError={index === activeHeroVideo ? showNextHeroVideo : undefined}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                  activeHeroVideo === index ? 'z-10 opacity-100' : 'z-0 opacity-0'
+                }`}
+              >
+                <source src={video.src} type="video/mp4" />
+              </video>
             ))}
           </div>
           <div className="flex w-full max-w-full justify-center gap-2 bg-white pt-5 max-md:box-border max-md:pt-3">
-            {heroSlides.map((slide, dot) => (
-              <span
-                key={slide.name}
-                className="maeme-hero-dot h-2.5 rounded-full"
-                style={{ animationDelay: `${dot * 2.5 - 0.5}s` }}
-                aria-hidden="true"
+            {heroVideos.map((video, index) => (
+              <button
+                key={video.src}
+                type="button"
+                onClick={() => setActiveHeroVideo(index)}
+                aria-label={`Show ${video.name} video`}
+                aria-current={activeHeroVideo === index ? 'true' : undefined}
+                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--maeme-red)] focus-visible:ring-offset-2 ${
+                  activeHeroVideo === index ? 'w-8 bg-[var(--maeme-red)]' : 'w-2.5 bg-[#d8d0ca] hover:bg-[#bfb4ad]'
+                }`}
               />
             ))}
           </div>
         </div>
       </section>
 
-      <section className="maeme-menu-carousel-section bg-white py-14 max-md:w-full max-md:max-w-full max-md:py-7 sm:py-16 lg:py-20">
-        <div className="mx-auto max-w-[1320px] px-4 max-md:box-border max-md:w-full max-md:min-w-0 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col gap-5 max-md:mb-6 max-md:gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--maeme-red)]">Explore our</p>
-              <h2 className="mt-2 text-[32px] font-black uppercase tracking-tight max-md:text-[clamp(25px,7.4vw,30px)] max-md:leading-none sm:text-5xl">
-                <span>Menu </span>
-                <span className="text-[var(--maeme-red)]">Categories</span>
-              </h2>
-              <div className="mt-4 h-1.5 w-20 rounded-full bg-[var(--maeme-yellow)] max-md:mt-3" />
-            </div>
-            <Link href="/menu" className="inline-flex items-center gap-2 text-sm font-black text-[var(--maeme-red)]">
-              View Full Menu <ArrowRight size={17} />
-            </Link>
-          </div>
-
-          <div className="flex min-w-0 items-center gap-4 py-3 max-md:w-full max-md:max-w-full max-md:gap-0 max-md:py-0">
-            <button
-              type="button"
-              onClick={() => scrollMenuCarousel('left')}
-              disabled={!canScrollMenuLeft}
-              className="maeme-menu-carousel-arrow relative z-10 hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(var(--maeme-red-rgb),0.14)] bg-white text-[#1f1210] shadow-[0_8px_22px_rgba(31,18,16,0.06)] transition hover:border-[rgba(var(--maeme-red-rgb),0.28)] hover:text-[var(--maeme-red)] hover:shadow-[0_12px_28px_rgba(31,18,16,0.09)] disabled:pointer-events-none disabled:opacity-30 md:flex"
-              aria-label="Scroll menu categories left"
-            >
-              <ChevronLeft size={21} strokeWidth={2.4} />
-            </button>
-
-            <div
-              ref={menuCarouselRef}
-              className="maeme-menu-carousel-track flex min-w-0 flex-1 snap-x snap-mandatory scroll-px-2 items-stretch gap-4 overflow-x-auto scroll-smooth px-2 pb-7 pt-2 [scrollbar-width:none] max-md:w-full max-md:max-w-full max-md:touch-pan-x max-md:gap-3 max-md:overscroll-x-contain max-md:pb-2 max-md:pt-1 sm:gap-5 [&::-webkit-scrollbar]:hidden"
-            >
-              {MENU_CATEGORY_DATA.map((category) => (
-              <Link
-                key={category.id}
-                data-menu-category-card
-                href={`/menu#${category.anchor}`}
-                className="maeme-menu-category-card group flex h-[232px] w-[78vw] min-w-[236px] max-w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-[16px] border border-[#ead8c6] bg-[#FFFFFF] p-4 text-left shadow-[0_10px_26px_rgba(31,18,16,0.045)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(var(--maeme-red-rgb),0.22)] hover:shadow-[0_16px_34px_rgba(31,18,16,0.08)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--maeme-yellow)]/30 max-md:h-[clamp(184px,50vw,215px)] max-md:w-[clamp(190px,62vw,246px)] max-md:min-w-[clamp(190px,62vw,246px)] max-md:max-w-[246px] max-md:p-3 sm:h-[244px] sm:w-[calc((100%-40px)/3)] sm:min-w-[226px] sm:max-w-none lg:w-[calc((100%-80px)/5)] lg:min-w-[0]"
-              >
-                <h3 className="min-h-[38px] text-sm font-black uppercase leading-tight tracking-[0.025em] text-[#1f1210] max-md:min-h-[30px] max-md:text-xs sm:text-[15px]">
-                  {category.title}
-                </h3>
-                <span className="mt-3 flex min-h-0 flex-1 items-center justify-center px-3 py-4 max-md:mt-1 max-md:px-1 max-md:py-2">
-                  <img
-                    src={category.image}
-                    alt={`${category.title} category`}
-                    className="max-h-[150px] w-full object-contain object-center transition-transform duration-300 ease-out group-hover:scale-[1.018] max-md:h-full max-md:max-h-[132px] max-md:max-w-full sm:max-h-[158px]"
-                  />
-                </span>
-              </Link>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => scrollMenuCarousel('right')}
-              disabled={!canScrollMenuRight}
-              className="maeme-menu-carousel-arrow relative z-10 hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(var(--maeme-red-rgb),0.14)] bg-white text-[#1f1210] shadow-[0_8px_22px_rgba(31,18,16,0.06)] transition hover:border-[rgba(var(--maeme-red-rgb),0.28)] hover:text-[var(--maeme-red)] hover:shadow-[0_12px_28px_rgba(31,18,16,0.09)] disabled:pointer-events-none disabled:opacity-30 md:flex"
-              aria-label="Scroll menu categories right"
-            >
-              <ChevronRight size={21} strokeWidth={2.4} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden bg-white py-14 sm:py-16 lg:py-20">
-        <div className="mx-auto grid max-w-[1320px] items-center gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+      <section className="relative overflow-hidden bg-white py-8 sm:py-12 lg:py-20">
+        <div className="mx-auto grid max-w-[1320px] items-center gap-4 px-4 sm:gap-7 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 lg:px-8">
           <div className="relative z-10">
-            <h2 className="text-5xl font-black uppercase leading-[0.95] tracking-tight sm:text-6xl">
+            <h2 className="text-[30px] font-bold uppercase leading-[1.02] tracking-[-0.025em] sm:text-5xl sm:font-black sm:leading-[0.98] lg:text-6xl">
               Made Fresh.
               <br />
               <span className="text-[var(--maeme-red)]">Grilled to Perfection.</span>
             </h2>
-            <p className="mt-5 text-2xl font-black text-[var(--maeme-yellow)]">That&apos;s the Maeme&apos;s Promise.</p>
-            <p className="mt-4 max-w-lg text-base leading-7 text-[#6f5f5a]">
+            <p className="mt-3 text-lg font-bold text-[var(--maeme-yellow)] sm:mt-5 sm:text-2xl sm:font-black">That&apos;s the Maeme&apos;s Promise.</p>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-[#6f5f5a] sm:mt-4 sm:text-base sm:leading-7">
               Chicken marinated with signature Piri Piri, grilled over flame and served with the crisp sides you crave.
             </p>
             <button
               onClick={handleMenuAction}
-              className="mt-8 inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-[var(--maeme-red)] px-7 text-sm font-black text-white transition hover:bg-[var(--maeme-red-dark)]"
+              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--maeme-red)] px-6 text-sm font-bold text-white transition hover:bg-[var(--maeme-red-dark)] sm:mt-8 sm:min-h-12 sm:gap-3 sm:px-7 sm:font-black"
             >
               Order Now <ArrowRight size={18} />
             </button>
           </div>
-          <div className="relative flex min-h-[340px] items-center justify-center sm:min-h-[440px]">
+          <div className="relative flex min-h-[210px] items-center justify-center sm:min-h-[360px] lg:min-h-[440px]">
             <img
               src="/images/grilled-composition.png"
               alt="Maeme's grilled chicken meal composition"
-              className="relative z-10 h-[360px] w-full object-contain drop-shadow-[0_34px_38px_rgba(63,24,18,0.22)] sm:h-[460px] lg:h-[540px]"
+              className="relative z-10 h-[220px] w-full object-contain drop-shadow-[0_22px_28px_rgba(63,24,18,0.18)] sm:h-[380px] sm:drop-shadow-[0_34px_38px_rgba(63,24,18,0.22)] lg:h-[540px]"
             />
           </div>
         </div>
@@ -248,53 +164,53 @@ export default function InternationalHomePage() {
 
       <AppDownloadSection />
 
-      <section className="relative overflow-hidden bg-white py-20 sm:py-24 lg:py-28">
+      <section className="relative overflow-hidden bg-white py-10 sm:py-14 lg:py-16">
         <div className="mx-auto max-w-[1380px] px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="mx-auto flex max-w-[520px] items-center justify-center gap-7">
-              <span className="h-px w-20 bg-[var(--maeme-yellow)]/75" />
-              <div className="flex flex-col items-center gap-3">
-                <Flame size={28} fill="var(--maeme-yellow)" strokeWidth={0} className="text-[var(--maeme-yellow)]" />
-                <p className="text-sm font-black uppercase tracking-[0.48em] text-[var(--maeme-red)]">How it works</p>
+            <div className="mx-auto flex max-w-[420px] items-center justify-center gap-4 sm:gap-6">
+              <span className="h-px w-12 bg-[var(--maeme-yellow)]/75 sm:w-20" />
+              <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                <Flame size={20} fill="var(--maeme-yellow)" strokeWidth={0} className="text-[var(--maeme-yellow)] sm:h-6 sm:w-6" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.34em] text-[var(--maeme-red)] sm:text-xs sm:tracking-[0.42em]">How it works</p>
               </div>
-              <span className="h-px w-20 bg-[var(--maeme-yellow)]/75" />
+              <span className="h-px w-12 bg-[var(--maeme-yellow)]/75 sm:w-20" />
             </div>
-            <h2 className="mt-14 text-[44px] font-black leading-none tracking-tight text-[#1f1210] sm:text-6xl lg:text-[76px]">
+            <h2 className="mt-6 text-[30px] font-bold leading-[1.02] tracking-[-0.025em] text-[#1f1210] sm:mt-8 sm:text-4xl sm:font-extrabold lg:text-[52px]">
               Simple. Fast. <span className="text-[var(--maeme-red)]">Delicious.</span>
             </h2>
-            <div className="mx-auto mt-9 h-1.5 w-28 rounded-full bg-[var(--maeme-yellow)]" />
-            <p className="mt-9 text-lg font-medium leading-8 text-[#4f4541] sm:text-2xl">
+            <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-[var(--maeme-yellow)] sm:mt-5 sm:w-20" />
+            <p className="mt-4 text-sm font-normal leading-6 text-[#4f4541] sm:mt-5 sm:text-lg">
               From our grill to your door - in just a few easy steps.
             </p>
           </div>
 
-          <div className="mt-20 grid gap-y-14 md:grid-cols-2 md:gap-x-10 lg:grid-cols-4 lg:gap-x-16">
+          <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-7 sm:mt-10 sm:gap-x-6 sm:gap-y-9 md:gap-x-10 lg:grid-cols-4 lg:gap-x-12">
             {processSteps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <article key={step.title} className="relative text-center">
-                  <div className="relative mx-auto flex h-[150px] w-[150px] items-center justify-center rounded-[22px] border border-[#ead7c7] bg-white shadow-[0_18px_48px_rgba(63,24,18,0.06)]">
-                    <span className="absolute -left-4 -top-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--maeme-yellow)] text-lg font-black text-[#1f1210] shadow-[0_12px_26px_rgba(var(--maeme-yellow-rgb),0.26)]">
+                  <div className="relative mx-auto flex h-[82px] w-[82px] items-center justify-center rounded-[16px] border border-[#ead7c7] bg-white shadow-[0_12px_30px_rgba(63,24,18,0.05)] sm:h-[112px] sm:w-[112px] sm:rounded-[20px] lg:h-[126px] lg:w-[126px]">
+                    <span className="absolute -left-2 -top-3 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--maeme-yellow)] text-xs font-bold text-[#1f1210] shadow-[0_8px_18px_rgba(var(--maeme-yellow-rgb),0.22)] sm:-left-3 sm:-top-4 sm:h-10 sm:w-10 sm:text-sm">
                       {index + 1}
                     </span>
-                    <span className="flex h-[106px] w-[106px] items-center justify-center rounded-full bg-[rgba(var(--maeme-red-rgb),0.06)] text-[var(--maeme-red)]">
-                      <Icon size={54} strokeWidth={1.9} />
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(var(--maeme-red-rgb),0.06)] text-[var(--maeme-red)] sm:h-20 sm:w-20 lg:h-[88px] lg:w-[88px]">
+                      <Icon size={29} strokeWidth={1.8} className="sm:h-10 sm:w-10 lg:h-11 lg:w-11" />
                     </span>
                   </div>
 
                   {index < processSteps.length - 1 && (
-                    <div className="absolute left-[calc(50%+102px)] top-[74px] hidden w-[124px] items-center lg:flex">
+                    <div className="absolute left-[calc(50%+86px)] top-[62px] hidden w-[92px] items-center lg:flex">
                       <span className="h-px flex-1 border-t border-dashed border-[var(--maeme-red)]/45" />
-                      <span className="mx-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--maeme-red)] bg-white">
-                        <span className="h-3.5 w-3.5 rounded-full bg-[var(--maeme-red)]" />
+                      <span className="mx-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-[var(--maeme-red)] bg-white">
+                        <span className="h-2.5 w-2.5 rounded-full bg-[var(--maeme-red)]" />
                       </span>
                       <span className="h-px flex-1 border-t border-dashed border-[var(--maeme-red)]/45" />
                     </div>
                   )}
 
-                  <h3 className="mt-10 text-2xl font-black leading-tight text-[#1f1210]">{step.title}</h3>
-                  <div className="mx-auto mt-5 h-0.5 w-16 bg-[var(--maeme-yellow)]" />
-                  <p className="mx-auto mt-7 max-w-[210px] text-base leading-8 text-[#4f4541]">{step.copy}</p>
+                  <h3 className="mt-3 text-sm font-bold leading-tight text-[#1f1210] sm:mt-5 sm:text-lg sm:font-extrabold lg:text-xl">{step.title}</h3>
+                  <div className="mx-auto mt-2 h-0.5 w-8 bg-[var(--maeme-yellow)] sm:mt-3 sm:w-12" />
+                  <p className="mx-auto mt-2 max-w-[160px] text-xs leading-5 text-[#4f4541] sm:mt-3 sm:max-w-[190px] sm:text-sm sm:leading-6">{step.copy}</p>
                 </article>
               );
             })}
@@ -306,7 +222,7 @@ export default function InternationalHomePage() {
         <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
           <div className="mb-9 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-4xl font-black tracking-tight text-[#1f1210]">Find your nearest Maeme&apos;s</h2>
+              <h2 className="text-[30px] font-bold leading-[1.02] tracking-[-0.025em] text-[#1f1210] sm:text-4xl sm:font-black sm:leading-normal sm:tracking-tight">Find your nearest Maeme&apos;s</h2>
               <p className="mt-2 text-base leading-7 text-[#6f5f5a]">Fresh flame-grilled flavour, ready for collection or delivery.</p>
             </div>
             <Link href="/branches" className="inline-flex items-center gap-2 text-sm font-black text-[var(--maeme-red)]">

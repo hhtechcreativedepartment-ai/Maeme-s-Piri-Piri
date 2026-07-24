@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import PostcodeModalHost from '@/components/ordering/PostcodeModalHost'
 import AssistantLoader from '@/components/assistant/AssistantLoader'
+import EnquiryLoader from '@/components/enquiry/EnquiryLoader'
 import { AuthProvider } from '@/lib/authContext'
 import { CartProvider } from '@/lib/cartContext'
 import { FavouritesProvider } from '@/lib/favouritesContext'
@@ -49,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-[#ededed]" suppressHydrationWarning>
-      <body className="antialiased bg-[#ededed] text-[#1F1F1F]">
+      <body className="flex min-h-[100dvh] flex-col antialiased bg-[#ededed] text-[#1F1F1F]">
         <AuthProvider>
           <CartProvider>
             <OrdersProvider>
@@ -57,7 +58,8 @@ export default function RootLayout({
             <Header />
             <PostcodeModalHost />
             <AssistantLoader />
-            <main className="min-h-screen pt-[var(--site-header-height)]">
+            <EnquiryLoader />
+            <main className="min-h-0 flex-1 pt-[var(--site-header-height)]">
               {children}
             </main>
             <Footer />

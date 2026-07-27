@@ -344,7 +344,7 @@ export default function CheckoutLoginModal({
 
   const modal = (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-[#2b0710]/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-[#2b0710]/60 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:p-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pt-[max(0.75rem,env(safe-area-inset-top))]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) closeModal();
       }}
@@ -356,10 +356,10 @@ export default function CheckoutLoginModal({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         onKeyDown={handleDialogKeyDown}
-        className="flex max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-[460px] flex-col overflow-hidden rounded-[24px] border border-[#e5a93e] bg-[#fffaf2] shadow-[0_24px_70px_rgba(43,7,16,0.24)]"
+        className="flex max-h-[calc(100dvh-16px)] w-full max-w-[460px] flex-col overflow-hidden rounded-[20px] border border-[#e5a93e] bg-[#fffaf2] shadow-[0_24px_70px_rgba(43,7,16,0.24)] sm:max-h-[calc(100dvh-24px)] sm:rounded-[24px]"
       >
-        <header className="relative flex min-h-[76px] shrink-0 items-center justify-center bg-[#ffc257] px-16 py-4">
-          <h2 id={titleId} className="text-center text-2xl font-black text-[#99041e]">
+        <header className="relative flex min-h-[68px] shrink-0 items-center justify-center bg-[#ffc257] px-14 py-3 sm:min-h-[76px] sm:px-16 sm:py-4">
+          <h2 id={titleId} className="text-center text-xl font-black leading-tight text-[#99041e] sm:text-2xl">
             {view === 'registration'
               ? 'Create New Account'
               : view === 'registration-otp'
@@ -375,13 +375,13 @@ export default function CheckoutLoginModal({
             onClick={closeModal}
             disabled={loading}
             aria-label="Close sign in"
-            className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#99041e] text-white transition hover:bg-[#7f0318] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white disabled:opacity-60"
+            className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#99041e] text-white transition hover:bg-[#7f0318] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white disabled:opacity-60 sm:right-4 sm:h-11 sm:w-11"
           >
             <X size={22} aria-hidden="true" />
           </button>
         </header>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-6 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-7">
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 [-webkit-overflow-scrolling:touch] sm:px-7 sm:py-7">
           <p id={descriptionId} className="text-center text-sm font-semibold leading-6 text-[#6b5b55]">
             {view === 'sign-in' && 'Sign in to continue your order.'}
             {view === 'login-otp' && `Enter the verification code sent to ${maskPhoneNumber(currentPhone)}.`}

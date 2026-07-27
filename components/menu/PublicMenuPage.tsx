@@ -53,25 +53,25 @@ export default function PublicMenuPage() {
         />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(83,0,14,0.98)_0%,rgba(153,4,30,0.86)_42%,rgba(93,0,16,0.25)_100%)]" />
 
-        <div className="mx-auto grid min-h-[360px] max-w-[1440px] items-center gap-4 px-5 py-10 sm:min-h-[430px] sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
-          <div className="relative z-10 max-w-xl py-5 text-center lg:text-left">
-            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#ffc257]">
+        <div className="mx-auto grid min-h-[310px] max-w-[1440px] items-center gap-0 px-4 py-5 sm:min-h-[430px] sm:gap-4 sm:px-8 sm:py-10 lg:grid-cols-[0.8fr_1.2fr] lg:px-12 lg:py-0">
+          <div className="relative z-10 max-w-xl py-2 text-center sm:py-5 lg:text-left">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ffc257] sm:text-sm sm:tracking-[0.24em]">
               Flame-grilled favourites
             </p>
             <h2
               id="menu-hero-title"
-              className="mt-4 text-5xl font-black uppercase leading-[0.9] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl"
+              className="mt-3 text-[clamp(2.15rem,11vw,4.5rem)] font-black uppercase leading-[0.9] tracking-[-0.04em] text-white sm:mt-4"
             >
               Fired up
               <span className="block text-[#ffc257]">with flavour</span>
             </h2>
-            <p className="mx-auto mt-5 max-w-lg text-base font-semibold leading-7 text-white/90 lg:mx-0">
+            <p className="mx-auto mt-3 max-w-lg text-xs font-semibold leading-5 text-white/90 sm:mt-5 sm:text-base sm:leading-7 lg:mx-0">
               Discover the full Maeme&apos;s menu, from our signature grilled chicken
               to burgers, wraps, sides and sweet finishes.
             </p>
           </div>
 
-          <div className="relative h-[230px] sm:h-[300px] lg:h-[430px]">
+          <div className="relative h-[155px] min-w-0 sm:h-[300px] lg:h-[430px]">
             <img
               src="/images/grilled-composition.png"
               alt="A selection of Maeme's flame-grilled food"
@@ -83,41 +83,41 @@ export default function PublicMenuPage() {
 
       <PublicMenuCategoryNav categories={categories} />
 
-      <div className="mx-auto max-w-[1380px] space-y-20 px-5 py-12 sm:px-8 lg:space-y-24 lg:px-12 lg:py-16">
+      <div className="mx-auto max-w-[1380px] space-y-16 px-4 py-10 sm:space-y-20 sm:px-8 sm:py-12 lg:space-y-24 lg:px-12 lg:py-16">
         {categories.map(category => (
           <section key={category.id} id={category.anchor} className="scroll-mt-28">
-            <div className="mb-8 flex items-center gap-4">
-              <h2 className="shrink-0 text-xl font-black tracking-tight text-[#99041e] sm:text-2xl">
+            <div className="mb-7 flex min-w-0 items-center gap-3 sm:mb-8 sm:gap-4">
+              <h2 className="min-w-0 text-lg font-black leading-tight tracking-tight text-[#99041e] sm:shrink-0 sm:text-2xl">
                 {category.title}
               </h2>
               <span aria-hidden="true" className="h-px flex-1 bg-[#e8d5ae]" />
             </div>
 
-            <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-14 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-10 xl:gap-y-16">
               {category.products.map(product => (
                 <article
                   key={`${category.id}-${product.id}`}
-                  className="group flex min-w-0 flex-col"
+                  className="group flex min-h-[152px] min-w-0 flex-row items-stretch gap-4 overflow-hidden rounded-[18px] border border-[#f0e0ca] bg-white p-4 shadow-[0_6px_20px_rgba(50,24,16,0.05)] sm:min-h-0 sm:flex-col sm:gap-0 sm:overflow-visible sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none"
                 >
-                  <div className="flex h-56 items-center justify-center sm:h-60 lg:h-64">
+                  <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center self-center overflow-hidden rounded-[14px] bg-white sm:h-60 sm:w-full sm:self-auto sm:overflow-visible sm:rounded-none lg:h-64">
                     <img
                       src={product.image}
                       alt={product.name}
                       loading="lazy"
-                      className="h-full w-full scale-[1.06] object-contain transition-transform duration-300 group-hover:scale-[1.1]"
+                      className="h-full w-full object-contain p-1 transition-transform duration-300 group-hover:scale-[1.04] sm:scale-[1.06] sm:p-0 sm:group-hover:scale-[1.1]"
                     />
                   </div>
 
-                  <div className="mt-5 flex flex-1 flex-col">
-                    <h3 className="text-base font-black leading-tight text-[#99041e]">
+                  <div className="flex min-h-[120px] min-w-0 flex-1 flex-col py-0 sm:mt-5 sm:min-h-0">
+                    <h3 className="line-clamp-2 text-[15px] font-black leading-[1.18] text-[#99041e] sm:text-base sm:leading-tight">
                       {product.name}
                     </h3>
                     {product.description && (
-                      <p className="mt-2 text-xs font-semibold leading-5 text-[#6b514a]">
+                      <p className="mt-1.5 line-clamp-3 text-xs font-semibold leading-[1.45] text-[#6b514a] sm:mt-2 sm:leading-5">
                         {product.description}
                       </p>
                     )}
-                    <p className="mt-auto pt-3 text-left text-[10px] font-black uppercase tracking-[0.1em] text-[#99041e]">
+                    <p className="mt-auto border-t border-[#f0d59d]/70 pt-2 text-left text-[10px] font-black uppercase tracking-[0.1em] text-[#99041e] sm:border-0 sm:pt-3">
                       {typeof product.kcal === 'number'
                         ? `${product.kcal} kcal`
                         : `${getEstimatedKcal(product.id, product.category)} kcal`}

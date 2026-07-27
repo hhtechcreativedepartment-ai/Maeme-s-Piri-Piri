@@ -107,7 +107,7 @@ export default function InternationalHomePage() {
                 aria-hidden={activeHeroVideo !== index}
                 onEnded={showNextHeroVideo}
                 onError={index === activeHeroVideo ? showNextHeroVideo : undefined}
-                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${
+                className={`absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-700 ${
                   activeHeroVideo === index ? 'z-10 opacity-100' : 'z-0 opacity-0'
                 }`}
               >

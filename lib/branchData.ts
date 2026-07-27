@@ -22,6 +22,104 @@ export interface Branch {
   deliveryFee: number;
 }
 
+export type UpcomingBranchStatus = 'opening-soon' | 'coming-soon' | 'upcoming' | 'planned' | 'launching-soon' | 'cancelled' | 'archived';
+
+export interface UpcomingBranch {
+  branchId: string;
+  branchName: string;
+  townOrCity: string;
+  country?: string;
+  address?: string;
+  postcode?: string;
+  plannedOpeningDate?: string;
+  openingDisplay?: string;
+  status: UpcomingBranchStatus;
+}
+
+export const UPCOMING_BRANCHES: UpcomingBranch[] = [
+  {
+    branchId: 'maemes-leicester',
+    branchName: "Maeme's - Leicester",
+    townOrCity: 'Leicester',
+    address: '47 Evington Lane',
+    postcode: 'LE5 5PR',
+    openingDisplay: 'After 3 Months',
+    status: 'opening-soon',
+  },
+  {
+    branchId: 'maemes-manchester',
+    branchName: "Maeme's - Manchester",
+    townOrCity: 'Manchester',
+    address: '936-938 Stockport Road, Manchester',
+    postcode: 'M19 3NN',
+    status: 'opening-soon',
+  },
+  {
+    branchId: 'maemes-32-church',
+    branchName: "Maeme's 32 Church",
+    townOrCity: 'Church Gate House',
+    address: '32-34 Church Gate House',
+    status: 'opening-soon',
+  },
+  {
+    branchId: 'maemes-basingstoke',
+    branchName: "Maeme's Basingstoke",
+    townOrCity: 'Basingstoke',
+    postcode: 'SO50 4BW',
+    openingDisplay: 'After 3 Months',
+    status: 'opening-soon',
+  },
+];
+
+const upcomingStatuses = new Set<UpcomingBranchStatus>([
+  'opening-soon',
+  'coming-soon',
+  'upcoming',
+  'planned',
+  'launching-soon',
+]);
+
+export function getUpcomingBranches(branches: UpcomingBranch[], currentDate: Date = new Date()): UpcomingBranch[] {
+  const today = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
+
+  return branches
+    .filter((branch) => upcomingStatuses.has(branch.status))
+    .sort((first, second) => {
+      const firstDate = getValidFutureOpeningTime(first.plannedOpeningDate, today);
+      const secondDate = getValidFutureOpeningTime(second.plannedOpeningDate, today);
+
+      if (firstDate === null && secondDate === null) return first.branchName.localeCompare(second.branchName);
+      if (firstDate === null) return 1;
+      if (secondDate === null) return -1;
+      return firstDate - secondDate;
+    });
+}
+
+export function formatUpcomingBranchStatus(branch: UpcomingBranch, currentDate: Date = new Date()): string {
+  if (branch.openingDisplay) return branch.openingDisplay;
+  if (!branch.plannedOpeningDate) return 'Opening Soon';
+
+  const openingDate = parseOpeningDate(branch.plannedOpeningDate);
+  const today = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  if (!openingDate || openingDate.getTime() < today.getTime()) return 'Opening Soon';
+
+  return `Opening ${new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(openingDate)}`;
+}
+
+function getValidFutureOpeningTime(value: string | undefined, today: number): number | null {
+  const date = value ? parseOpeningDate(value) : null;
+  return date && date.getTime() >= today ? date.getTime() : null;
+}
+
+function parseOpeningDate(value: string): Date | null {
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export const BRANCHES: Branch[] = [
   {
     branchId: 'maemes-southall',

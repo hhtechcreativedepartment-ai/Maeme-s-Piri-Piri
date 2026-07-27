@@ -17,7 +17,8 @@ import {
   ZoomIn,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { BRANCHES, Branch, formatBranchDisplay } from '@/lib/branchData';
+import OpeningSoonBranchesSection from '@/components/branches/OpeningSoonBranchesSection';
+import { BRANCHES, Branch, formatBranchDisplay, UPCOMING_BRANCHES } from '@/lib/branchData';
 import { useCart } from '@/lib/cartContext';
 
 type StoreStatus = 'open' | 'opening' | 'closing' | 'closed';
@@ -105,16 +106,18 @@ export default function BranchesPage() {
 
   return (
     <main className="min-h-screen bg-[#FFF9F1] text-[#351817]">
-      <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <header className="mb-7">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-[#99041E]">Branch locator</p>
-          <h1 className="mt-2 text-4xl font-black tracking-[-0.04em] sm:text-5xl">Find your Maeme&apos;s</h1>
+      <div className="mx-auto max-w-[1440px] px-4 py-9 sm:px-6 lg:px-8 lg:py-14">
+        <header className="mb-8 border-l-4 border-[#FFC257] pl-4 sm:pl-5">
+          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#99041E]">Branch locator</p>
+          <h1 className="mt-2 text-4xl font-black tracking-[-0.04em] text-[#351817] sm:text-5xl">Find your Maeme&apos;s</h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-[#715D57] sm:text-base sm:leading-7">
             Search by postcode or city, choose your nearest branch, then start a delivery or collection order.
           </p>
         </header>
 
-        <div className="mb-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,44fr)_minmax(0,56fr)] lg:gap-7">
+        <OpeningSoonBranchesSection branches={UPCOMING_BRANCHES} />
+
+        <div className="mb-6 grid min-w-0 gap-3 rounded-[22px] border border-[#EED9CB] bg-white/70 p-3 shadow-[0_14px_40px_rgba(74,32,20,0.045)] backdrop-blur-sm sm:p-4 lg:grid-cols-[minmax(0,44fr)_minmax(0,56fr)] lg:gap-4">
           <StoreSearch query={query} onQueryChange={setQuery} />
           <StatusFilters activeStatuses={activeStatuses} onToggle={toggleStatus} />
         </div>
@@ -139,7 +142,7 @@ export default function BranchesPage() {
           <section className={`${viewMode === 'map' ? 'hidden lg:block' : 'block'} min-w-0`} aria-label="Branch results">
             <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-black text-[#351817]">{visibleBranches.length} branch{visibleBranches.length === 1 ? '' : 'es'} found</p>
-              <p className="text-xs font-semibold text-[#806B64]">Delivery and collection available at most stores</p>
+              <p className="text-xs font-medium text-[#806B64]">Delivery and collection available at most branches</p>
             </div>
 
             {visibleBranches.length === 0 ? (
@@ -191,7 +194,7 @@ export default function BranchesPage() {
 function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (value: string) => void }) {
   return (
     <div className="flex min-w-0 gap-3">
-      <label className="relative flex min-h-14 min-w-0 flex-1 items-center rounded-2xl border border-[#EBCFBC] bg-white shadow-[0_12px_34px_rgba(86,34,25,0.06)] focus-within:border-[#99041E] focus-within:ring-4 focus-within:ring-[#99041E]/10">
+      <label className="relative flex min-h-14 min-w-0 flex-1 items-center rounded-xl border border-[#E5CBBB] bg-white shadow-sm transition focus-within:border-[#99041E] focus-within:ring-4 focus-within:ring-[#99041E]/8">
         <Search className="absolute left-4 text-[#99041E]" size={19} />
         <input
           value={query}
@@ -206,7 +209,7 @@ function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (
           </button>
         )}
       </label>
-      <button type="button" aria-label="Branch filter settings" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#EBCFBC] bg-white text-[#99041E] shadow-sm transition hover:-translate-y-0.5 hover:border-[#99041E]/35">
+      <button type="button" aria-label="Branch filter settings" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[#E5CBBB] bg-white text-[#99041E] shadow-sm transition hover:border-[#99041E]/35 hover:bg-[#FFF8F2]">
         <Settings2 size={20} />
       </button>
     </div>
@@ -215,7 +218,7 @@ function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (
 
 function StatusFilters({ activeStatuses, onToggle }: { activeStatuses: StoreStatus[]; onToggle: (status: StoreStatus) => void }) {
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-[#EBCFBC] bg-white shadow-[0_12px_34px_rgba(86,34,25,0.05)] sm:grid-cols-4" aria-label="Filter branches by status">
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#E5CBBB] bg-white shadow-sm sm:grid-cols-4" aria-label="Filter branches by status">
       {statusOptions.map((status) => {
         const active = activeStatuses.includes(status.id);
         return (
@@ -224,8 +227,8 @@ function StatusFilters({ activeStatuses, onToggle }: { activeStatuses: StoreStat
             type="button"
             onClick={() => onToggle(status.id)}
             aria-pressed={active}
-            className={`flex min-h-14 min-w-0 items-center justify-center gap-2 border-[#F0DED2] px-2 text-[11px] font-black transition sm:border-l sm:px-3 sm:text-xs ${
-              active ? 'bg-[#FFF9F1] text-[#351817]' : 'bg-white text-[#9D8981] opacity-65'
+            className={`flex min-h-14 min-w-0 items-center justify-center gap-2 border-[#F0DED2] px-2 text-[11px] font-bold transition first:border-l-0 sm:border-l sm:px-3 sm:text-xs ${
+              active ? 'bg-[#FFF7EC] text-[#351817]' : 'bg-white text-[#9D8981] opacity-60 hover:opacity-100'
             }`}
           >
             <span className={`h-3 w-3 rounded-full ${status.dot} ${active ? 'ring-4 ring-current/10' : ''}`} />
@@ -259,29 +262,34 @@ const StoreCard = forwardRef<HTMLElement, {
         }
       }}
       aria-label={`${branch.branchName}, ${closed ? 'closed' : 'open now'}`}
-      className={`relative cursor-pointer rounded-[22px] border bg-white p-5 shadow-[0_14px_40px_rgba(74,32,20,0.065)] outline-none transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(74,32,20,0.10)] focus-visible:ring-4 focus-visible:ring-[#FFC257]/45 ${
-        selected ? 'border-[#99041E]/50 ring-2 ring-[#99041E]/8' : 'border-[#E9CDBA]'
+      className={`group relative cursor-pointer overflow-hidden rounded-[22px] border bg-white p-4 shadow-[0_12px_34px_rgba(74,32,20,0.05)] outline-none transition duration-200 hover:-translate-y-0.5 hover:border-[#99041E]/30 hover:shadow-[0_20px_48px_rgba(74,32,20,0.09)] focus-visible:ring-4 focus-visible:ring-[#FFC257]/45 sm:p-5 ${
+        selected ? 'border-[#99041E]/45 shadow-[0_18px_44px_rgba(153,4,30,0.09)]' : 'border-[#E9D3C5]'
       }`}
     >
-      <span className="absolute -left-3 top-5 flex h-8 w-8 items-center justify-center rounded-full border-4 border-[#FFF9F1] bg-[#99041E] text-xs font-black text-white shadow-md">{number}</span>
-      <div className="pl-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-black tracking-[-0.025em] sm:text-2xl">{branch.branchName}</h2>
+      <span className={`absolute inset-x-0 top-0 h-1 transition-colors ${selected ? 'bg-[#99041E]' : 'bg-[#FFC257] group-hover:bg-[#99041E]'}`} />
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFF3DE] text-xs font-black text-[#99041E]">{String(number).padStart(2, '0')}</span>
+            <h2 className="min-w-0 text-xl font-black tracking-[-0.025em] text-[#351817] sm:text-2xl">{branch.branchName}</h2>
+          </div>
           <StoreStatusBadge closed={closed} />
         </div>
-        <p className="mt-3 flex gap-2 text-sm leading-6 text-[#715D57]"><MapPin size={16} className="mt-1 shrink-0 text-[#99041E]" /> {branch.address}, {branch.postcode}</p>
-        <a href={`tel:${branch.phone}`} onClick={(event) => event.stopPropagation()} className="mt-1.5 inline-flex items-center gap-2 text-sm font-semibold text-[#715D57] hover:text-[#99041E]"><Phone size={16} className="text-[#99041E]" /> {branch.phone}</a>
+        <div className="mt-4 grid gap-2 border-t border-[#F1E3DA] pt-3 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-4">
+          <p className="flex gap-2 text-sm leading-6 text-[#715D57]"><MapPin size={16} className="mt-1 shrink-0 text-[#99041E]" /> {branch.address}, {branch.postcode}</p>
+          <a href={`tel:${branch.phone}`} onClick={(event) => event.stopPropagation()} className="inline-flex min-h-6 items-center gap-2 text-sm font-semibold text-[#715D57] transition hover:text-[#99041E]"><Phone size={15} className="text-[#99041E]" /> {branch.phone}</a>
+        </div>
       </div>
 
       <StoreInfoGrid branch={branch} />
 
-      <div className="mt-4 flex flex-wrap gap-3 pl-2">
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${branch.address} ${branch.postcode}`)}`}
           target="_blank"
           rel="noreferrer"
           onClick={(event) => event.stopPropagation()}
-          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[#E4C7B5] bg-white px-4 text-sm font-black text-[#99041E] transition hover:bg-[#FFF4EA] sm:flex-none"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#E4C7B5] bg-white px-4 text-sm font-bold text-[#99041E] transition hover:border-[#99041E]/35 hover:bg-[#FFF8F2]"
         >
           <Navigation size={17} /> Directions
         </a>
@@ -290,7 +298,7 @@ const StoreCard = forwardRef<HTMLElement, {
           onClick={(event) => { event.stopPropagation(); onOrder(); }}
           disabled={closed}
           aria-disabled={closed}
-          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFC257] px-5 text-sm font-black text-[#351817] shadow-sm transition hover:bg-[#F5AF34] active:translate-y-px disabled:cursor-not-allowed disabled:bg-[#E8DFD9] disabled:text-[#A3938B] sm:flex-none"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#99041E] px-5 text-sm font-black text-white shadow-[0_8px_20px_rgba(153,4,30,0.16)] transition hover:bg-[#7D0318] active:translate-y-px disabled:cursor-not-allowed disabled:bg-[#E8DFD9] disabled:text-[#A3938B] disabled:shadow-none"
         >
           <ShoppingBag size={17} /> Order
         </button>
@@ -301,7 +309,7 @@ const StoreCard = forwardRef<HTMLElement, {
 
 function StoreStatusBadge({ closed }: { closed: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.04em] ${closed ? 'bg-[#F8E7E8] text-[#99041E]' : 'bg-[#E8F5ED] text-[#17673B]'}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.04em] ${closed ? 'border-[#F0CDD1] bg-[#FFF3F4] text-[#99041E]' : 'border-[#CFE8D7] bg-[#F2FAF5] text-[#17673B]'}`}>
       <span className={`h-2 w-2 rounded-full ${closed ? 'bg-[#99041E]' : 'bg-[#239653]'}`} />
       {closed ? 'Closed' : 'Open now'}
     </span>
@@ -316,14 +324,14 @@ function StoreInfoGrid({ branch }: { branch: Branch }) {
     { label: 'Minimum order', value: `£${branch.minDeliveryAmount.toFixed(2)} · Delivery £${branch.deliveryFee.toFixed(2)}`, icon: Store },
   ];
   return (
-    <div className="mt-5 grid gap-x-4 gap-y-3 rounded-2xl bg-[#FFF8F2] p-4 sm:grid-cols-2">
+    <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-[#F0DED2] bg-[#FFFBF7] sm:grid-cols-4">
       {items.map(({ label, value, icon: Icon }) => (
-        <div key={label} className="flex gap-2 border-b border-[#F0DED2] pb-3 last:border-0 sm:[&:nth-last-child(-n+2)]:border-0">
-          <Icon size={16} className="mt-0.5 shrink-0 text-[#99041E]" />
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.13em] text-[#99041E]">{label}</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-[#4D3530]">{value}</p>
+        <div key={label} className="min-w-0 border-b border-r border-[#F0DED2] p-3 even:border-r-0 [&:nth-last-child(-n+2)]:border-b-0 sm:border-b-0 sm:even:border-r sm:last:border-r-0">
+          <div className="flex items-center gap-1.5">
+            <Icon size={14} className="shrink-0 text-[#99041E]" />
+            <p className="truncate text-[9px] font-black uppercase tracking-[0.1em] text-[#8A5C51]">{label}</p>
           </div>
+          <p className="mt-1.5 text-[11px] font-bold leading-4 text-[#4D3530] sm:text-xs">{value}</p>
         </div>
       ))}
     </div>

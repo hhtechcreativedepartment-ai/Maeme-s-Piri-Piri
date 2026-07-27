@@ -95,6 +95,19 @@ export function getUpcomingBranches(branches: UpcomingBranch[], currentDate: Dat
     });
 }
 
+export function filterUpcomingBranches(branches: UpcomingBranch[], query: string): UpcomingBranch[] {
+  const normalised = query.trim().toLowerCase();
+  if (!normalised) return branches;
+
+  return branches.filter((branch) => [
+    branch.branchName,
+    branch.townOrCity,
+    branch.address,
+    branch.postcode,
+    branch.country,
+  ].filter(Boolean).join(' ').toLowerCase().includes(normalised));
+}
+
 export function formatUpcomingBranchStatus(branch: UpcomingBranch, currentDate: Date = new Date()): string {
   if (branch.openingDisplay) return branch.openingDisplay;
   if (!branch.plannedOpeningDate) return 'Opening Soon';

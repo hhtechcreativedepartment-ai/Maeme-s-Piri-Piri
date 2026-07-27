@@ -16,7 +16,6 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import OpeningSoonBranchesSection from '@/components/branches/OpeningSoonBranchesSection';
 import { BRANCHES, Branch, formatBranchDisplay, UPCOMING_BRANCHES } from '@/lib/branchData';
 import { useCart } from '@/lib/cartContext';
@@ -49,10 +48,10 @@ function todayHours(branch: Branch) {
 }
 
 export default function BranchesPage() {
-  const router = useRouter();
   const { selectBranch } = useCart();
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const [query, setQuery] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeStatuses, setActiveStatuses] = useState<StoreStatus[]>(['open', 'opening', 'closing', 'closed']);
   const [selectedId, setSelectedId] = useState(BRANCHES[0].branchId);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -96,7 +95,7 @@ export default function BranchesPage() {
     if (branch.isOpen === false) return;
     const orderType = branch.deliveryAvailable ? 'delivery' : 'pickup';
     selectBranch(branch.branchId, orderType);
-    router.push('/menu');
+    window.open('/order/menu', '_blank', 'noopener,noreferrer');
   };
 
   const changeZoom = (next: number) => {
@@ -117,9 +116,18 @@ export default function BranchesPage() {
 
         <OpeningSoonBranchesSection branches={UPCOMING_BRANCHES} />
 
-        <div className="mb-6 grid min-w-0 gap-3 rounded-[22px] border border-[#EED9CB] bg-white/70 p-3 shadow-[0_14px_40px_rgba(74,32,20,0.045)] backdrop-blur-sm sm:p-4 lg:grid-cols-[minmax(0,44fr)_minmax(0,56fr)] lg:gap-4">
-          <StoreSearch query={query} onQueryChange={setQuery} />
-          <StatusFilters activeStatuses={activeStatuses} onToggle={toggleStatus} />
+        <div className="sticky top-[var(--site-header-height)] z-40 -mx-4 mb-6 bg-[#FFF9F1]/96 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <div className={`grid min-w-0 gap-3 rounded-[22px] border border-[#EED9CB] bg-white/85 p-3 shadow-[0_14px_40px_rgba(74,32,20,0.07)] sm:p-4 lg:gap-4 ${filtersOpen ? 'lg:grid-cols-[minmax(0,44fr)_minmax(0,56fr)]' : 'lg:grid-cols-1'}`}>
+            <StoreSearch
+              query={query}
+              filtersOpen={filtersOpen}
+              onQueryChange={setQuery}
+              onToggleFilters={() => setFiltersOpen((open) => !open)}
+            />
+            {filtersOpen && (
+              <StatusFilters activeStatuses={activeStatuses} onToggle={toggleStatus} />
+            )}
+          </div>
         </div>
 
         <div className="mb-5 grid grid-cols-2 rounded-2xl border border-[#EBCFBC] bg-white p-1.5 shadow-sm lg:hidden">
@@ -191,7 +199,17 @@ export default function BranchesPage() {
   );
 }
 
-function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (value: string) => void }) {
+function StoreSearch({
+  query,
+  filtersOpen,
+  onQueryChange,
+  onToggleFilters,
+}: {
+  query: string;
+  filtersOpen: boolean;
+  onQueryChange: (value: string) => void;
+  onToggleFilters: () => void;
+}) {
   return (
     <div className="flex min-w-0 gap-3">
       <label className="relative flex min-h-14 min-w-0 flex-1 items-center rounded-xl border border-[#E5CBBB] bg-white shadow-sm transition focus-within:border-[#99041E] focus-within:ring-4 focus-within:ring-[#99041E]/8">
@@ -209,7 +227,14 @@ function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (
           </button>
         )}
       </label>
-      <button type="button" aria-label="Branch filter settings" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[#E5CBBB] bg-white text-[#99041E] shadow-sm transition hover:border-[#99041E]/35 hover:bg-[#FFF8F2]">
+      <button
+        type="button"
+        onClick={onToggleFilters}
+        aria-label={filtersOpen ? 'Hide branch status filters' : 'Show branch status filters'}
+        aria-expanded={filtersOpen}
+        aria-controls="branch-status-filters"
+        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border text-[#99041E] shadow-sm transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFC257]/45 ${filtersOpen ? 'border-[#99041E] bg-[#FFF2F0]' : 'border-[#E5CBBB] bg-white hover:border-[#99041E]/35 hover:bg-[#FFF8F2]'}`}
+      >
         <Settings2 size={20} />
       </button>
     </div>
@@ -218,7 +243,7 @@ function StoreSearch({ query, onQueryChange }: { query: string; onQueryChange: (
 
 function StatusFilters({ activeStatuses, onToggle }: { activeStatuses: StoreStatus[]; onToggle: (status: StoreStatus) => void }) {
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#E5CBBB] bg-white shadow-sm sm:grid-cols-4" aria-label="Filter branches by status">
+    <div id="branch-status-filters" className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#E5CBBB] bg-white shadow-sm sm:grid-cols-4" aria-label="Filter branches by status">
       {statusOptions.map((status) => {
         const active = activeStatuses.includes(status.id);
         return (
@@ -227,7 +252,7 @@ function StatusFilters({ activeStatuses, onToggle }: { activeStatuses: StoreStat
             type="button"
             onClick={() => onToggle(status.id)}
             aria-pressed={active}
-            className={`flex min-h-14 min-w-0 items-center justify-center gap-2 border-[#F0DED2] px-2 text-[11px] font-bold transition first:border-l-0 sm:border-l sm:px-3 sm:text-xs ${
+            className={`flex min-h-14 min-w-0 items-center justify-start gap-2.5 border-[#F0DED2] px-5 text-left text-[11px] font-bold transition first:border-l-0 sm:justify-center sm:border-l sm:px-3 sm:text-center sm:text-xs ${
               active ? 'bg-[#FFF7EC] text-[#351817]' : 'bg-white text-[#9D8981] opacity-60 hover:opacity-100'
             }`}
           >

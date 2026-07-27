@@ -98,10 +98,9 @@ export default function Header() {
             href="/order?notice=1"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[var(--maeme-red)] px-3 text-xs font-black leading-none text-white shadow-[0_12px_28px_rgba(var(--maeme-red-rgb),0.20)] transition hover:bg-[var(--maeme-red-dark)] sm:h-11 sm:px-5 sm:text-sm lg:px-6"
+            className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[var(--maeme-red)] px-4 text-xs font-black leading-none text-white shadow-[0_12px_28px_rgba(var(--maeme-red-rgb),0.20)] transition hover:bg-[var(--maeme-red-dark)] sm:h-11 sm:px-5 sm:text-sm lg:px-6"
           >
-            <span className="hidden sm:inline">Order Now</span>
-            <span className="sm:hidden">Order</span>
+            Order Now
           </Link>
 
         </div>

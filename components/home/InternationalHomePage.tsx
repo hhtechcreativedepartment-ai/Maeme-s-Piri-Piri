@@ -85,10 +85,9 @@ export default function InternationalHomePage() {
   };
 
   return (
-    <main className="w-full overflow-x-hidden bg-white text-[#1f1210] max-md:max-w-full max-md:min-w-0">
-      <section className="relative bg-white pb-10 pt-8 max-md:box-border max-md:w-full max-md:max-w-full max-md:pb-5 max-md:pt-3 lg:pb-14">
-        <div className="page-container max-md:box-border max-md:w-full max-md:max-w-full">
-          <div className="relative aspect-[1920/750] min-h-[168px] min-w-0 overflow-hidden rounded-[26px] border border-[#ead7c7] bg-[#fff8ef] shadow-[0_26px_80px_rgba(63,24,18,0.10)] max-md:box-border max-md:h-auto max-md:w-full max-md:max-w-full max-md:min-h-0 max-md:rounded-[18px] sm:min-h-[260px] lg:min-h-0">
+    <main className="w-full overflow-x-hidden bg-[#FFF8F2] text-[#1f1210] max-md:max-w-full max-md:min-w-0">
+      <section className="relative w-full overflow-hidden bg-[#FFF8F2] pb-5 sm:pb-7 lg:pb-9">
+          <div className="relative aspect-[1920/750] w-full min-w-0 overflow-hidden bg-[#FFF8F2]">
             {heroVideos.map((video, index) => (
               <video
                 key={video.src}
@@ -108,7 +107,7 @@ export default function InternationalHomePage() {
                 aria-hidden={activeHeroVideo !== index}
                 onEnded={showNextHeroVideo}
                 onError={index === activeHeroVideo ? showNextHeroVideo : undefined}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${
                   activeHeroVideo === index ? 'z-10 opacity-100' : 'z-0 opacity-0'
                 }`}
               >
@@ -116,7 +115,7 @@ export default function InternationalHomePage() {
               </video>
             ))}
           </div>
-          <div className="flex w-full max-w-full justify-center gap-2 bg-white pt-5 max-md:box-border max-md:pt-3">
+          <div className="flex w-full max-w-full justify-center gap-2 bg-[#FFF8F2] pt-3 sm:pt-4">
             {heroVideos.map((video, index) => (
               <button
                 key={video.src}
@@ -130,10 +129,9 @@ export default function InternationalHomePage() {
               />
             ))}
           </div>
-        </div>
       </section>
 
-      <section className="relative overflow-hidden bg-white py-8 sm:py-12 lg:py-20">
+      <section className="relative overflow-hidden bg-[#FFF8F2] py-8 sm:py-12 lg:py-20">
         <div className="mx-auto grid max-w-[1320px] items-center gap-4 px-4 sm:gap-7 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 lg:px-8">
           <div className="relative z-10">
             <h2 className="text-[30px] font-bold uppercase leading-[1.02] tracking-[-0.025em] sm:text-5xl sm:font-black sm:leading-[0.98] lg:text-6xl">
@@ -164,7 +162,7 @@ export default function InternationalHomePage() {
 
       <AppDownloadSection />
 
-      <section className="relative overflow-hidden bg-white py-10 sm:py-14 lg:py-16">
+      <section className="relative overflow-hidden bg-[#FFF8F2] py-10 sm:py-14 lg:py-16">
         <div className="mx-auto max-w-[1380px] px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="mx-auto flex max-w-[420px] items-center justify-center gap-4 sm:gap-6">
@@ -218,7 +216,7 @@ export default function InternationalHomePage() {
         </div>
       </section>
 
-      <section className="bg-white py-14 sm:py-16 lg:py-20">
+      <section className="bg-[#FFF8F2] py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
           <div className="mb-9 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   formatUpcomingBranchStatus,
+  filterUpcomingBranches,
   getUpcomingBranches,
   type UpcomingBranch,
 } from './branchData.ts';
@@ -40,4 +41,14 @@ test('formatUpcomingBranchStatus preserves a supplied opening label without inve
     formatUpcomingBranchStatus({ ...branches[0], openingDisplay: 'After 3 Months' }, currentDate),
     'After 3 Months',
   );
+});
+
+test('filterUpcomingBranches searches name, town, address and postcode case-insensitively', () => {
+  const searchableBranches: UpcomingBranch[] = [
+    { branchId: 'leicester', branchName: "Maeme's Leicester", townOrCity: 'Leicester', address: '47 Evington Lane', postcode: 'LE5 5PR', status: 'opening-soon' },
+    { branchId: 'manchester', branchName: "Maeme's Manchester", townOrCity: 'Manchester', postcode: 'M19 3NN', status: 'opening-soon' },
+  ];
+
+  assert.deepEqual(filterUpcomingBranches(searchableBranches, 'EVINGTON').map((branch) => branch.branchId), ['leicester']);
+  assert.deepEqual(filterUpcomingBranches(searchableBranches, 'm19 3nn').map((branch) => branch.branchId), ['manchester']);
 });

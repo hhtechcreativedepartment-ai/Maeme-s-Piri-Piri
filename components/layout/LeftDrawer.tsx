@@ -28,7 +28,7 @@ export default function LeftDrawer({ isOpen, onClose }: LeftDrawerProps) {
       />
 
       <div
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[90vw] max-w-[420px] flex-col bg-white shadow-[24px_0_70px_rgba(26,18,15,0.24)] transition-transform duration-300 ease-out ${
+        className={`fixed left-0 top-0 z-50 flex h-dvh w-[90vw] max-w-[420px] flex-col bg-white shadow-[24px_0_70px_rgba(26,18,15,0.24)] transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-hidden={!isOpen}
@@ -70,6 +70,20 @@ export default function LeftDrawer({ isOpen, onClose }: LeftDrawerProps) {
             );
           })}
         </nav>
+
+        <footer className="shrink-0 border-t border-[#ead8c6] bg-[#fffaf4] px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-[#6f5f5a]">
+            <Link href="/privacy-policy" onClick={onClose} className="transition hover:text-[#99041e] focus-visible:outline-none focus-visible:text-[#99041e]">
+              Privacy Policy
+            </Link>
+            <Link href="/terms-and-conditions" onClick={onClose} className="transition hover:text-[#99041e] focus-visible:outline-none focus-visible:text-[#99041e]">
+              Terms &amp; Conditions
+            </Link>
+          </div>
+          <p className="mt-3 text-[11px] font-semibold leading-5 text-[#806f68]">
+            © {new Date().getFullYear()} Maeme&apos;s Piri Piri. All rights reserved.
+          </p>
+        </footer>
       </div>
     </>
   );

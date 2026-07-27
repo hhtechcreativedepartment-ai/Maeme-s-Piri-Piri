@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Select } from '@base-ui/react/select';
 import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
   ArrowRight,
@@ -168,6 +169,9 @@ function CareerApplicationForm({ selectedRole, onRoleChange }: { selectedRole: s
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [branch, setBranch] = useState('');
   const [referral, setReferral] = useState('');
+  const [availability, setAvailability] = useState<Record<string, string>>(
+    () => Object.fromEntries(DAYS_OF_WEEK.map((day) => [day, 'Unavailable'])),
+  );
   const [cv, setCv] = useState<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -216,7 +220,7 @@ function CareerApplicationForm({ selectedRole, onRoleChange }: { selectedRole: s
 
       <FormSection title="Role Preferences" number="02">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field id="preferredRole" label="Preferred Role" error={errors.preferredRole}><select id="preferredRole" value={selectedRole} onChange={(e) => onRoleChange(e.target.value)} className={inputClass}><option value="">Select a role</option>{CAREER_ROLES.map((role) => <option key={role.id} value={role.id}>{role.title}</option>)}</select></Field>
+          <Field id="preferredRole" label="Preferred Role" error={errors.preferredRole}><BrandedSelect id="preferredRole" value={selectedRole} onValueChange={onRoleChange} placeholder="Select a role" options={CAREER_ROLES.map((role) => ({ value: role.id, label: role.title }))} /></Field>
           <Field id="preferredBranch" label="Preferred Branch" error={errors.preferredBranch}><SearchableBranchSelect value={branch} onChange={setBranch} /></Field>
         </div>
       </FormSection>
@@ -224,7 +228,7 @@ function CareerApplicationForm({ selectedRole, onRoleChange }: { selectedRole: s
       <FormSection title="Availability" number="03">
         <p className="mb-4 text-sm text-[#715D57]">Select your preferred availability for at least one day.</p>
         <div id="availability" tabIndex={-1} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {DAYS_OF_WEEK.map((day) => <label key={day} className="block"><span className="mb-1.5 block text-xs font-black text-[#5A4038]">{day}</span><select name={`availability.${day.toLowerCase()}`} defaultValue="Unavailable" className={`${inputClass} min-h-11`}><>{AVAILABILITY_OPTIONS.map((option) => <option key={option}>{option}</option>)}</></select></label>)}
+          {DAYS_OF_WEEK.map((day) => <div key={day}><label htmlFor={`availability-${day.toLowerCase()}`} className="mb-1.5 block text-xs font-black text-[#5A4038]">{day}</label><BrandedSelect id={`availability-${day.toLowerCase()}`} name={`availability.${day.toLowerCase()}`} value={availability[day]} onValueChange={(value) => setAvailability((current) => ({ ...current, [day]: value }))} placeholder="Select availability" compact options={AVAILABILITY_OPTIONS.map((option) => ({ value: option, label: option }))} /></div>)}
         </div>
         {errors.availability && <ErrorText id="availability-error">{errors.availability}</ErrorText>}
       </FormSection>
@@ -233,7 +237,7 @@ function CareerApplicationForm({ selectedRole, onRoleChange }: { selectedRole: s
         <div className="grid gap-5">
           <Field id="experience" label="Previous Experience" error={errors.experience}><textarea id="experience" name="experience" className={`${inputClass} min-h-28 resize-y py-3`} placeholder="Tell us about relevant experience" /></Field>
           <Field id="motivation" label="Why would you like to work at Maeme's?" error={errors.motivation}><textarea id="motivation" name="motivation" className={`${inputClass} min-h-28 resize-y py-3`} placeholder="Tell us what interests you about joining the team" /></Field>
-          <div className="grid gap-5 sm:grid-cols-2"><Field id="startDate" label="Earliest Available Start Date — Optional"><input id="startDate" name="startDate" type="date" className={inputClass} /></Field><Field id="referralSource" label="How did you find out about this job?" error={errors.referralSource}><select id="referralSource" value={referral} onChange={(e) => setReferral(e.target.value)} className={inputClass}><option value="" disabled>Select an option</option>{REFERRAL_SOURCES.map((source) => <option key={source}>{source}</option>)}</select></Field></div>
+          <div className="grid gap-5 sm:grid-cols-2"><Field id="startDate" label="Earliest Available Start Date — Optional"><input id="startDate" name="startDate" type="date" className={inputClass} /></Field><Field id="referralSource" label="How did you find out about this job?" error={errors.referralSource}><BrandedSelect id="referralSource" value={referral} onValueChange={setReferral} placeholder="Select an option" options={REFERRAL_SOURCES.map((source) => ({ value: source, label: source }))} /></Field></div>
           {referral === 'Other' && <Field id="referralOther" label="Please tell us where you heard about this role" error={errors.referralOther}><input id="referralOther" name="referralOther" className={inputClass} /></Field>}
           <label className="flex min-h-11 items-start gap-3 rounded-xl border border-[#E8D2C4] bg-[#FFFBF7] p-4 text-sm font-semibold"><input id="rightToWork" name="rightToWork" value="yes" type="checkbox" className="mt-0.5 h-5 w-5 accent-[#99041E]" />I confirm that I have the right to work in the location for which I am applying.</label>
           {errors.rightToWork && <ErrorText>{errors.rightToWork}</ErrorText>}
@@ -262,7 +266,50 @@ function SearchableBranchSelect({ value, onChange }: { value: string; onChange: 
   const [query, setQuery] = useState('');
   const options = useMemo(() => BRANCHES.filter((branch) => branch.isOpen !== false && [branch.branchName, branch.address, branch.postcode].join(' ').toLowerCase().includes(query.toLowerCase())), [query]);
   const selected = BRANCHES.find((item) => item.branchId === value);
-  return <div className="relative"><button id="preferredBranch" type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} className={`${inputClass} flex items-center justify-between text-left`}><span className={selected || value === 'any' ? '' : 'text-[#9D8981]'}>{value === 'any' ? 'Any Branch' : selected ? selected.branchName : 'Select a branch'}</span><ChevronDown size={17} className="text-[#99041E]" /></button>{open && <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[#E5CBBB] bg-white shadow-[0_18px_45px_rgba(74,32,20,0.14)]"><label className="relative block border-b border-[#F0DED2] p-2"><span className="sr-only">Search branches</span><Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#99041E]" size={16} /><input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or postcode" className="min-h-10 w-full rounded-lg bg-[#FFF9F1] pl-9 pr-3 text-sm outline-none" /></label><div role="listbox" className="max-h-60 overflow-y-auto p-1.5"><button type="button" role="option" aria-selected={value === 'any'} onClick={() => { onChange('any'); setOpen(false); }} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm font-bold hover:bg-[#FFF1DD]">Any Branch</button>{options.map((branch) => <button key={branch.branchId} type="button" role="option" aria-selected={value === branch.branchId} onClick={() => { onChange(branch.branchId); setOpen(false); }} className="block min-h-12 w-full rounded-lg px-3 py-2 text-left hover:bg-[#FFF1DD]"><span className="block text-sm font-black">{branch.branchName}</span><span className="block text-xs text-[#715D57]">{branch.address}, {branch.postcode}</span></button>)}{options.length === 0 && <p className="px-3 py-6 text-center text-sm text-[#715D57]">No branches match your search.</p>}</div></div>}</div>;
+  return <div className="relative"><button id="preferredBranch" type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} className={`${inputClass} flex min-w-0 cursor-pointer items-center justify-between bg-white pl-4 pr-4 text-left shadow-[0_8px_22px_rgba(63,24,18,0.05)] hover:border-[#C9A98C]`}><span className={`min-w-0 truncate ${selected || value === 'any' ? '' : 'text-[#9D8981]'}`}>{value === 'any' ? 'Any Branch' : selected ? selected.branchName : 'Select a branch'}</span><ChevronDown size={18} strokeWidth={2.5} className={`ml-4 shrink-0 text-[#99041E] transition-transform ${open ? 'rotate-180' : ''}`} /></button>{open && <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[#E5CBBB] bg-white shadow-[0_18px_45px_rgba(74,32,20,0.14)]"><label className="relative block border-b border-[#F0DED2] p-2"><span className="sr-only">Search branches</span><Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#99041E]" size={16} /><input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or postcode" className="min-h-11 w-full rounded-lg bg-[#FFF9F1] pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#99041E]/15" /></label><div role="listbox" className="max-h-60 overflow-y-auto p-1.5"><button type="button" role="option" aria-selected={value === 'any'} onClick={() => { onChange('any'); setOpen(false); }} className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm font-bold outline-none transition hover:bg-[#FFF1DD] focus:bg-[#FFF1DD] aria-selected:bg-[#FFF1DD] aria-selected:text-[#99041E]">Any Branch</button>{options.map((branch) => <button key={branch.branchId} type="button" role="option" aria-selected={value === branch.branchId} onClick={() => { onChange(branch.branchId); setOpen(false); }} className="block min-h-12 w-full rounded-lg px-3 py-2 text-left outline-none transition hover:bg-[#FFF1DD] focus:bg-[#FFF1DD] aria-selected:bg-[#FFF1DD] aria-selected:text-[#99041E]"><span className="block text-sm font-black">{branch.branchName}</span><span className="block text-xs text-[#715D57]">{branch.address}, {branch.postcode}</span></button>)}{options.length === 0 && <p className="px-3 py-6 text-center text-sm text-[#715D57]">No branches match your search.</p>}</div></div>}</div>;
+}
+
+function BrandedSelect({
+  id,
+  name,
+  value,
+  onValueChange,
+  placeholder,
+  options,
+  compact = false,
+}: {
+  id: string;
+  name?: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  options: Array<{ value: string; label: string }>;
+  compact?: boolean;
+}) {
+  return (
+    <Select.Root items={options} name={name} value={value || null} onValueChange={(nextValue) => onValueChange(nextValue ?? '')}>
+      <Select.Trigger id={id} className={`${inputClass} flex cursor-pointer items-center justify-between bg-white pl-4 pr-4 text-left shadow-[0_8px_22px_rgba(63,24,18,0.05)] hover:border-[#C9A98C] data-popup-open:border-[#99041E] data-popup-open:ring-4 data-popup-open:ring-[#99041E]/10 ${compact ? 'min-h-11' : ''}`}>
+        <Select.Value placeholder={placeholder} />
+        <Select.Icon className="ml-4 flex shrink-0 text-[#99041E] transition-transform duration-200 data-popup-open:rotate-180">
+          <ChevronDown size={18} strokeWidth={2.5} />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner className="z-[90] outline-none" sideOffset={8} alignItemWithTrigger={false}>
+          <Select.Popup className="min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-xl border border-[#EAD8C6] bg-white p-1.5 text-[#351817] shadow-[0_18px_45px_rgba(63,24,18,0.14)] outline-none transition-[transform,opacity] duration-150 data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
+            <Select.List className="max-h-64 overflow-y-auto">
+              {options.map((option) => (
+                <Select.Item key={option.value} value={option.value} className="flex min-h-10 cursor-pointer items-center justify-between gap-4 rounded-lg px-3 py-2 text-sm outline-none transition-colors data-highlighted:bg-[#FFF4E6] data-highlighted:text-[#99041E] data-selected:font-semibold data-selected:text-[#99041E]">
+                  <Select.ItemText>{option.label}</Select.ItemText>
+                  <Select.ItemIndicator className="flex shrink-0 text-[#99041E]"><Check size={16} strokeWidth={2.5} /></Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.List>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  );
 }
 
 function validateCareerForm(data: FormData, cv: File | null): FormErrors {

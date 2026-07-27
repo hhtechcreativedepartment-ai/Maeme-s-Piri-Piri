@@ -17,7 +17,7 @@ export default function Header() {
   const navLinks = [
     { label: 'Menu', href: '/menu' },
     { label: 'Our Food', href: '/food' },
-    { label: 'Stores', href: '/branches' },
+    { label: 'Branches', href: '/branches' },
     { label: 'Our App', href: '/app' },
     { label: 'Franchising', href: '/franchising' },
   ];

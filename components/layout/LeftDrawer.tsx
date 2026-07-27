@@ -11,7 +11,7 @@ interface LeftDrawerProps {
 const menuItems = [
   { label: 'Menu', href: '/menu', icon: Utensils },
   { label: 'Our Food', href: '/food', icon: FileText },
-  { label: 'Stores', href: '/branches', icon: MapPinIcon },
+  { label: 'Branches', href: '/branches', icon: MapPinIcon },
   { label: 'Our App', href: '/app', icon: Gift },
   { label: 'Franchising', href: '/franchising', icon: FileText },
 ];

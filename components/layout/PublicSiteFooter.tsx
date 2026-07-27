@@ -10,7 +10,7 @@ const essentialLinks = [
   { label: 'Franchising', href: '/franchising' },
   { label: "What's New", href: '/blog' },
   { label: 'Our Food', href: '/food' },
-  { label: 'Stores', href: '/branches' },
+  { label: 'Branches', href: '/branches' },
 ];
 
 const socialLinks = [

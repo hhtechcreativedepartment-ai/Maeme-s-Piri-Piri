@@ -1,12 +1,14 @@
 'use client';
 
 import Image from 'next/image';
+import { Select } from '@base-ui/react/select';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import {
   ArrowRight,
   Award,
   Building2,
   Check,
+  ChevronDown,
   ClipboardCheck,
   Handshake,
   Headphones,
@@ -78,6 +80,14 @@ const initialFormData = {
   experience: '',
   message: '',
 };
+
+const experienceOptions = [
+  { value: 'hospitality', label: 'Hospitality or catering' },
+  { value: 'qsr', label: 'Quick-service restaurant' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'business', label: 'Business ownership or management' },
+  { value: 'other', label: 'Other experience' },
+];
 
 export default function FranchisingPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -297,18 +307,39 @@ export default function FranchisingPage() {
 
             <div className="mt-5">
               <FormField label="Relevant experience">
-                <select
-                  value={formData.experience}
-                  onChange={(event) => updateField('experience', event.target.value)}
-                  className={inputClassName}
+                <Select.Root
+                  items={experienceOptions}
+                  value={formData.experience || null}
+                  onValueChange={(value) => updateField('experience', value ?? '')}
                 >
-                  <option value="">Select an option</option>
-                  <option value="hospitality">Hospitality or catering</option>
-                  <option value="qsr">Quick-service restaurant</option>
-                  <option value="retail">Retail</option>
-                  <option value="business">Business ownership or management</option>
-                  <option value="other">Other experience</option>
-                </select>
+                  <Select.Trigger className={`${inputClassName} flex min-h-14 cursor-pointer items-center justify-between bg-white pl-4 pr-4 text-left shadow-[0_8px_22px_rgba(63,24,18,0.06)] hover:border-[#c9a98c] data-popup-open:border-[#99041e] data-popup-open:ring-4 data-popup-open:ring-[#99041e]/10`}>
+                    <Select.Value placeholder="Select an option" />
+                    <Select.Icon className="ml-4 flex shrink-0 text-[#99041e] transition-transform duration-200 data-popup-open:rotate-180">
+                      <ChevronDown size={18} strokeWidth={2.5} />
+                    </Select.Icon>
+                  </Select.Trigger>
+
+                  <Select.Portal>
+                    <Select.Positioner className="z-50 outline-none" sideOffset={8} alignItemWithTrigger={false}>
+                      <Select.Popup className="min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-xl border border-[#ead8c6] bg-white p-1.5 text-[#1f1210] shadow-[0_18px_45px_rgba(63,24,18,0.14)] outline-none transition-[transform,opacity] duration-150 data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
+                        <Select.List>
+                          {experienceOptions.map((option) => (
+                            <Select.Item
+                              key={option.value}
+                              value={option.value}
+                              className="flex min-h-10 cursor-pointer items-center justify-between gap-4 rounded-lg px-3 py-2 text-sm outline-none transition-colors data-highlighted:bg-[#fff4e6] data-highlighted:text-[#99041e] data-selected:font-semibold data-selected:text-[#99041e]"
+                            >
+                              <Select.ItemText>{option.label}</Select.ItemText>
+                              <Select.ItemIndicator className="flex shrink-0 text-[#99041e]">
+                                <Check size={16} strokeWidth={2.5} />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.List>
+                      </Select.Popup>
+                    </Select.Positioner>
+                  </Select.Portal>
+                </Select.Root>
               </FormField>
             </div>
 

@@ -20,6 +20,7 @@ export default function Header() {
     { label: 'Branches', href: '/branches' },
     { label: 'Our App', href: '/app' },
     { label: 'Franchising', href: '/franchising' },
+    { label: 'Career', href: '/career' },
   ];
 
   useEffect(() => {

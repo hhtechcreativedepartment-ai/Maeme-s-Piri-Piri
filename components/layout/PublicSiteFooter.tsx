@@ -11,6 +11,7 @@ const essentialLinks = [
   { label: "What's New", href: '/blog' },
   { label: 'Our Food', href: '/food' },
   { label: 'Branches', href: '/branches' },
+  { label: 'Career', href: '/career' },
 ];
 
 const socialLinks = [

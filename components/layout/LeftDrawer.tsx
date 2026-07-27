@@ -14,6 +14,7 @@ const menuItems = [
   { label: 'Branches', href: '/branches', icon: MapPinIcon },
   { label: 'Our App', href: '/app', icon: Gift },
   { label: 'Franchising', href: '/franchising', icon: FileText },
+  { label: 'Career', href: '/career', icon: FileText },
 ];
 
 export default function LeftDrawer({ isOpen, onClose }: LeftDrawerProps) {

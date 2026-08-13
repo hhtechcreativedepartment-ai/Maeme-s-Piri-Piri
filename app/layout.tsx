@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer'
 import PostcodeModalHost from '@/components/ordering/PostcodeModalHost'
 import AssistantLoader from '@/components/assistant/AssistantLoader'
 import EnquiryLoader from '@/components/enquiry/EnquiryLoader'
+import OrderingLegalNavigationGuard from '@/components/legal/OrderingLegalNavigationGuard'
 import { AuthProvider } from '@/lib/authContext'
 import { CartProvider } from '@/lib/cartContext'
 import { FavouritesProvider } from '@/lib/favouritesContext'
@@ -59,6 +60,7 @@ export default function RootLayout({
             <PostcodeModalHost />
             <AssistantLoader />
             <EnquiryLoader />
+            <OrderingLegalNavigationGuard />
             <main className="min-h-0 flex-1 pt-[var(--site-header-height)]">
               {children}
             </main>

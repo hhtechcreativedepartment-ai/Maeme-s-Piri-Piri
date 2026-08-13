@@ -442,11 +442,11 @@ export default function CheckoutLoginModal({
               )}
               <p className="px-2 pt-4 text-center text-xs font-semibold leading-5 text-[#78645d]">
                 By continuing, you agree to our{' '}
-                <a href="/terms-and-conditions" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
+                <a href="/order/terms-and-conditions" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
                   Terms
                 </a>{' '}
                 and{' '}
-                <a href="/privacy-policy" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
+                <a href="/order/privacy-policy" className="underline decoration-[#99041e]/40 underline-offset-2 hover:text-[#99041e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc257]">
                   Privacy Policy
                 </a>
                 .

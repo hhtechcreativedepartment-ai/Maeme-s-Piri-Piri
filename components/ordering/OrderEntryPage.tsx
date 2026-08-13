@@ -128,8 +128,8 @@ export default function OrderEntryPage() {
       <footer className="relative z-10 border-t border-white/15 bg-[#99041e]/95 px-4 py-4">
         <div className="site-container-wide flex flex-col items-center justify-between gap-3 text-center text-xs font-bold text-white/85 sm:flex-row sm:text-left">
           <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2" aria-label="Ordering support">
-            <Link href="/privacy-policy" className="transition hover:text-[#ffc257]">Privacy Policy</Link>
-            <Link href="/terms-and-conditions" className="transition hover:text-[#ffc257]">Terms</Link>
+            <Link href="/order/privacy-policy" className="transition hover:text-[#ffc257]">Privacy Policy</Link>
+            <Link href="/order/terms-and-conditions" className="transition hover:text-[#ffc257]">Terms</Link>
             <Link href="/contact" className="transition hover:text-[#ffc257]">Contact Us</Link>
           </nav>
           <p>© {new Date().getFullYear()} Maeme&apos;s Piri Piri</p>

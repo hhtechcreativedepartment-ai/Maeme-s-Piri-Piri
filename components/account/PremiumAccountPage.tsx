@@ -37,9 +37,9 @@ const tabs = [
 ];
 
 const profileLinks = [
-  { label: 'Explore Menu', href: '/menu', icon: Utensils },
-  { label: 'Privacy Policy', href: '/privacy-policy', icon: FileText },
-  { label: 'Terms & Conditions', href: '/terms-and-conditions', icon: FileText },
+  { label: 'Explore Menu', href: '/order/menu', icon: Utensils },
+  { label: 'Privacy Policy', href: '/order/privacy-policy', icon: FileText },
+  { label: 'Terms & Conditions', href: '/order/terms-and-conditions', icon: FileText },
 ];
 
 const promoCards = [
